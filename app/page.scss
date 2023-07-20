@@ -1,0 +1,82 @@
+///////////////////////////////////////////
+// *** HOMEPAGE STYLES ***
+///////////////////////////////////////////
+section#explore {
+  padding: 0;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  // width: 100%;
+  .explore-column {
+    // width: 50%;
+    // height: 33vh;
+    background-position: center;
+    background-size: cover;
+    filter: saturate(0%);
+    border: 1px solid var(--color-8);
+    //* Centers the h3 inside each column
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    &:hover,
+    &:focus,
+    &:active {
+      width: 50%;
+      filter: saturate(100%);
+      border: 1px solid var(--color-1);
+      //* linking is done through Next.js event listener so cursor needs to be changed on hover
+      cursor: pointer;
+      h3 {
+        color: var(--color-1);
+      }
+    }
+    &#column_1 {
+      background-image: url(../public/imgs/photos/tsm-1.jpg);
+    }
+    &#column_2 {
+      background-image: url(../public/imgs/photos/tsm-2.jpg);
+    }
+    &#column_3 {
+      background-image: url(../public/imgs/photos/tsm-3.jpg);
+    }
+    &#column_4 {
+      background-image: url(../public/imgs/photos/tsm-grey.jpg);
+    }
+    h3 {
+      // color: var(--color-9);
+      text-transform: uppercase;
+      text-shadow: var(--shadow);
+    }
+  }
+}
+
+///////////////////////////////////////////
+// *** MEDIA QUERIES ***
+///////////////////////////////////////////
+// *** TABLETS ***
+//* Applies to everything 768px wide and larger.
+// $breakpoint-tablet: 768px;
+// @media (min-width: $breakpoint-tablet) {
+// }
+
+// *** LARGE SCREENS ***
+//* Applies to everything 1200px wide and larger.
+$breakpoint-tablet: 1200px;
+@media (min-width: $breakpoint-tablet) {
+  section#explore {
+    flex-wrap: nowrap;
+    .explore-column {
+      height: clamp(40vw, 66.6667vh, 100vh);
+      width: 25%;
+    }
+  }
+}
+
+// *** MOBILE ***
+//* This one is max-width instead. Applies to everything 480px wide and SMALLER!
+$breakpoint-mobile: 480px;
+@media (max-width: $breakpoint-mobile) {
+  main#intro {
+    padding-top: 0;
+  }
+}

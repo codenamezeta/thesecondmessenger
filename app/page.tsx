@@ -1,91 +1,69 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from './page.module.css'
+import Theater from './components/Theater'
+import Nav from './components/Nav'
+import Button from './components/Buttons'
+import FeaturedSong from './components/FeaturedSong'
+import SubscribeFormMC from './components/SubscribeFormMC'
+import Link from 'next/link'
+import NewsTeaser from './components/NewsTeaser'
+import Footer from './components/Footer'
+import { getLatestRelease } from '@/lib/firebase'
 
-const inter = Inter({ subsets: ['latin'] })
+// export const revalidate = 0 // revalidate this page every 60 seconds
 
-export default function Home() {
+export default async function Home() {
+  const latestRelease = await getLatestRelease()
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
+    <>
+      <Theater
+        youTubePlaylistId='PLFhi_wBjERLqYiJSbS0jOKhcjnfT1EuE1' //- Hard coded to the discography playlist.
+      />
+      <Nav />
+
+      <main
+        className='container'
+        id='intro'
+        style={{ marginTop: 'var(--spacer-4)' }}
+      >
+        <h1>The Second Messenger</h1>
         <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.tsx</code>
+          We are The Second Messenger, a team of DIY music producers,
+          songwriters, and recording artists united by our quest to create a
+          legacy of high-quality music. Unfettered by record labels or
+          geographical limitations, we leverage the connective power of the
+          internet to build direct relationships with our worldwide audience.
+          Our quest has only just begun, but we&apos;re beyond excited for
+          what&apos;s ahead. We hope you will join us because we like to think
+          The Second Messenger always delivers.
         </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+        <Button to='/bio' text='Learn More' outline />
+        <Button to='/bio' text='Become A Fan' />
+      </main>
+      <FeaturedSong
+        song={latestRelease}
+        sectionHeading='Our Newest Release'
+        titleAsH1={false}
+      />
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-        <div className={styles.thirteen}>
-          <Image src="/thirteen.svg" alt="13" width={40} height={31} priority />
-        </div>
-      </div>
+      <SubscribeFormMC />
 
-      <div className={styles.grid}>
-        <a
-          href="https://beta.nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+      <section id='explore'>
+        <Link href='/music' className='explore-column' id='column_1'>
+          <h4>Music</h4>
+        </Link>
+        <Link href='/bio' className='explore-column' id='column_2'>
+          <h4>Bio</h4>
+        </Link>
+        <Link href='/merch' className='explore-column' id='column_3'>
+          <h4>Merch</h4>
+        </Link>
+        <Link href='/news' className='explore-column' id='column_4'>
+          <h4>News</h4>
+        </Link>
+      </section>
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>Explore the Next.js 13 playground.</p>
-        </a>
+      {/* <NewsTeaser posts={posts} sectionTitle={'Latest Posts'} /> */}
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+      <Footer />
+    </>
   )
 }

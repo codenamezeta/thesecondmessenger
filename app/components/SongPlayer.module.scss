@@ -1,0 +1,33 @@
+div#sonic {
+  --player-height: 100px;
+  background-color: var(--color-3);
+  // border-top: 1px solid var(--color-8);
+  // color: white;
+  position: fixed;
+  z-index: 100;
+  width: 100vw;
+  height: var(--player-height);
+  bottom: calc(
+    var(--player-height) * -1.1
+  ); //@ -1.1 Reduces a little extra cause of the negative margin on the range slider.
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
+  &.open {
+    bottom: 0px;
+  }
+  #progressBar {
+    grid-column: 1/-1;
+    margin-bottom: auto;
+  }
+  // #playPause {
+  //   margin: 0 auto;
+  // }
+  // #volumeSlider {
+  //   width: 100px;
+  //   margin-left: 1em;
+  // }
+  // #closeButton {
+  //   margin-right: 1em;
+  // }
+}

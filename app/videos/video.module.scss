@@ -1,0 +1,25 @@
+.videoList {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  row-gap: var(--spacer-3);
+  column-gap: var(--spacer-2);
+
+  .videoWrapper {
+    display: block;
+    padding: 0;
+    margin: 0 auto;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    max-height: calc(100vh - var(--navbar-height));
+    iframe {
+      border: 0;
+      aspect-ratio: 16/9;
+      height: 100%;
+    }
+  }
+
+  .videoTitle {
+    margin-top: 0.5rem;
+  }
+}

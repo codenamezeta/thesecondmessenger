@@ -1,0 +1,448 @@
+///////////////////////////////////////////
+// *** THEME STYLES & GLOBAL VARIABLES ***
+///////////////////////////////////////////
+
+//* Fonts from adobe
+@import url('https://use.typekit.net/lau7jir.css');
+//? To edit: https://fonts.adobe.com/my_fonts
+
+:root {
+  //* COLOR PALLATE
+  --text-color: aliceblue;
+  --color-1: hsl(183, 38%, 42%);
+  --color-2: hsl(207, 71%, 5%);
+  --color-3: hsl(200, 19%, 18%);
+  --color-4: hsl(185, 28%, 18%);
+  --color-5: hsl(207, 21%, 17%);
+  --color-6: hsl(185, 28%, 18%);
+  --color-7: hsl(0, 0%, 55%);
+  --color-8: hsl(0, 0%, 28%);
+  --color-9: hsl(0, 0%, 13%);
+  --color-10: hsl(207, 100%, 4%);
+  //* SPACING
+  --spacer: 1rem;
+  --spacer-2: calc(var(--spacer) * 4);
+  --spacer-3: calc(var(--spacer) * 6);
+  --spacer-4: calc(var(--spacer) * 12);
+  --spacer-half: calc(var(--spacer) / 2);
+  --spacer-third: calc(var(--spacer) / 4);
+  --spacer-quater: calc(var(--spacer) / 8);
+  --container-width: 85%;
+  //* NAVIGATION
+  --side-sheet-width: 66.6667vw;
+  --navbar-height: clamp(60px, 10vh, 80px);
+  //* TYPOGRAPHY
+  --font-1: 'printf', sans-serif;
+  --font-2: 'metallophile-sp8', sans-serif;
+  --font-base: 1em;
+  --font-scale-quarter: calc(var(--font-base) / 4);
+  --font-scale-third: calc(var(--font-base) / 3);
+  --font-scale-small: calc(var(--font-base) * 0.9167);
+  --font-scale-half: calc(var(--font-base) / 2);
+  --font-scale-2: calc(var(--font-base) * 1.25);
+  --font-scale-3: calc(var(--font-base) * 1.5em);
+  --font-scale-4: calc(var(--font-base) * 2);
+  //* OTHER
+  --shadow: -1px 1px 2px #000;
+  --transition: all 0.75s ease-out;
+}
+
+* {
+  transition: var(--transition);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-size: var(--font-base);
+  font-family: var(--font-2);
+  transition: var(--transition);
+  color: var(--text-color);
+  background-color: var(--color-2);
+  padding: 0;
+  margin: 0;
+}
+
+main,
+section {
+  padding: var(--spacer-4) 0;
+  &:first-of-type {
+    //A page's first section shouldn't be so far from the bottom of the Nav.
+    padding-top: var(--spacer);
+  }
+}
+
+article {
+  --container-width: 66.6667%;
+  p,
+  ul,
+  ol {
+    margin-top: var(--spacer);
+  }
+}
+
+header {
+  min-height: 40vh;
+  background-color: var(--color-3);
+  background-position: center;
+  background-size: cover;
+}
+
+footer {
+  height: var(--spacer-3);
+  background-color: var(--color-8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  p {
+    --font-base: 0.6667em;
+    line-height: 0;
+    margin: 0;
+  }
+}
+
+h1 {
+  font-family: var(--font-1);
+  font-size: var(--font-scale-4);
+  // font-size: 3em;
+  margin: var(--spacer-2) 0 0;
+}
+
+h2 {
+  font-family: var(--font-1);
+  font-size: var(--font-scale-3);
+  margin: var(--spacer) 0 0;
+}
+
+h3 {
+  font-size: var(--font-scale-3);
+  font-weight: 900;
+  margin: var(--spacer) 0 0;
+}
+
+h4 {
+  font-family: var(--font-1);
+  font-size: var(--font-scale-2);
+  margin: var(--spacer) 0 0;
+}
+
+h5 {
+  font-family: var(--font-1);
+  font-size: var(--font-base);
+  margin: var(--spacer) 0 0;
+}
+
+h6 {
+  font-size: var(--font-base);
+  font-weight: 900;
+  margin: var(--spacer) 0 0;
+}
+
+a {
+  color: var(--text-color);
+  text-decoration: none;
+  &:hover {
+    color: var(--color-1);
+    text-decoration: underline;
+  }
+}
+
+p,
+summary,
+time,
+details {
+  font-family: var(--font-2);
+  font-weight: 100;
+  font-size: var(--font-base);
+  line-height: 1.4em;
+  max-width: 60ch;
+  margin-bottom: var(--spacer);
+  a {
+    // These are links inline with text. Not headings
+    color: var(--color-1);
+    &:hover {
+      color: var(--text-color);
+    }
+  }
+}
+
+time {
+  color: var(--color-7);
+}
+
+//? Prevents overriding Nav.scss that removed the list styles in the nav.
+ol,
+:not(nav) > ul {
+  list-style-position: inside;
+  li::marker {
+    color: var(--color-7);
+  }
+}
+
+blockquote {
+  font-family: var(--font-1);
+  // font-size: var(--font-scale-2);
+  line-height: 1.4em;
+  max-width: 52ch;
+  margin-bottom: var(--spacer);
+}
+
+hr {
+  margin: var(--spacer-quater) 0 var(--spacer-2) 0;
+}
+
+svg {
+  color: aliceblue;
+  font-size: var(--font-scale-3);
+  filter: drop-shadow(-1px 1px 2px rgb(0 0 0 / 0.8));
+}
+
+figure {
+  img {
+    max-width: 60ch;
+  }
+}
+
+.container {
+  width: var(--container-width);
+  // width: clamp(85%, var(--container-width), 1800px);
+  margin: 0 auto;
+}
+
+.flex {
+  display: flex;
+}
+
+///////////////////////////////////////////
+// *** BUTTONS ***
+///////////////////////////////////////////
+.btn {
+  //* Changing only font-size will scale padding too. Padding must use em, not rems.
+  //? https://www.kevinpowell.co/article/scaling-buttons-with-css-custom-properties/
+  --btn-scale: 1em;
+  // min-width: 48px; //* Makes sure buttons can easily be pressed on touch screens
+  // min-height: 48px;
+  padding: calc(var(--btn-scale) * 0.85) calc(var(--btn-scale) * 1.25);
+  font-size: calc(var(--btn-scale) * 0.85);
+  font-family: var(--font-1);
+  text-transform: uppercase;
+  background: var(--color-4);
+  color: var(--text-color);
+  text-decoration: none;
+  text-align: center;
+  text-shadow: var(--shadow);
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  &.small {
+    --btn-scale: 0.75em;
+  }
+  &.large {
+    --btn-scale: 1.25em;
+  }
+  &.x-large {
+    --btn-scale: 1.5em;
+  }
+  &.outline {
+    background-color: transparent;
+    border: 2px solid var(--color-3);
+    padding: calc(var(--btn-scale) * 0.85 - 2px)
+      calc(var(--btn-scale) * 1.25 - 2px);
+  }
+  &.align-right {
+    display: block;
+    width: 250px;
+    margin-right: 0;
+    margin-left: auto;
+  }
+  &.align-center {
+    display: block;
+    width: 250px;
+    margin: auto;
+  }
+  &.full-width {
+    width: 100%;
+    margin: 0;
+    text-align: center;
+  }
+  &:hover,
+  &:focus {
+    position: relative;
+    bottom: 2px;
+    text-decoration: none;
+    color: var(--text-color);
+    background-color: var(--color-1);
+    box-shadow: var(--shadow);
+  }
+}
+
+//* General sibling selector selects every .btn after the first. No need for button group class for margin anymore!
+.btn ~ .btn:not(.full-width) {
+  margin-left: var(--spacer-half);
+}
+
+///////////////////////////////////////////
+// *** RANGE INPUTS & SLIDERS ***
+///////////////////////////////////////////
+//* Reset browser defaults
+input[type='range'] {
+  appearance: none;
+  -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
+  width: 100%; /* Specific width is required for Firefox. */
+  background: transparent; /* Otherwise white in Chrome */
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+}
+
+input[type='range']:focus {
+  outline: none; /* Removes the blue border. You should probably do some kind of focus styling for accessibility reasons though. */
+}
+
+input[type='range']::-ms-track {
+  width: 100%;
+  cursor: pointer;
+
+  /* Hides the slider so custom styles can be added */
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+
+//* Thumb Styles
+/* Special styling for WebKit/Blink */
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  border: 1px solid #000000;
+  height: 8px;
+  width: 12px;
+  border-radius: 3px;
+  background: var(--color-7);
+  cursor: pointer;
+  margin-top: -1px; /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d; /* Add cool effects to your sliders! */
+}
+
+/* All the same stuff for Firefox */
+input[type='range']::-moz-range-thumb {
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  border: 1px solid #000000;
+  height: 6px;
+  width: 12px;
+  border-radius: 3px;
+  background: var(--color-7);
+  cursor: pointer;
+}
+
+/* All the same stuff for IE */
+input[type='range']::-ms-thumb {
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  border: 1px solid #000000;
+  height: 6px;
+  width: 12px;
+  border-radius: 3px;
+  background: var(--color-7);
+  cursor: pointer;
+}
+
+//* Track Styles
+input[type='range']::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  background: var(--color-4);
+  border-radius: 0;
+  border-top: 0.2px solid #010101;
+  border-bottom: 0.2px solid #010101;
+  margin-top: -1px;
+}
+
+input[type='range']:focus::-webkit-slider-runnable-track {
+  background: var(--color-1);
+}
+
+input[type='range']::-moz-range-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  background: var(--color-4);
+  border-top: 0.2px solid #010101;
+  border-bottom: 0.2px solid #010101;
+  margin-top: -20px;
+}
+
+input[type='range']::-ms-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  border-width: 16px 0;
+  color: transparent;
+}
+input[type='range']::-ms-fill-lower {
+  background: var(--color-1);
+  border: 0.2px solid #010101;
+  border-radius: 2.6px;
+  box-shadow: var(--shadow);
+}
+input[type='range']:focus::-ms-fill-lower {
+  background: var(--color-4);
+}
+input[type='range']::-ms-fill-upper {
+  background: var(--color-4);
+  border: 0.2px solid #010101;
+  border-radius: 2.6px;
+  box-shadow: var(--shadow);
+}
+input[type='range']:focus::-ms-fill-upper {
+  background: var(--color-4);
+}
+
+///////////////////////////////////////////
+// *** MEDIA QUERIES ***
+///////////////////////////////////////////
+// *** TABLETS ***
+//* Applies to everything 768px wide and larger.
+$breakpoint-tablet: 768px;
+@media (min-width: $breakpoint-tablet) {
+  :root {
+    --container-width: 75%;
+    --font-base: 1.5rem; // Increases the font size for lager screens
+    // Widens the difference in font sizes on larger screens
+    --font-scale-2: calc(var(--font-base) * 1.3333);
+    --font-scale-3: calc(var(--font-base) * 1.5);
+    --font-scale-4: calc(var(--font-base) * 2);
+  }
+}
+
+// *** LARGE SCREENS ***
+//* Applies to everything 1200px wide and larger.
+$breakpoint-tablet: 1200px;
+@media (min-width: $breakpoint-tablet) {
+  :root {
+    --container-width: 90%;
+    --font-base: 1.5rem; // Increases the font size for lager screens
+    // Widens the difference in font sizes on larger screens
+    --font-scale-2: calc(var(--font-base) * 1.5);
+    --font-scale-3: calc(var(--font-base) * 2);
+    --font-scale-4: calc(var(--font-base) * 3);
+  }
+}
+
+// *** MOBILE ***
+//* This one is max-width instead. Applies to everything 480px wide and SMALLER!
+$breakpoint-mobile: 480px;
+@media (max-width: $breakpoint-mobile) {
+  // :root {
+  //   --container-width: 75%;
+  // }
+  //* Helps make buttons easier to tap with fingers
+  .btn {
+    min-height: 48px;
+    min-width: 48px;
+  }
+}

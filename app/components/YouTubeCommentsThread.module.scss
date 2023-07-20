@@ -1,0 +1,39 @@
+section.comments {
+  padding: 4em;
+  background-color: var(--color-3);
+  li {
+    margin-bottom: var(--spacer-2);
+    // *** Comment Submit Form Styles ***
+    // ? A good deal of these styles are the same as the Subscribe form styles.
+    textarea[name='comment'] {
+      --input-color: var(--color-7);
+      width: 100%;
+      background-color: transparent;
+      border-top: none;
+      border-right: none;
+      border-bottom: 2px solid var(--input-color);
+      border-left: 1px solid var(--input-color);
+      border-radius: 0 0 0 4px;
+      font-size: 1em;
+      padding: 0 0 0 var(--spacer-half);
+      margin: var(--spacer) 0;
+      color: var(--input-color);
+      &::placeholder {
+        color: var(--input-color);
+      }
+      &:focus {
+        outline: none;
+        --input-color: var(--color-1);
+        color: var(--text-color);
+        box-shadow: var(--shadow);
+        text-shadow: var(--shadow);
+      }
+    }
+    input[type='submit'] {
+      margin: 0 0 0 auto;
+      width: 25%;
+      height: 48px;
+      justify-self: end;
+    }
+  }
+}

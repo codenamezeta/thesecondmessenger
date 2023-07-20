@@ -1,0 +1,22 @@
+section#theater {
+  padding: 0;
+  margin: 0;
+  background-color: black;
+  .viewport {
+    display: block;
+    padding: 0;
+    margin: 0 auto;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    max-height: calc(100vh - var(--navbar-height));
+    iframe {
+      border: 0;
+      aspect-ratio: 16/9;
+      height: 100%;
+    }
+  }
+
+  svg {
+    font-size: 3em;
+  }
+}

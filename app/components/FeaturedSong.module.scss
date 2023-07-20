@@ -1,0 +1,49 @@
+section#featured_song {
+  // ? Background URL gets replaced via inline styles inside the component. This is just a default/fallback.
+  background-image: url(https://unburdheupaxhceqdqii.supabase.co/storage/v1/object/public/projects/Saving_Aleah/Artwork%20Saving%20Aleah.jpg?t=2023-03-12T20%3A18%3A00.736Z);
+  text-shadow: var(--shadow);
+  padding: 0;
+  background-size: cover;
+  background-position: center;
+  //! Backdrop filters not yet supported on Firefox as of November 2021
+  //! https://developer.mozilla.org/en-US/docs/Web/CSS/backdrop-filter
+  .backdrop-filter {
+    padding: var(--spacer-4) 0;
+    backdrop-filter: blur(4px) saturate(33%);
+    // color: black;
+  }
+  // div#streaming_links {
+  //   display: flex;
+  //   justify-content: space-between;
+  //   max-width: 52ch;
+  //   a {
+  //     color: var(--color-11);
+  //     text-decoration: none;
+  //     display: flex;
+  //     flex-direction: column;
+  //     align-items: center;
+  //     :hover {
+  //       color: var(--color-6);
+  //       font-size: calc(var(--font-scale-3) + 5px);
+  //     }
+  //     svg {
+  //       display: block;
+  //       font-size: var(--font-scale-3);
+  //     }
+  //     span.label {
+  //       display: block;
+  //       font-size: 0.6em;
+  //       text-align: center;
+  //     }
+  //   }
+  // }
+}
+
+// // *** TABLETS ***
+// //* Applies to everything 768px wide and larger.
+// $breakpoint-tablet: 1024px;
+// @media (min-width: $breakpoint-tablet) {
+//   section#featured_song div#streaming_links a span.label {
+//     display: none;
+//   }
+// }

@@ -1,0 +1,51 @@
+section#news_teaser {
+  article {
+    --color-1: hsla(182, 57%, 50%, 0.712);
+    padding-bottom: var(--spacer);
+    border-left: 6px solid var(--color-1);
+    box-shadow: 0px 2px 4px var(--color-1);
+    border-radius: 4px;
+
+    img {
+      width: 100%;
+      border-radius: 0 4px 0 0;
+      margin-bottom: 0;
+      &:hover {
+        cursor: pointer;
+      }
+    }
+    h3 a {
+      color: var(--text-color);
+      text-decoration: none;
+      &:hover {
+        color: var(--color-1);
+        text-decoration: underline;
+      }
+    }
+    summary {
+      margin-bottom: var(--spacer);
+    }
+  }
+}
+
+// *** TABLETS ***
+//* Applies to everything 768px wide and larger.
+$breakpoint-tablet: 800px;
+@media (min-width: $breakpoint-tablet) {
+  section#news_teaser {
+    article {
+      --font-base: 1.25rem;
+      h3 {
+        font-size: 1em;
+      }
+    }
+  }
+}
+
+// *** LARGE SCREENS ***
+//* Applies to everything 1200px wide and larger.
+// $breakpoint-tablet: 1400px;
+// @media (min-width: $breakpoint-tablet) {
+//   section#news_teaser {
+//   }
+// }
