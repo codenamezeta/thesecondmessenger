@@ -1,5 +1,5 @@
 //* This is what users will see when the navigate to a specific song's page. Links to these are our most sharable asset, so make it count! e.g. https://thesecondmessenger.com/the-best-song-ever
-import { getSongById } from '@/lib/firebase'
+import { getSongBySlug } from '@/lib/firebase'
 import { getVideoOrPlaylistIdFromUrl } from '@/lib/youtube'
 import Nav from '@/app/components/Nav'
 import Button from '@/app/components/Buttons'
@@ -14,8 +14,12 @@ export default async function SongPage({
 }: {
   params: { slug: string }
 }) {
-  //- Tries to help fix common errors if a user mistypes a slug
+  //* Tries to help fix common errors if a user mistypes a slug
   function fixSlug(userTypedSlug: string): string {
+    console.log(
+      '🚀 ~ file: page.tsx:19 ~ fixSlug ~ userTypedSlug:',
+      userTypedSlug
+    )
     //- Convert to lowercase
     let fixedSlug = userTypedSlug.toLowerCase()
     //- Decode URL encoding (e.g., "%20" to space)
@@ -29,7 +33,8 @@ export default async function SongPage({
     return fixedSlug
   }
 
-  const song: any = await getSongById(fixSlug(params.slug))
+  const song: any = await getSongBySlug(fixSlug(params.slug))
+  // console.log('🚀 ~ file: page.tsx:33 ~ song:', song)
 
   //- Converts the full link URL into just a video ID
   // const youTubeVideoId = getVideoOrPlaylistIdFromUrl(song.stream_links.youtube)

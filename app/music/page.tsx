@@ -1,24 +1,24 @@
-import { getAllSongs } from '@/lib/firebase'
-import Nav from '../components/Nav'
-import Timeline from '../components/Timeline'
+import { getAllSongs, getCoverArtUrl } from '@/lib/firebase'
+import BlogCard from '../components/BlogCard'
 
-const MusicPage = async ({}) => {
-  const allSongs: any[] = await getAllSongs()
-
-  console.log(allSongs)
+export default async function Music() {
+  const songs = await getAllSongs()
 
   return (
-    <>
-      <header style={{ backgroundColor: 'var(--color-3)', minHeight: '33vh' }}>
-        <Nav />
-        <div className='container'>
-          <h1>Music</h1>
-        </div>
-      </header>
-
-      <Timeline songs={allSongs} />
-    </>
+    <ul className='container'>
+      {songs.map(async (song) => {
+        let coverArt = await getCoverArtUrl(song.cover_art)
+        return (
+          <li key={song.title}>
+            <BlogCard
+              title={song.title}
+              image={coverArt}
+              description={song.sonic_description}
+              link={`/music/${song.slug}`}
+            />
+          </li>
+        )
+      })}
+    </ul>
   )
 }
-
-export default MusicPage

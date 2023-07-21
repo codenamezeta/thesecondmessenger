@@ -4,7 +4,14 @@ const nextConfig = {
     appDir: true,
   },
   images: {
-    remotePatterns: [],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+        port: '',
+        pathname: '**',
+      },
+    ],
   },
 }
 
