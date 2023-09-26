@@ -1,0 +1,23 @@
+main#all_posts_lists {
+  ul {
+    list-style-type: none;
+    li {
+      border-top: 3px solid black;
+      &:hover {
+        background-color: var(--color-3);
+      }
+      a {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacer-1);
+        &:hover {
+          text-decoration: none;
+          color: white;
+          padding: var(--spacer);
+        }
+      }
+    }
+  }
+}

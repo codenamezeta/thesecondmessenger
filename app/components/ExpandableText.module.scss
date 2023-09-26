@@ -1,0 +1,11 @@
+pre.expandable-text {
+  font-size: var(--font-scale-half);
+  max-height: 300px; /* Set the initial height to show the truncated text */
+  overflow: hidden;
+  transition: max-height 0.3s ease; /* Smooth transition animation */
+  margin-bottom: var(--spacer);
+}
+
+.expandable-text.expanded {
+  max-height: none; /* Expand to full height */
+}

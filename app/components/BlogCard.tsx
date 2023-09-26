@@ -11,7 +11,7 @@ interface BlogCardProps {
 
 const BlogCard = ({ title, image, description, link }: BlogCardProps) => {
   return (
-    <div className={selectors.card}>
+    <li className={selectors.card}>
       <Image src={image} alt={title} width={50} height={50} />
       <div className='card-body'>
         <h2>{title}</h2>
@@ -20,7 +20,7 @@ const BlogCard = ({ title, image, description, link }: BlogCardProps) => {
           Read More
         </Link>
       </div>
-    </div>
+    </li>
   )
 }
 

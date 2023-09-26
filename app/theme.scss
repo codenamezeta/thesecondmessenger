@@ -64,17 +64,16 @@ body {
   margin: 0;
 }
 
-main,
-section {
-  padding: var(--spacer-4) 0;
-  &:first-of-type {
-    //A page's first section shouldn't be so far from the bottom of the Nav.
-    padding-top: var(--spacer);
-  }
-}
+// main,
+// section {
+//   padding: var(--spacer) 0;
+//   &:first-of-type {
+//     //A page's first section shouldn't be so far from the bottom of the Nav.
+//     padding-top: var(--spacer);
+//   }
+// }
 
 article {
-  --container-width: 66.6667%;
   p,
   ul,
   ol {
@@ -274,6 +273,7 @@ figure {
     color: var(--text-color);
     background-color: var(--color-1);
     box-shadow: var(--shadow);
+    outline: 2px solid var(--color-4);
   }
 }
 
@@ -416,6 +416,9 @@ $breakpoint-tablet: 768px;
     --font-scale-2: calc(var(--font-base) * 1.3333);
     --font-scale-3: calc(var(--font-base) * 1.5);
     --font-scale-4: calc(var(--font-base) * 2);
+  }
+  .container {
+    width: clamp(760px, 75%, 3000px);
   }
 }
 

@@ -1,6 +1,6 @@
-//* Firebase library
+//* Firebase Library
 
-//- Import the functions you need from the SDKs you need
+//- Imports the functions needed from the Firebase SDKs.
 import { initializeApp } from 'firebase/app'
 // import { getAnalytics } from 'firebase/analytics'
 import { getAuth } from 'firebase/auth'
@@ -36,10 +36,10 @@ export const storage = getStorage(app) // Creates a reference to the firebase st
 export const db = getFirestore(app) // Used a lot throughout custom lib functions
 
 //* Custom lib functions
-//* A reference to the songs collection
+//- A reference to the songs collection
 const songsCol = collection(db, 'songs')
 
-//* Gets the most recently released song
+//* Gets the most recently released song.
 export async function getLatestRelease(): Promise<DocumentData> {
   try {
     const now = new Date()
@@ -61,7 +61,7 @@ export async function getLatestRelease(): Promise<DocumentData> {
   }
 }
 
-//* Gets a list of all songs from the firestore database
+//* Gets a list of all songs from the firestore database.
 export async function getAllSongs(): Promise<DocumentData[]> {
   try {
     const songsSnapshot = await getDocs(songsCol)
@@ -73,7 +73,7 @@ export async function getAllSongs(): Promise<DocumentData[]> {
   }
 }
 
-//* Gets a song by it's slug
+//* Gets a song's data by it's slug.
 export async function getSongBySlug(slug: string): Promise<DocumentData> {
   try {
     const songRequest = query(songsCol, where('slug', '==', slug), limit(1))
@@ -89,7 +89,7 @@ export async function getSongBySlug(slug: string): Promise<DocumentData> {
   }
 }
 
-//* Gets a URL for cover art images
+//* Gets a URL for cover art images.
 export function getCoverArtUrl(coverArtPath: string): Promise<string> {
   // console.log('🚀 ~ coverArtPath:', coverArtPath)
   if (coverArtPath) {
@@ -97,5 +97,18 @@ export function getCoverArtUrl(coverArtPath: string): Promise<string> {
   } else {
     let coverArtFallback = 'images/circled-transparent-bg-crow-logo.png'
     return getDownloadURL(ref(storage, coverArtFallback))
+  }
+}
+
+//* Gets a download URL to a song's audio file.
+export function getAudioDownloadUrl({
+  audioFilePath,
+}: {
+  audioFilePath: string | null
+}): Promise<string> | null {
+  if (audioFilePath) {
+    return getDownloadURL(ref(storage, audioFilePath))
+  } else {
+    return null
   }
 }
