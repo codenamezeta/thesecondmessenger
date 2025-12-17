@@ -36,5 +36,15 @@
     "editor.codeActionsOnSave": {
       "source.fixAll.eslint": "explicit"
     }
-  }
+  },
+  "cSpell.words": [
+    "Bandcamp",
+    "CCOOOYYSSSSS",
+    "heros",
+    "isrc",
+    "iswc",
+    "payloadcms",
+    "Tracklist",
+    "unrs"
+  ]
 }

@@ -1,10 +1,12 @@
 import type { Block, Field } from 'payload'
 
 import {
-  FixedToolbarFeature,
-  HeadingFeature,
-  InlineToolbarFeature,
   lexicalEditor,
+  HeadingFeature,
+  FixedToolbarFeature,
+  // TreeViewFeature,
+  EXPERIMENTAL_TableFeature,
+  TextStateFeature,
 } from '@payloadcms/richtext-lexical'
 
 import { link } from '@/fields/link'
@@ -13,8 +15,12 @@ const columnFields: Field[] = [
   {
     name: 'size',
     type: 'select',
-    defaultValue: 'oneThird',
+    defaultValue: 'twoThirds',
     options: [
+      {
+        label: 'One Quarter',
+        value: 'oneQuarter',
+      },
       {
         label: 'One Third',
         value: 'oneThird',
@@ -28,6 +34,10 @@ const columnFields: Field[] = [
         value: 'twoThirds',
       },
       {
+        label: 'Three Quarters',
+        value: 'threeQuarters',
+      },
+      {
         label: 'Full',
         value: 'full',
       },
@@ -37,12 +47,15 @@ const columnFields: Field[] = [
     name: 'richText',
     type: 'richText',
     editor: lexicalEditor({
-      features: ({ rootFeatures }) => {
+      features: ({ defaultFeatures, rootFeatures }) => {
         return [
+          ...defaultFeatures,
           ...rootFeatures,
-          HeadingFeature({ enabledHeadingSizes: ['h2', 'h3', 'h4'] }),
+          HeadingFeature({ enabledHeadingSizes: ['h2', 'h3', 'h4', 'h5', 'h6'] }),
           FixedToolbarFeature(),
-          InlineToolbarFeature(),
+          // TreeViewFeature(),
+          EXPERIMENTAL_TableFeature(),
+          TextStateFeature(),
         ]
       },
     }),
