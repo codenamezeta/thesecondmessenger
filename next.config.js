@@ -8,16 +8,24 @@ const NEXT_PUBLIC_SERVER_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ['@payloadcms/richtext-lexical', '@payloadcms/ui'],
   images: {
-    remotePatterns: [
-      ...[NEXT_PUBLIC_SERVER_URL /* 'https://example.com' */].map((item) => {
-        const url = new URL(item)
+    // FIX 1: Explicitly allow quality 100 so the template doesn't crash
+    qualities: [60, 75, 85, 100],
 
-        return {
-          hostname: url.hostname,
-          protocol: url.protocol.replace(':', ''),
-        }
-      }),
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
+        // FIX 2: Remove 'pathname' restriction for localhost.
+        // It saves you from debugging if the path is /media or /api/media
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+      },
     ],
   },
   webpack: (webpackConfig) => {

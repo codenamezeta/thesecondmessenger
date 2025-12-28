@@ -13,9 +13,44 @@ export const Header: GlobalConfig = {
       name: 'navItems',
       type: 'array',
       fields: [
+        {
+          name: 'type',
+          type: 'select',
+          defaultValue: 'link',
+          options: [
+            { label: 'Link', value: 'link' },
+            { label: 'Dropdown', value: 'dropdown' },
+          ],
+          required: true,
+        },
         link({
           appearances: false,
+          overrides: {
+            admin: {
+              condition: (_, siblingData) => siblingData?.type === 'link',
+            },
+          },
         }),
+        {
+          name: 'dropdownLabel',
+          type: 'text',
+          required: true,
+          admin: {
+            condition: (_, siblingData) => siblingData?.type === 'dropdown',
+          },
+        },
+        {
+          name: 'dropdownItems',
+          type: 'array',
+          admin: {
+            condition: (_, siblingData) => siblingData?.type === 'dropdown',
+          },
+          fields: [
+            link({
+              appearances: false,
+            }),
+          ],
+        },
       ],
       maxRows: 6,
       admin: {

@@ -430,6 +430,9 @@ export interface Song {
     hasNextPage?: boolean;
     totalDocs?: number;
   };
+  /**
+   * The 11-character ID (e.g., dQw4w9WgXcQ). Required for the Global Player.
+   */
   youtubeId?: string | null;
   masterAudio?: (number | null) | Media;
   /**
@@ -1944,7 +1947,8 @@ export interface Header {
   id: number;
   navItems?:
     | {
-        link: {
+        type: 'link' | 'dropdown';
+        link?: {
           type?: ('reference' | 'custom') | null;
           newTab?: boolean | null;
           reference?:
@@ -1959,6 +1963,27 @@ export interface Header {
           url?: string | null;
           label: string;
         };
+        dropdownLabel?: string | null;
+        dropdownItems?:
+          | {
+              link: {
+                type?: ('reference' | 'custom') | null;
+                newTab?: boolean | null;
+                reference?:
+                  | ({
+                      relationTo: 'pages';
+                      value: number | Page;
+                    } | null)
+                  | ({
+                      relationTo: 'posts';
+                      value: number | Post;
+                    } | null);
+                url?: string | null;
+                label: string;
+              };
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -2002,6 +2027,7 @@ export interface HeaderSelect<T extends boolean = true> {
   navItems?:
     | T
     | {
+        type?: T;
         link?:
           | T
           | {
@@ -2010,6 +2036,21 @@ export interface HeaderSelect<T extends boolean = true> {
               reference?: T;
               url?: T;
               label?: T;
+            };
+        dropdownLabel?: T;
+        dropdownItems?:
+          | T
+          | {
+              link?:
+                | T
+                | {
+                    type?: T;
+                    newTab?: T;
+                    reference?: T;
+                    url?: T;
+                    label?: T;
+                  };
+              id?: T;
             };
         id?: T;
       };

@@ -62,12 +62,13 @@ type Props = {
 } & React.HTMLAttributes<HTMLDivElement>
 
 export default function RichText(props: Props) {
-  const { className, enableProse = true, enableGutter = true, ...rest } = props
+  const { className, enableProse = false, enableGutter = false, ...rest } = props
   return (
     <ConvertRichText
       converters={jsxConverters}
       className={cn(
         'payload-richtext',
+        'rich-text',
         {
           container: enableGutter,
           'max-w-none': !enableGutter,

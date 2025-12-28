@@ -184,6 +184,10 @@ export const Songs: CollectionConfig = {
               label: 'YouTube Video ID',
               required: false,
               unique: true,
+              admin: {
+                description:
+                  'The 11-character ID (e.g., dQw4w9WgXcQ). Required for the Global Player.',
+              },
             },
             {
               name: 'masterAudio',
