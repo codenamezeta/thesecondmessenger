@@ -1,5 +1,6 @@
 import tailwindcssAnimate from 'tailwindcss-animate'
 import typography from '@tailwindcss/typography'
+import plugin from 'tailwindcss/plugin'
 
 /** @type {import('tailwindcss').Config} */
 const config = {
@@ -33,18 +34,18 @@ const config = {
       // --- THEME ENGINE MAPPING ---
       colors: {
         // Semantic variables linked to globals.css
-        primary: 'var(--color-primary)',
-        secondary: 'var(--color-secondary)',
-        accent: 'var(--color-accent)',
+        primary: 'hsl(var(--color-primary) / <alpha-value>)',
+        secondary: 'hsl(var(--color-secondary) / <alpha-value>)',
+        accent: 'hsl(var(--color-accent) / <alpha-value>)',
 
-        background: 'var(--bg-main)', // Maps bg-background to your main variable
-        surface: 'var(--bg-surface)', // Maps bg-surface
+        main: 'hsl(var(--bg-main) / <alpha-value>)', // Maps bg-background to your main variable
+        surface: 'hsl(var(--bg-surface) / <alpha-value>)', // Maps bg-surface
 
         // Shadcn/UI Standard Mappings (Required for UI components)
-        border: 'hsla(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        foreground: 'var(--text-body)', // Maps text-foreground to your body text
+        border: 'hsl(var(--border) / <alpha-value>)',
+        input: 'hsl(var(--input) / <alpha-value>)',
+        ring: 'hsl(var(--ring) / <alpha-value>)',
+        foreground: 'hsl(var(--text-body) / <alpha-value>)', // Maps text-foreground to your body text
 
         // Status colors
         success: '#10b981',
@@ -53,7 +54,7 @@ const config = {
 
         // Keep these if your UI components rely on specific hsl vars
         muted: {
-          DEFAULT: 'var(--text-muted)',
+          DEFAULT: 'hsl(var(--text-muted) / <alpha-value>)',
           foreground: 'hsl(var(--muted-foreground))',
         },
         card: {
@@ -105,7 +106,17 @@ const config = {
       },
     },
   },
-  plugins: [tailwindcssAnimate, typography],
+  plugins: [
+    tailwindcssAnimate,
+    typography,
+    plugin(function ({ addVariant }) {
+      // Add your custom theme variants here
+      addVariant('light', '[data-theme="light"] &')
+      addVariant('tan', '[data-theme="tan"] &')
+      addVariant('interstellar', '[data-theme="interstellar"] &')
+      // You can add more themes easily by duplicating the line above
+    }),
+  ],
 }
 
 export default config

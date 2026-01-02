@@ -9,6 +9,7 @@ import { SearchIcon, Menu, X, ChevronDown, ChevronRight, ExternalLink } from 'lu
 import { SearchModal } from './SearchModal' // Ensure this file exists in the same folder
 
 import type { Header as HeaderType } from '@/payload-types'
+import { cn } from '@/utilities/ui'
 
 export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
   const [navOpen, setNavOpen] = useState(false)
@@ -41,6 +42,12 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
     setIsSearchOpen(false)
   }, [pathname])
 
+  // --- THE LOGIC TO PUSH THE NAV DOWN ---
+  useEffect(() => {
+    const heightValue: number = 100 / 12 // 1/12th of the screen height is my magic number. :)
+    document.documentElement.style.setProperty('--main-nav-bar-height', `${heightValue}vh`)
+  }, [])
+
   // Desktop Hover Handlers
   const handleMouseEnter = (index: number) => {
     if (timeoutRef.current) {
@@ -60,7 +67,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
   const NavLogo = () => (
     <>
       {!logoError ? (
-        <div className="relative w-40 h-12">
+        <div className="relative w-40 h-9">
           <Image
             src="/imgs/logos/white.png"
             alt="The 2nd Messenger Logo"
@@ -84,15 +91,15 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
   return (
     <>
       {/* --- DESKTOP NAV --- */}
-      <nav className="fixed top-[var(--admin-bar-height,0px)] left-0 right-0 z-40 h-20 bg-background/80 backdrop-blur-md border-b border-white/10">
-        <div className="container h-full flex items-center justify-between">
+      <nav className="fixed flex w-full h-[var(--main-nav-bar-height)] top-[var(--admin-bar-height,0px)] z-40 bg-main backdrop-blur-3xl border-b border-white/20">
+        <div className="container flex justify-between">
           {/* Logo */}
-          <Link href="/" className="group flex flex-col justify-center h-full relative z-40">
+          <Link href="/" className="group flex flex-col justify-center z-40">
             <NavLogo />
           </Link>
 
           {/* Desktop Links */}
-          <ul className="hidden list-none md:flex items-center gap-8 font-heading text-sm uppercase tracking-widest relative z-10">
+          <ul className="portrait-hidden list-none flex items-center gap-8 font-heading text-sm uppercase tracking-widest relative z-40">
             {/* 1. Render CMS Items */}
             {navItems.map((item, i) => {
               // Cast to any to handle new fields before types are regenerated
@@ -107,7 +114,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
                 return (
                   <li
                     key={i}
-                    className="relative group h-20 flex items-center"
+                    className="relative group h-[var(--totalNavBarHeight),80px] flex items-center"
                     onMouseEnter={() => handleMouseEnter(i)}
                     onMouseLeave={handleMouseLeave}
                   >
@@ -130,9 +137,9 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
                       ${isOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'}
                   `}
                       >
-                        <div className="bg-surface/95 backdrop-blur-xl border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.5)] rounded-sm overflow-hidden p-2 relative">
+                        <div className="bg-black/75 backdrop-blur-xl border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.5)] rounded-sm overflow-hidden p-2 relative">
                           <div className="absolute top-0 right-0 w-4 h-4 border-t border-r border-primary/50"></div>
-                          <div className="flex flex-col gap-1 relative z-10">
+                          <div className="flex flex-col gap-1 relative z-40">
                             {dropdownItems.map((subItem: any, j: number) => (
                               <CMSLink
                                 key={j}
@@ -176,9 +183,9 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
           {/* Mobile Trigger */}
           <button
             onClick={() => setNavOpen(true)}
-            className="md:hidden text-white hover:text-primary p-2"
+            className="landscape-hidden text-white hover:text-primary pl-2"
           >
-            <Menu size={32} />
+            <Menu size={40} />
           </button>
         </div>
       </nav>
@@ -188,12 +195,18 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
 
       {/* --- MOBILE SIDE SHEET --- */}
       <div
-        className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-30 transition-opacity duration-300 ${navOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={cn(
+          'fixed inset-0 bg-black/75 backdrop-blur-sm z-50 transition-opacity duration-300',
+          navOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
+        )}
         onClick={() => setNavOpen(false)}
       />
 
       <aside
-        className={`fixed top-0 right-0 h-full w-[85vw] max-w-sm bg-surface border-l border-primary/30 z-50 transform transition-transform duration-300 ease-out shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col ${navOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={cn(
+          'fixed top-[var(--admin-bar-height,0px)] right-0 h-full w-[85vw] max-w-sm bg-surface border-l border-primary/75 z-50 transform transition-transform duration-300 ease-out shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col',
+          navOpen ? 'translate-x-0' : 'translate-x-full',
+        )}
       >
         <div className="p-6 flex justify-between items-center border-b border-white/10">
           <Link href="/" onClick={() => setNavOpen(false)} className="group">

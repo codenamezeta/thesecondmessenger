@@ -1,36 +1,53 @@
 'use client'
 
-import { createContext, useContext, useState, ReactNode, JSX } from 'react'
+import { createContext, useContext, useState, ReactNode, useMemo } from 'react'
 import { Song } from '@/payload-types'
 
-// We define the modes exactly like your old project
-export type PlayerMode = 'hidden' | 'mini' | 'full'
-
 interface PlayerState {
-  isPlaying: boolean
   currentSong: Song | null
-  playerMode: PlayerMode
+  isPlaying: boolean
+  isVideoEnabled: boolean
+  miniMode: boolean
+  controlsVisible: boolean
   volume: number
   isMuted: boolean
 }
 
-interface PlayerContextType extends PlayerState {
+interface PlayerActions {
   playSong: (song: Song) => void
   togglePlay: () => void
-  setPlayerMode: (mode: PlayerMode) => void
   toggleVideo: () => void
+  setMiniMode: (mode: boolean) => void
+  setControlsVisible: (visible: boolean) => void
+  toggleControls: () => void
   setVolume: (vol: number) => void
   toggleMute: () => void
+  setIsMuted: (muted: boolean) => void
+  isVideoEnabled: boolean
+  setIsPlaying: (playing: boolean) => void
+  setIsVideoEnabled: (enabled: boolean) => void
 }
+
+type PlayerContextType = PlayerState & PlayerActions
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined)
 
-export const PlayerProvider = ({ children }: { children: ReactNode }): JSX.Element => {
-  const [isPlaying, setIsPlaying] = useState(false)
+export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [currentSong, setCurrentSong] = useState<Song | null>(null)
-  const [playerMode, setPlayerMode] = useState<PlayerMode>('hidden')
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [isVideoEnabled, setIsVideoEnabled] = useState(false)
+  const [miniMode, setMiniMode] = useState(false)
+  const [controlsVisible, setControlsVisible] = useState(false)
   const [volume, setVolume] = useState(0.67)
   const [isMuted, setIsMuted] = useState(false)
+
+  const togglePlay = () => {
+    setControlsVisible(true)
+    setIsPlaying((prev) => !prev)
+  }
+  const toggleMute = () => setIsMuted((prev) => !prev)
+  const toggleVideo = () => setIsVideoEnabled((prev) => !prev)
+  const toggleControls = () => setControlsVisible((prev) => !prev)
 
   const playSong = (song: Song) => {
     // If it's the same song, just toggle play
@@ -41,39 +58,46 @@ export const PlayerProvider = ({ children }: { children: ReactNode }): JSX.Eleme
 
     // New song? Start fresh
     setCurrentSong(song)
+    setControlsVisible(true)
     setIsPlaying(true)
-
-    // Auto-open the player bar if it was hidden
-    if (playerMode === 'hidden') {
-      setPlayerMode('mini')
-    }
   }
 
-  const togglePlay = () => setIsPlaying((prev) => !prev)
-  const toggleMute = () => setIsMuted((prev) => !prev)
-  const toggleVideo = () => {
-    setPlayerMode((prev) => (prev === 'hidden' ? 'mini' : prev === 'mini' ? 'full' : 'hidden'))
-  }
-
-  return (
-    <PlayerContext.Provider
-      value={{
-        isPlaying,
-        currentSong,
-        playerMode,
-        toggleVideo,
-        volume,
-        isMuted,
-        playSong,
-        togglePlay,
-        setPlayerMode,
-        setVolume,
-        toggleMute,
-      }}
-    >
-      {children}
-    </PlayerContext.Provider>
+  const value = useMemo<PlayerContextType>(
+    () => ({
+      currentSong,
+      isPlaying,
+      setIsPlaying,
+      isVideoEnabled,
+      setIsVideoEnabled,
+      miniMode,
+      controlsVisible,
+      volume,
+      isMuted,
+      playSong,
+      togglePlay,
+      toggleVideo,
+      setMiniMode,
+      setControlsVisible,
+      toggleControls,
+      setVolume,
+      toggleMute,
+      setIsMuted,
+    }),
+    [
+      currentSong,
+      playSong,
+      isPlaying,
+      setIsPlaying,
+      isVideoEnabled,
+      setIsVideoEnabled,
+      miniMode,
+      controlsVisible,
+      volume,
+      isMuted,
+    ],
   )
+
+  return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>
 }
 
 export const usePlayer = (): PlayerContextType => {

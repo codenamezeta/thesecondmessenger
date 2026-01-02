@@ -13,18 +13,21 @@ import {
   ListPlus,
   Share2,
   Download,
+  Volume,
+  Volume1,
   Volume2,
   VolumeX,
-  Monitor,
-  Music,
 } from 'lucide-react'
 import { cn } from '@/utilities/ui'
-import { ViewMode } from './types'
 
 interface BottomBarProps {
   currentSong: any
-  viewMode: ViewMode
-  setViewMode: (mode: ViewMode) => void
+  isVideoEnabled: boolean
+  setIsVideoEnabled: (enabled: boolean) => void
+  miniMode: boolean
+  setMiniMode: (mode: boolean) => void
+  controlsVisible: boolean
+  setControlsVisible: (visible: boolean) => void
   isPlaying: boolean
   togglePlay: () => void
   toggleVideo: () => void
@@ -44,8 +47,11 @@ interface BottomBarProps {
 
 export const BottomBar = ({
   currentSong,
-  viewMode,
-  setViewMode,
+  isVideoEnabled,
+  setIsVideoEnabled,
+  miniMode,
+  setMiniMode,
+  controlsVisible,
   isPlaying,
   togglePlay,
   toggleVideo,
@@ -69,18 +75,23 @@ export const BottomBar = ({
     <section
       id="media_player_bottom_bar"
       className={cn(
-        'flex flex-col justify-center w-full h-20 bg-surface/90 backdrop-blur-xl border-t border-white/10 z-20 pointer-events-auto transition-transform duration-300',
-        viewMode === 'hidden' ? 'translate-y-full' : 'translate-y-0',
+        'flex flex-col w-full justify-center bg-black/30 backdrop-blur-3xl border-t border-white/10 z-20 pointer-events-auto transition-transform duration-300',
+        controlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full',
       )}
     >
       {/* Progress Bar (Not in container) */}
-      <div className="absolute -top-[2px] left-0 right-0 h-[2px] group hover:h-1 transition-all z-20 cursor-pointer">
+      <div
+        id="player_progress_seek"
+        className="absolute -top-[2px] left-0 right-0 h-[2px] group hover:h-1 transition-all z-20 cursor-pointer"
+      >
         <div className="absolute inset-0 bg-gray-800"></div>
         <div
           className="absolute top-0 left-0 bottom-0 bg-primary shadow-[0_0_10px_var(--color-primary)] transition-all duration-100 ease-linear"
           style={{ width: `${played * 100}%` }}
         ></div>
         <input
+          name="seek"
+          id="seek"
           type="range"
           min={0}
           max={0.999999}
@@ -95,11 +106,12 @@ export const BottomBar = ({
 
       {/* Controls Row (Inside container: px-2 on mobile and .container for desktop/tablet) */}
       <div
+        id="player_controls"
         className={cn(
           'flex w-full items-center justify-around sm:justify-between px-1 sm:px-0 sm:container',
         )}
       >
-        <div className="flex w-3/5 sm:w-2/5 items-center gap-2">
+        <div id="player_controls_song_info" className="flex w-3/5 sm:w-2/5 items-center gap-2">
           {/* Current Song Info */}
           <Link
             href={`/songs/${currentSong.slug}`}
@@ -112,53 +124,70 @@ export const BottomBar = ({
                 height={144}
                 width={144}
                 className="h-16 w-16"
+                sizes="144px"
               />
             )}
-            <div className="flex flex-col flex-wrap justify-around md:gap-1">
-              <h4 className=" text-white font-heading font-bold text-sm sm:text-base md:text-lg tracking-tight md:tracking-normal lg:tracking-wide sm:leading-none md:leading-none">
+            <div className="flex flex-col gap-1 my-[0.33rem]">
+              <h4 className="text-lg text-white font-heading font-bold tracking-wide leading-[0.75] break-words">
                 {currentSong.title}
               </h4>
-              <span className="text-xs md:text-md text-muted font-mono uppercase tracking-tighter md:tracking-normal lg:tracking-wide sm:leading-none md:leading-none">
+              <span className="text-sm text-muted font-heading uppercase leading-3 break-words">
                 The Second Messenger
               </span>
             </div>
           </Link>
 
           {/* Actions */}
-          {/* TODO: An overflow menu popup for when the screen width is too small to display these icons. */}
-          <div className="hidden sm:flex flex-1 max-w-[33%] items-center justify-between">
-            {/* Toggle Overlay Button */}
+          <div className="flex flex-auto truncate min-w-36 max-w-72 items-center justify-between space-x-1">
+            {/* Open Browser Button */}
             <button
-              onClick={() => setViewMode(viewMode === 'theater' ? 'audio' : 'theater')}
-              className="text-muted hover:text-white border-r border-white/10 px-4"
-              title={viewMode === 'theater' ? 'Collapse' : 'Expand'}
+              onClick={() => {
+                if (isVideoEnabled && !miniMode) {
+                  toggleVideo() // Collapse to Audio
+                } else {
+                  if (!isVideoEnabled) toggleVideo() // Enable Video
+                  setMiniMode(false) // Ensure Theater
+                }
+              }}
+              className="text-muted hover:text-white border-r border-white/10 flex-auto flex items-center justify-center"
+              title={isVideoEnabled && !miniMode ? 'Collapse Browser' : 'Expand Browser'}
             >
-              {viewMode === 'theater' ? <ChevronDown size={32} /> : <ChevronUp size={32} />}
+              {isVideoEnabled && !miniMode ? <ChevronDown size={32} /> : <ChevronUp size={32} />}
             </button>
-
-            <button className="text-muted hover:text-white">
+            <button
+              className="text-muted hover:text-white flex-auto flex items-center justify-center"
+              title="Like on YouTube"
+            >
               <ThumbsUp size={20} />
             </button>
-            <button className="text-muted hover:text-white">
+            <button
+              className="text-muted hover:text-white flex-auto flex items-center justify-center"
+              title="Save to YouTube"
+            >
               <ListPlus size={20} />
             </button>
-            <button className="text-muted hover:text-white">
+            <button
+              className="text-muted hover:text-white flex-auto flex items-center justify-center"
+              title="Share this song"
+            >
               <Share2 size={20} />
             </button>
-            <button className="text-muted hover:text-white">
+            <button
+              className="text-muted hover:text-white flex-auto flex items-center justify-center"
+              title="Download this song"
+            >
               <Download size={20} />
             </button>
           </div>
         </div>
 
         {/* Playback and time display */}
-        <div className="flex flex-col w-2/5 sm:w-1/5 items-center justify-center gap-1">
+        <div id="player_controls_playback" className="flex flex-col w-2/5 sm:w-1/5 gap-1 py-1">
           {/* Playback Controls */}
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex justify-center gap-1 sm:gap-2 xl:gap-3">
             <button className="text-muted hover:text-white">
               <SkipBack size={32} />
             </button>
-
             <button
               onClick={togglePlay}
               className={cn(
@@ -176,7 +205,7 @@ export const BottomBar = ({
             </button>
           </div>
           {/* Time display */}
-          <div className="hidden md:flex text-[10px] font-mono text-gray-500 gap-1">
+          <div className="hidden md:flex self-center text-xs font-mono text-muted gap-1">
             <span>{formatTime(currentTime)}</span>
             <span className="opacity-75">/</span>
             <span>{formatTime(duration)}</span>
@@ -184,12 +213,50 @@ export const BottomBar = ({
         </div>
 
         {/* View Modes & Volume */}
-        <div className="hidden sm:flex sm:w-2/5 items-center justify-end gap-4">
-          <div className="flex items-center gap-2 bg-white/5 rounded-full px-3 py-1 border border-white/10">
-            <span
+        <div
+          id="player_controls_view_modes"
+          className="flex w-2/5 items-center justify-end gap-3 flex-wrap"
+        >
+          {/* Volume Slider */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleMute}
               className={cn(
-                'text-[10px] font-mono uppercase',
-                viewMode === 'audio' || viewMode === 'hidden' ? 'text-white' : 'text-muted',
+                isMuted || volume === 0
+                  ? 'text-secondary hover:text-primary transition-colors'
+                  : 'text-muted hover:text-white',
+              )}
+            >
+              {isMuted || volume === 0 ? (
+                <VolumeX size={18} />
+              ) : volume >= 0 && volume <= 0.33 ? (
+                <Volume size={18} />
+              ) : volume > 0.33 && volume <= 0.67 ? (
+                <Volume1 size={18} />
+              ) : (
+                <Volume2 size={18} />
+              )}
+            </button>
+            <input
+              name="volume"
+              id="volume"
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={isMuted ? 0 : volume}
+              onChange={(e) => setVolume(parseFloat(e.target.value))}
+              className="w-full h-1 bg-gray-700 rounded-lg cursor-pointer accent-white hover:accent-primary"
+            />
+          </div>
+
+          {/* Audio / Video toggle */}
+          <div className="flex items-center justify-around gap-2 bg-white/5 rounded-full px-3 py-1 border border-white/10">
+            <span
+              onClick={() => setIsVideoEnabled(false)}
+              className={cn(
+                'text-[0.5em] font-mono uppercase truncate cursor-pointer',
+                !isVideoEnabled ? 'text-white' : 'text-muted',
               )}
             >
               Audio
@@ -198,46 +265,31 @@ export const BottomBar = ({
               onClick={toggleVideo}
               className={cn(
                 'w-9 h-5 rounded-full relative transition-colors duration-200 ease-in-out',
-                viewMode === 'mini' || viewMode === 'theater' ? 'bg-primary' : 'bg-white/20',
+                isVideoEnabled ? 'bg-primary' : 'bg-white/20',
               )}
               title="Toggle Video"
             >
               <div
                 className={cn(
                   'absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform duration-200 ease-in-out',
-                  viewMode === 'mini' || viewMode === 'theater' ? 'translate-x-4' : 'translate-x-0',
+                  isVideoEnabled ? 'translate-x-4' : 'translate-x-0',
                 )}
               />
             </button>
             <span
+              onClick={() => setIsVideoEnabled(true)}
               className={cn(
-                'text-[10px] font-mono uppercase',
-                viewMode === 'mini' || viewMode === 'theater' ? 'text-white' : 'text-muted',
+                'text-[0.5em] font-mono uppercase truncate cursor-pointer',
+                isVideoEnabled ? 'text-white' : 'text-muted',
               )}
             >
               Video
             </span>
           </div>
 
-          {/* Volume Slider */}
-          <div className="hidden sm:flex items-center gap-2 group">
-            <button onClick={toggleMute} className="text-muted hover:text-white">
-              {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
-            </button>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={isMuted ? 0 : volume}
-              onChange={(e) => setVolume(parseFloat(e.target.value))}
-              className="w-20 h-1 bg-gray-700 rounded-lg cursor-pointer accent-white hover:accent-primary"
-            />
-          </div>
-
           <button
             onClick={onClose}
-            className="text-muted hover:text-red-500 transition-colors ml-2"
+            className="text-muted hover:text-red-500 transition-colors flex justify-end"
             title="Close Player"
           >
             <X size={20} />

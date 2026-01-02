@@ -18,10 +18,10 @@ export const ThemeSelector: React.FC = () => {
   const { setTheme } = useTheme()
   const [value, setValue] = useState('')
 
-  const onThemeChange = (themeToSet: Theme & 'auto') => {
-    if (themeToSet === 'auto') {
+  const onThemeChange = (themeToSet: Theme & 'system') => {
+    if (themeToSet === 'system') {
       setTheme(null)
-      setValue('auto')
+      setValue('system')
     } else {
       setTheme(themeToSet)
       setValue(themeToSet)
@@ -30,21 +30,23 @@ export const ThemeSelector: React.FC = () => {
 
   React.useEffect(() => {
     const preference = window.localStorage.getItem(themeLocalStorageKey)
-    setValue(preference ?? 'auto')
+    setValue(preference ?? 'system')
   }, [])
 
   return (
     <Select onValueChange={onThemeChange} value={value}>
       <SelectTrigger
         aria-label="Select a theme"
-        className="w-auto bg-transparent gap-2 pl-0 md:pl-3 border-none"
+        className="w-auto bg-[var(--bg-main)] text-[var(--text-body)] gap-2 pl-0 md:pl-3 border-none"
       >
         <SelectValue placeholder="Theme" />
       </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="auto">Auto</SelectItem>
+      <SelectContent className="bg-[var(--bg-main)]">
+        <SelectItem value="system">Auto</SelectItem>
         <SelectItem value="light">Light</SelectItem>
         <SelectItem value="dark">Dark</SelectItem>
+        <SelectItem value="interstellar">Interstellar</SelectItem>
+        <SelectItem value="tan">Tan</SelectItem>
       </SelectContent>
     </Select>
   )

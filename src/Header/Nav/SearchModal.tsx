@@ -23,6 +23,8 @@ export const SearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         <div className="flex items-center border-b border-white/10 p-4">
           <Search className="text-primary w-6 h-6 mr-4" />
           <input
+            name="search"
+            id="search"
             type="text"
             placeholder="SEARCH DATABASE..."
             className="flex-1 bg-transparent border-none outline-none text-xl font-heading text-white placeholder:text-gray-600 uppercase tracking-widest"

@@ -1,33 +1,35 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
-import { YouTubeProps } from 'react-youtube'
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
+import YouTube, { YouTubeProps, YouTubeEvent } from 'react-youtube'
 import { usePlayer } from '@/context/PlayerContext'
-import { ViewMode, LeftTab, RightTab } from './types'
-import { StandbyTab } from './StandbyTab'
-import { TheaterOverlay } from './TheaterOverlay'
-import { VideoContainer } from './VideoContainer'
+import { Browser, LibraryTab, DetailsTab } from './Browser'
 import { BottomBar } from './BottomBar'
+import { cn } from '@/utilities/ui'
+import { Music4 } from 'lucide-react'
 
 export const GlobalPlayer = () => {
   const {
     currentSong,
     isPlaying,
+    setIsPlaying,
     volume,
     isMuted,
+    isVideoEnabled,
+    setIsVideoEnabled,
+    miniMode,
+    setMiniMode,
     togglePlay,
     setVolume,
     toggleMute,
     toggleVideo,
+    controlsVisible,
+    setControlsVisible,
   } = usePlayer()
 
   // --- STATE ---
-  // Default to Standby on load.
-  // When a song is clicked, the context should ideally trigger this to change,
-  // but for now we'll auto-switch in the useEffect below.
-  const [viewMode, setViewMode] = useState<ViewMode>('hidden')
-  const [activeRightTab, setActiveRightTab] = useState<RightTab>('lyrics')
-  const [activeLeftTab, setActiveLeftTab] = useState<LeftTab>('queue')
+  const [activeLibraryTab, setActiveLibraryTab] = useState<LibraryTab>('queue')
+  const [activeDetailsTab, setActiveDetailsTab] = useState<DetailsTab>('lyrics')
 
   // Playback State
   const [played, setPlayed] = useState(0)
@@ -43,7 +45,9 @@ export const GlobalPlayer = () => {
   // --- HELPER: Safe Player Calls ---
   const safePlayerCall = (callback: (player: any) => void) => {
     const player = internalPlayerRef.current
-    if (player && typeof player.getIframe === 'function' && player.getIframe()) {
+    if (player && typeof player.getIframe === 'function') {
+      const iframe = player.getIframe()
+      if (!iframe || !iframe.isConnected) return
       try {
         callback(player)
       } catch (e) {
@@ -57,12 +61,13 @@ export const GlobalPlayer = () => {
     if (typeof window !== 'undefined') setOrigin(window.location.origin)
   }, [])
 
-  // Auto-wake from Standby when song changes
-  useEffect(() => {
-    if (currentSong && viewMode === 'hidden') {
-      setViewMode('audio') // I don't think we need this.
-    }
-  }, [currentSong])
+  // // Scroll Lock
+  // useEffect(() => {
+  //   document.body.style.overflow = isVideoEnabled ? 'hidden' : ''
+  //   return () => {
+  //     document.body.style.overflow = ''
+  //   }
+  // }, [isVideoEnabled])
 
   // Command Bridge
   useEffect(() => {
@@ -71,7 +76,7 @@ export const GlobalPlayer = () => {
       if (isPlaying) player.playVideo()
       else player.pauseVideo()
     })
-  }, [isPlaying, isReady, currentSong])
+  }, [isPlaying, isReady])
 
   // Volume Bridge
   useEffect(() => {
@@ -82,7 +87,7 @@ export const GlobalPlayer = () => {
       if (isMuted || vol === 0) player.mute()
       else player.unMute()
     })
-  }, [volume, isMuted, isReady, currentSong])
+  }, [volume, isMuted, isReady])
 
   // Progress Poller
   useEffect(() => {
@@ -106,20 +111,26 @@ export const GlobalPlayer = () => {
     return () => {
       if (progressInterval.current) clearInterval(progressInterval.current)
     }
-  }, [isPlaying, isReady, isSeeking, currentSong])
+  }, [isPlaying, isReady, isSeeking])
 
   // --- HANDLERS ---
-  const onPlayerReady: YouTubeProps['onReady'] = (event) => {
-    internalPlayerRef.current = event.target
-    setIsReady(true)
-    setDuration(event.target.getDuration())
-    event.target.setVolume(volume * 100)
-    if (isPlaying) event.target.playVideo()
-  }
+  const onPlayerReady: YouTubeProps['onReady'] = useCallback(
+    (event: YouTubeEvent) => {
+      internalPlayerRef.current = event.target
+      setIsReady(true)
+      setDuration(event.target.getDuration())
+      event.target.setVolume(volume * 100)
+      if (isPlaying) event.target.playVideo()
+    },
+    [volume, isPlaying],
+  )
 
-  const onPlayerStateChange: YouTubeProps['onStateChange'] = (event) => {
-    if (event.data === 0) togglePlay()
-  }
+  const onPlayerStateChange: YouTubeProps['onStateChange'] = useCallback(
+    (event: YouTubeEvent) => {
+      if (event.data === 0) togglePlay()
+    },
+    [togglePlay],
+  )
 
   const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPercent = parseFloat(e.target.value)
@@ -144,67 +155,92 @@ export const GlobalPlayer = () => {
     return `${mm}:${ss}`
   }
 
-  // --- RENDER ---
-  const hasActiveSong = currentSong && currentSong.youtubeId
-
-  // If no song is loaded, render nothing (or just the hidden div)
-  if (!hasActiveSong) {
-    // setViewMode('hidden')
-    return <div className="hidden" />
+  const closePlayer = () => {
+    setIsPlaying(false)
+    setControlsVisible(false)
+    setIsVideoEnabled(false)
   }
 
-  // If hidden, show the standby tab (regardless of play state, if the user explicitly hid it)
-  if (viewMode === 'hidden') {
-    return <StandbyTab onRestore={() => setViewMode('audio')} />
-  }
-
-  return (
-    <aside
-      id="media_player"
-      className="fixed inset-0 pointer-events-none z-10 flex flex-col justify-end"
-    >
-      <TheaterOverlay
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        activeLeftTab={activeLeftTab}
-        setActiveLeftTab={setActiveLeftTab}
-        activeRightTab={activeRightTab}
-        setActiveRightTab={setActiveRightTab}
-        currentSong={currentSong}
-      >
-        <VideoContainer
-          currentSong={currentSong}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          onPlayerReady={onPlayerReady}
-          onPlayerStateChange={onPlayerStateChange}
-          origin={origin}
-        />
-      </TheaterOverlay>
-
-      <BottomBar
-        currentSong={currentSong}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        isPlaying={isPlaying}
-        togglePlay={togglePlay}
-        volume={volume}
-        setVolume={setVolume}
-        isMuted={isMuted}
-        toggleMute={toggleMute}
-        played={played}
-        handleSeekChange={handleSeekChange}
-        handleSeekMouseUp={handleSeekMouseUp}
-        setIsSeeking={setIsSeeking}
-        currentTime={currentTime}
-        duration={duration}
-        formatTime={formatTime}
-        toggleVideo={toggleVideo}
-        onClose={() => {
-          togglePlay()
-          setViewMode('hidden')
-        }}
-      />
-    </aside>
+  const opts: YouTubeProps['opts'] = useMemo(
+    () => ({
+      host: 'https://www.youtube.com',
+      playerVars: {
+        autoplay: 1,
+        controls: 0,
+        disablekb: 1,
+        modestbranding: 1,
+        origin: origin,
+        rel: 0,
+        fs: 0,
+      },
+    }),
+    [origin],
   )
+
+  // --- RENDER ---
+
+  if (currentSong && currentSong.youtubeId) {
+    return (
+      <aside
+        id="media_player"
+        className={cn(
+          'fixed top-[calc(var(--admin-bar-height,0px)+var(--main-nav-bar-height,0px))] inset-x-0 bottom-0 flex flex-col gap-[0.04rem] items-center justify-end z-20 pointer-events-none transition-all duration-1000 ease-in-out',
+        )}
+      >
+        <Browser
+          isVideoEnabled={isVideoEnabled}
+          toggleVideo={toggleVideo}
+          miniMode={miniMode}
+          setMiniMode={setMiniMode}
+          activeLibraryTab={activeLibraryTab}
+          setActiveLibraryTab={setActiveLibraryTab}
+          activeDetailsTab={activeDetailsTab}
+          setActiveDetailsTab={setActiveDetailsTab}
+          currentSong={currentSong}
+        >
+          {origin ? (
+            <YouTube
+              videoId={currentSong.youtubeId ?? undefined}
+              onReady={onPlayerReady}
+              onStateChange={onPlayerStateChange}
+              title={currentSong.title}
+              opts={opts}
+              className="w-full"
+              iframeClassName="w-full h-full"
+            />
+          ) : null}
+        </Browser>
+        <button className="flex items-center justify-center w-12 h-12 fixed bottom-4 right-20 z-10 bg-black/50 backdrop-blur-lg rounded-full shadow-[0_0_20px_var(--color-primary)] hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all duration-200 ease-in-out cursor-pointer pointer-events-auto">
+          <Music4 onClick={() => setControlsVisible(true)} size={24} className="text-white" />
+        </button>
+
+        <BottomBar
+          currentSong={currentSong}
+          isVideoEnabled={isVideoEnabled}
+          setIsVideoEnabled={setIsVideoEnabled}
+          miniMode={miniMode}
+          setMiniMode={setMiniMode}
+          controlsVisible={controlsVisible}
+          setControlsVisible={setControlsVisible}
+          isPlaying={isPlaying}
+          togglePlay={togglePlay}
+          volume={volume}
+          setVolume={setVolume}
+          isMuted={isMuted}
+          toggleMute={toggleMute}
+          played={played}
+          handleSeekChange={handleSeekChange}
+          handleSeekMouseUp={handleSeekMouseUp}
+          setIsSeeking={setIsSeeking}
+          currentTime={currentTime}
+          duration={duration}
+          formatTime={formatTime}
+          toggleVideo={toggleVideo}
+          onClose={closePlayer}
+        />
+      </aside>
+    )
+  } else {
+    return null
+  }
 }

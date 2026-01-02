@@ -14,9 +14,9 @@ import { getClientSideURL } from '@/utilities/getURL'
 const collectionLabels = {
   pages: { plural: 'Pages', singular: 'Page' },
   posts: { plural: 'Posts', singular: 'Post' },
-  projects: { plural: 'Projects', singular: 'Project' },
-  songs: { plural: 'Songs', singular: 'Song' }, // Added your new collections
+  projects: { plural: 'Playlists', singular: 'Playlist' },
   releases: { plural: 'Releases', singular: 'Release' },
+  songs: { plural: 'Songs', singular: 'Song' }, // Added your new collections
 }
 
 const Title: React.FC = () => <span className="text-white font-bold">Dashboard</span>
@@ -30,7 +30,7 @@ export const AdminBar: React.FC<{
 
   // Determine which collection we are viewing for the "Edit" button
   const collection = (
-    collectionLabels[segments?.[1] as keyof typeof collectionLabels] ? segments[1] : 'pages'
+    collectionLabels[segments?.[1] as keyof typeof collectionLabels] ? segments[1] : 'posts'
   ) as keyof typeof collectionLabels
 
   const router = useRouter()
@@ -53,9 +53,9 @@ export const AdminBar: React.FC<{
   return (
     <div
       className={cn(
-        'py-2 bg-background/80 backdrop-blur-md border-b border-white/10 text-white fixed top-0 left-0 right-0 z-20',
+        'bg-main backdrop-blur-3xl border-b border-white/10 text-white fixed top-0 items-center w-full h-[var(--admin-bar-height,36px)] z-40',
         {
-          block: show,
+          flex: show,
           hidden: !show,
         },
       )}

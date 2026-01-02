@@ -16,6 +16,8 @@ export default async function Page() {
     sort: '-releaseDate',
   })
 
+  // console.log(songs)
+
   return (
     <main className="pt-44 container">
       <h1

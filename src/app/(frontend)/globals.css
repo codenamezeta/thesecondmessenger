@@ -3,47 +3,108 @@
 @tailwind utilities;
 
 :root {
-  /* --- THEME VARIABLES (Swappable) --- */
   --base: 1rem;
 
+  /* --- THEME VARIABLES (Swappable) --- */
+  /* NOTE: Colors are defined as HSL channels (Hue Saturation Lightness) 
+     to allow Tailwind opacity modifiers (e.g. bg-primary/50) to work. */
+
   /* Default Theme (Space Industrial) */
-  --color-primary: #8ddbbc;
-  --color-secondary: #dd7250;
-  --color-accent: #ff006a;
+  --color-primary: 156 53% 71%; /* #8ddbbc */
+  --color-secondary: 14 68% 59%; /* #dd7250 */
+  --color-accent: 335 100% 50%; /* #ff006a */
 
-  --bg-main: #060807;
-  --bg-surface: #2d3331;
+  --bg-main: 150 14% 3%; /* #060807 */
+  --bg-surface: 160 6% 19%; /* #2d3331 */
 
-  --text-body: #e0e0e0;
-  --text-muted: #a0a0a0;
+  --text-body: 0 0% 88%; /* #e0e0e0 */
+  --text-muted: 0 0% 63%; /* #a0a0a0 */
+
+  /* UI Defaults (Borders/Inputs) */
+  --border: 160 6% 30%;
+  --input: 160 6% 19%;
+  --ring: 156 53% 71%;
+  --radius: 0.5rem;
+
+  --card: 160 6% 19%;
+  --card-foreground: 0 0% 88%;
+  --popover: 160 6% 19%;
+  --popover-foreground: 0 0% 88%;
+  --muted-foreground: 0 0% 63%;
 
   --font-heading: 'Rajdhani', sans-serif;
   --font-body: 'Space Grotesk', sans-serif;
 }
 
-/* Example: "Interstellar" Theme */
-[data-theme='interstellar'] {
-  --color-primary: #a3e635; /* Lime */
-  --color-secondary: #3b82f6; /* Blue */
-  --bg-main: #020617; /* Deep Blue Space */
-  --bg-surface: #1e293b;
+/*  THEMES! */
+[data-theme='light'] {
+  --bg-main: 0 0% 88%;
+  --bg-surface: 0 0% 11%;
+  --text-body: 0 0% 0%;
+  --text-muted: 0 0% 52%;
+  --color-primary: 182 100% 18%;
+  --color-secondary: 325 100% 30%;
+  --color-accent: 103 100% 17%;
+
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 182 100% 18%;
+  --radius: 0.5rem;
+
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+  --muted-foreground: 0 0% 52%;
 }
 
-/* Example: Light Theme */
-[data-theme='light'] {
-  --bg-main: #f0fdf4;
-  --bg-surface: #d1d5db;
-  --text-body: #1f2937;
-  --text-muted: #4b5563;
-  --color-primary: #059669;
-  --color-secondary: #d97706;
+[data-theme='tan'] {
+  --bg-main: 36 23% 66%; /* #bbac96 */
+  --bg-surface: 34 41% 29%; /* #684e2b */
+  --text-body: 328 27% 89%; /* #ebdce4 */
+  --text-muted: 0 0% 52%; /* #858585 */
+  --color-primary: 4 100% 18%; /* #5a0600 */
+  --color-secondary: 0 70% 9%; /* #270707 */
+  --color-accent: 41 100% 39%; /* #c98900 */
+
+  --border: 34 41% 20%;
+  --input: 34 41% 29%;
+  --ring: 4 100% 18%;
+
+  --card: 34 41% 29%;
+  --card-foreground: 328 27% 89%;
+  --popover: 34 41% 29%;
+  --popover-foreground: 328 27% 89%;
+  --muted-foreground: 0 0% 52%;
+}
+
+/* "Interstellar" Theme */
+[data-theme='interstellar'] {
+  --color-primary: 83 78% 55%; /* #a3e635 (Lime) */
+  --color-secondary: 217 39% 43%; /* #426397 (Blue) */
+  --color-accent: 340 93% 16%; /* #4e031c */
+  --bg-main: 229 84% 5%; /* #020617 (Deep Blue Space) */
+  --bg-surface: 217 33% 17%; /* #1e293b */
+
+  --text-body: 210 40% 98%;
+  --text-muted: 215 20% 65%;
+
+  --border: 217 33% 30%;
+  --input: 217 33% 17%;
+  --ring: 83 78% 55%;
+
+  --card: 217 33% 17%;
+  --card-foreground: 210 40% 98%;
+  --popover: 217 33% 17%;
+  --popover-foreground: 210 40% 98%;
+  --muted-foreground: 215 20% 65%;
 }
 
 @layer base {
   html {
     scroll-behavior: smooth;
-    background-color: var(--bg-main);
-    color: var(--text-body);
+    background-color: hsl(var(--bg-main));
+    color: hsl(var(--text-body));
   }
 
   body {
@@ -64,10 +125,10 @@
     width: 0.25em;
   }
   ::-webkit-scrollbar-track {
-    box-shadow: inset 0 0 6px var(--bg-main);
+    box-shadow: inset 0 0 6px hsl(var(--bg-main));
   }
   ::-webkit-scrollbar-thumb {
-    background-color: var(--color-secondary);
+    background-color: hsl(var(--color-secondary));
   }
 
   /* Reset Links to be predictable in UI */
@@ -121,7 +182,7 @@
   .rich-text h5,
   .rich-text h6 {
     font-family: var(--font-heading);
-    color: var(--color-primary);
+    color: hsl(var(--color-primary));
     margin-top: 2em; /* Margin is relative to font size now */
     margin-bottom: 0em;
     text-transform: uppercase;
@@ -160,32 +221,113 @@
     list-style-type: square;
   }
   .rich-text li::marker {
-    color: var(--color-secondary);
+    color: hsl(var(--color-secondary));
   }
 
   .rich-text a {
-    color: var(--color-primary);
+    color: hsl(var(--color-primary));
     border-bottom: 1px solid transparent;
   }
   .rich-text a:hover {
-    color: var(--color-accent);
-    text-shadow: 0 0 8px var(--color-accent);
-    border-bottom-color: var(--color-accent);
+    color: hsl(var(--color-accent));
+    text-shadow: 0 0 8px hsl(var(--color-accent));
+    border-bottom-color: hsl(var(--color-accent));
   }
 }
 
 @media (orientation: portrait) {
   /* CSS rules to apply when the window is taller than it is wide */
+  .portrait-hidden {
+    display: none;
+  }
   .auto-flex {
     display: flex;
     flex-direction: column;
+  }
+  .auto-flex-reverse {
+    display: flex;
+    flex-direction: row;
+  }
+
+  #player_controls {
+    @apply auto-flex;
+    padding-bottom: 1em;
+    /* flex-direction: column-reverse; */
+
+    #player_controls_song_info {
+      @apply auto-flex;
+      border-bottom: 1px solid hsl(var(--bg-surface));
+      width: 100%;
+      & > a {
+        width: 100%;
+        max-width: 100%;
+        & > img {
+          height: 10vh;
+          width: auto;
+        }
+      }
+      & > div {
+        width: 100%;
+        max-width: 100%;
+      }
+    }
+
+    #player_controls_playback {
+      padding: 1em 0;
+      width: 100%;
+      & > div {
+        gap: 2em;
+      }
+    }
+
+    #player_controls_view_modes {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: nowrap;
+      width: 100%;
+      max-width: 100%;
+      padding: 0 1em;
+      & > div,
+      & > button {
+        width: clamp(150px, calc(1 / 3 * 100%), 25vw);
+        /* max-width: 20vw; */
+      }
+      & > div > input[type='range'] {
+        width: 100%;
+      }
+    }
   }
 }
 
 @media (orientation: landscape) {
   /* CSS rules to apply when the window is wider than it is tall */
+  .landscape-hidden {
+    display: none;
+  }
   .auto-flex {
     display: flex;
     flex-direction: row;
   }
+  .auto-flex-reverse {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* @media (max-width: 900px) { */
+/* CSS styles for screens 900px and SMALLER go here */
+/* body { */
+/* --primary: #f09d09; */
+/* font-size: 12px; Example: change font size */
+/* } */
+/* .container {
+    width: clamp(300px, 95vw, 900px);
+  } */
+/* } */
+
+@media only screen and (hover: none) and (pointer: coarse) {
+  /* CSS styles for primarily touchscreen devices go here */
+  /* #player_progress_seek {
+    height: 16px;
+  } */
 }
