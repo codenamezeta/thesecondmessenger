@@ -1,9 +1,12 @@
 import { SongCard } from './SongCard'
 import { Song } from '@/payload-types'
 
-// TODO: Properly type Songs. Don't use any.
+interface PaginatedSongs {
+  docs: Song[]
+  [key: string]: unknown // Allow for other pagination fields from Payload
+}
 
-export default function LatestReleases({ songs }: { songs: any }) {
+export default function LatestReleases({ songs }: { songs: PaginatedSongs }) {
   return (
     <section className="my-12">
       <h2 className="font-heading text-2xl mb-6 border-b border-white/20 pb-2">Latest Releases</h2>

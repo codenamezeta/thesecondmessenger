@@ -10,7 +10,7 @@ const NEXT_PUBLIC_SERVER_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
 const nextConfig = {
   transpilePackages: ['@payloadcms/richtext-lexical', '@payloadcms/ui'],
   images: {
-    // FIX 1: Explicitly allow quality 100 so the template doesn't crash
+    // Explicitly allow quality 100 so the template doesn't crash
     qualities: [60, 75, 85, 100],
 
     remotePatterns: [
@@ -18,9 +18,13 @@ const nextConfig = {
         protocol: 'http',
         hostname: 'localhost',
         port: '3000',
-        // FIX 2: Remove 'pathname' restriction for localhost.
+        // Remove 'pathname' restriction for localhost.
         // It saves you from debugging if the path is /media or /api/media
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.ytimg.com',
       },
       {
         protocol: 'https',

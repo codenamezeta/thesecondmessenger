@@ -1,6 +1,8 @@
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import LatestReleases from '@/components/LatestReleases'
+import { VideoCard } from '@/components/VideoCard'
+import MyPlaylistComponent from '@/components/PlaylistCard'
 
 // Keep your existing metadata export if you are using it
 export { generateMetadata } from './[slug]/page'
@@ -27,6 +29,8 @@ export default async function Page() {
         The Second Messenger
       </h1>
       <LatestReleases songs={songs} />
+      <VideoCard video={{ title: 'Test Video', youtubeId: 'e4uenzs0Lfs' }} />
+      <MyPlaylistComponent />
     </main>
   )
 }

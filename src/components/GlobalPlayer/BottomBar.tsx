@@ -43,6 +43,8 @@ interface BottomBarProps {
   duration: number
   formatTime: (seconds: number) => string
   onClose: () => void
+  playNext: () => void
+  playPrevious: () => void
 }
 
 export const BottomBar = ({
@@ -67,15 +69,23 @@ export const BottomBar = ({
   duration,
   formatTime,
   onClose,
+  playNext,
+  playPrevious,
 }: BottomBarProps) => {
-  const coverArtUrl =
-    typeof currentSong.coverArt === 'object' ? currentSong.coverArt?.url : undefined
+  const coverArtUrl = currentSong.coverImage
+    ? currentSong.coverImage
+    : typeof currentSong.coverArt === 'object'
+      ? currentSong.coverArt?.url
+      : undefined
+
+  const SongInfoWrapper = (currentSong.slug ? Link : 'div') as React.ElementType
+  const wrapperProps = currentSong.slug ? { href: `/songs/${currentSong.slug}` } : {}
 
   return (
     <section
       id="media_player_bottom_bar"
       className={cn(
-        'flex flex-col w-full justify-center bg-black/30 backdrop-blur-3xl border-t border-white/10 z-20 pointer-events-auto transition-transform duration-300',
+        'flex flex-col w-full justify-center bg-black backdrop-blur-3xl border-t border-white/10 z-20 pointer-events-auto transition-transform duration-300',
         controlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full',
       )}
     >
@@ -113,9 +123,12 @@ export const BottomBar = ({
       >
         <div id="player_controls_song_info" className="flex w-3/5 sm:w-2/5 items-center gap-2">
           {/* Current Song Info */}
-          <Link
-            href={`/songs/${currentSong.slug}`}
-            className="flex flex-auto overflow-x-clip max-w-72 items-center justify-start gap-2 hover:scale-105"
+          <SongInfoWrapper
+            {...wrapperProps}
+            className={cn(
+              'flex flex-auto overflow-x-clip max-w-72 items-center justify-start gap-2',
+              currentSong.slug && 'hover:scale-105 cursor-pointer',
+            )}
           >
             {coverArtUrl && (
               <Image
@@ -123,7 +136,7 @@ export const BottomBar = ({
                 alt={`${currentSong.title} Cover Art`}
                 height={144}
                 width={144}
-                className="h-16 w-16"
+                className="h-16 w-auto rounded-lg"
                 sizes="144px"
               />
             )}
@@ -132,10 +145,10 @@ export const BottomBar = ({
                 {currentSong.title}
               </h4>
               <span className="text-sm text-muted font-heading uppercase leading-3 break-words">
-                The Second Messenger
+                {currentSong.artist || 'The Second Messenger'}
               </span>
             </div>
-          </Link>
+          </SongInfoWrapper>
 
           {/* Actions */}
           <div className="flex flex-auto truncate min-w-36 max-w-72 items-center justify-between space-x-1">
@@ -185,7 +198,7 @@ export const BottomBar = ({
         <div id="player_controls_playback" className="flex flex-col w-2/5 sm:w-1/5 gap-1 py-1">
           {/* Playback Controls */}
           <div className="flex justify-center gap-1 sm:gap-2 xl:gap-3">
-            <button className="text-muted hover:text-white">
+            <button onClick={playPrevious} className="text-muted hover:text-white">
               <SkipBack size={32} />
             </button>
             <button
@@ -200,12 +213,12 @@ export const BottomBar = ({
                 <Play size={24} fill="currentColor" />
               )}
             </button>
-            <button className="text-muted hover:text-white">
+            <button onClick={playNext} className="text-muted hover:text-white">
               <SkipForward size={32} />
             </button>
           </div>
           {/* Time display */}
-          <div className="hidden md:flex self-center text-xs font-mono text-muted gap-1">
+          <div className="hidden md:flex self-center text-[0.6em] font-mono text-muted gap-1">
             <span>{formatTime(currentTime)}</span>
             <span className="opacity-75">/</span>
             <span>{formatTime(duration)}</span>

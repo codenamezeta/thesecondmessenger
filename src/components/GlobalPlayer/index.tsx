@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import YouTube, { YouTubeProps, YouTubeEvent } from 'react-youtube'
 import { usePlayer } from '@/context/PlayerContext'
-import { Browser, LibraryTab, DetailsTab } from './Browser'
+import { Browser } from './Browser'
 import { BottomBar } from './BottomBar'
 import { cn } from '@/utilities/ui'
 import { Music4 } from 'lucide-react'
@@ -19,17 +19,97 @@ export const GlobalPlayer = () => {
     setIsVideoEnabled,
     miniMode,
     setMiniMode,
+    playNext,
+    playPrevious,
     togglePlay,
     setVolume,
     toggleMute,
     toggleVideo,
     controlsVisible,
     setControlsVisible,
+    updateSongMetadata,
   } = usePlayer()
 
   // --- STATE ---
-  const [activeLibraryTab, setActiveLibraryTab] = useState<LibraryTab>('queue')
-  const [activeDetailsTab, setActiveDetailsTab] = useState<DetailsTab>('lyrics')
+  const [activeLibraryTab, setActiveLibraryTab] = useState<string>('queue')
+  const [activeDetailsTab, setActiveDetailsTab] = useState<string>('about')
+
+  // --- YOUTUBE DATA API ---
+  const [playlistItems, setPlaylistItems] = useState<any[] | null>(null)
+
+  useEffect(() => {
+    if (!currentSong?.youtubeId) {
+      setPlaylistItems(null)
+      return
+    }
+
+    // Only fetch if we don't have a title (or it's the default) or missing cover art
+    const shouldFetchMetadata =
+      currentSong.title === 'Unknown Title' ||
+      currentSong.title === 'Loading...' ||
+      (!currentSong.coverImage && !currentSong.coverArt) ||
+      (!currentSong.description && !currentSong.about)
+
+    const fetchYouTubeData = async () => {
+      try {
+        const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
+        if (!apiKey) return
+
+        // Fetch Video Details
+        if (shouldFetchMetadata) {
+          const videoRes = await fetch(
+            `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${currentSong.youtubeId}&key=${apiKey}`,
+          )
+          const videoData = await videoRes.json()
+          if (videoData.items?.[0]) {
+            const snippet = videoData.items[0].snippet
+            // Update the global context so the queue reflects the new data
+            if (currentSong.youtubeId) {
+              const metadata: any = {}
+              if (
+                !currentSong.title ||
+                currentSong.title === 'Unknown Title' ||
+                currentSong.title === 'Loading...'
+              ) {
+                metadata.title = snippet.title
+              }
+              if (!currentSong.artist) {
+                metadata.artist = snippet.channelTitle
+              }
+              if (!currentSong.coverImage && !currentSong.coverArt) {
+                metadata.coverImage =
+                  snippet.thumbnails?.maxres?.url ||
+                  snippet.thumbnails?.high?.url ||
+                  snippet.thumbnails?.medium?.url
+              }
+              if (!currentSong.description && !currentSong.about) {
+                metadata.description = snippet.description
+              }
+
+              if (Object.keys(metadata).length > 0) {
+                updateSongMetadata(currentSong.youtubeId, metadata)
+              }
+            }
+          }
+        }
+
+        // Fetch Playlist Details
+        const playlistId = (currentSong as any).youtubePlaylistId
+        if (playlistId) {
+          const playlistRes = await fetch(
+            `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${apiKey}`,
+          )
+          const playlistData = await playlistRes.json()
+          if (playlistData.items) {
+            setPlaylistItems(playlistData.items)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching YouTube data:', error)
+      }
+    }
+    fetchYouTubeData()
+  }, [currentSong?.youtubeId, (currentSong as any)?.youtubePlaylistId])
 
   // Playback State
   const [played, setPlayed] = useState(0)
@@ -41,6 +121,19 @@ export const GlobalPlayer = () => {
 
   const internalPlayerRef = useRef<any>(null)
   const progressInterval = useRef<NodeJS.Timeout | null>(null)
+
+  // --- DERIVED STATE ---
+  const activeMedia = useMemo(() => {
+    // If there's no song object from the context, we can't do anything.
+    if (!currentSong) return null
+
+    // We no longer need to merge local youtubeMetadata here because we updated the context directly.
+    // We just attach the playlist items if they exist.
+    return {
+      ...currentSong,
+      playlist: playlistItems,
+    }
+  }, [currentSong, playlistItems])
 
   // --- HELPER: Safe Player Calls ---
   const safePlayerCall = (callback: (player: any) => void) => {
@@ -61,13 +154,13 @@ export const GlobalPlayer = () => {
     if (typeof window !== 'undefined') setOrigin(window.location.origin)
   }, [])
 
-  // // Scroll Lock
-  // useEffect(() => {
-  //   document.body.style.overflow = isVideoEnabled ? 'hidden' : ''
-  //   return () => {
-  //     document.body.style.overflow = ''
-  //   }
-  // }, [isVideoEnabled])
+  // Scroll Lock
+  useEffect(() => {
+    document.body.style.overflow = isVideoEnabled && !miniMode ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isVideoEnabled, miniMode])
 
   // Command Bridge
   useEffect(() => {
@@ -127,9 +220,10 @@ export const GlobalPlayer = () => {
 
   const onPlayerStateChange: YouTubeProps['onStateChange'] = useCallback(
     (event: YouTubeEvent) => {
-      if (event.data === 0) togglePlay()
+      // When video ends, play next in queue
+      if (event.data === 0) playNext()
     },
-    [togglePlay],
+    [playNext],
   )
 
   const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -163,7 +257,6 @@ export const GlobalPlayer = () => {
 
   const opts: YouTubeProps['opts'] = useMemo(
     () => ({
-      host: 'https://www.youtube.com',
       playerVars: {
         autoplay: 1,
         controls: 0,
@@ -179,7 +272,7 @@ export const GlobalPlayer = () => {
 
   // --- RENDER ---
 
-  if (currentSong && currentSong.youtubeId) {
+  if (activeMedia && activeMedia.youtubeId) {
     return (
       <aside
         id="media_player"
@@ -196,14 +289,14 @@ export const GlobalPlayer = () => {
           setActiveLibraryTab={setActiveLibraryTab}
           activeDetailsTab={activeDetailsTab}
           setActiveDetailsTab={setActiveDetailsTab}
-          currentSong={currentSong}
+          currentSong={activeMedia}
         >
           {origin ? (
             <YouTube
-              videoId={currentSong.youtubeId ?? undefined}
+              key={activeMedia.youtubeId} // Force remount on video change to prevent internal errors
+              videoId={activeMedia.youtubeId ?? undefined}
               onReady={onPlayerReady}
               onStateChange={onPlayerStateChange}
-              title={currentSong.title}
               opts={opts}
               className="w-full"
               iframeClassName="w-full h-full"
@@ -215,7 +308,7 @@ export const GlobalPlayer = () => {
         </button>
 
         <BottomBar
-          currentSong={currentSong}
+          currentSong={activeMedia}
           isVideoEnabled={isVideoEnabled}
           setIsVideoEnabled={setIsVideoEnabled}
           miniMode={miniMode}
@@ -236,6 +329,8 @@ export const GlobalPlayer = () => {
           duration={duration}
           formatTime={formatTime}
           toggleVideo={toggleVideo}
+          playNext={playNext}
+          playPrevious={playPrevious}
           onClose={closePlayer}
         />
       </aside>

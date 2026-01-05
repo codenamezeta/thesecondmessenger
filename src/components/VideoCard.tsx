@@ -1,33 +1,35 @@
 'use client'
 
-import { Song } from '@/payload-types'
 import Image from 'next/image'
-import { usePlayer } from '@/context/PlayerContext'
+import { PlayableMedia, usePlayer } from '@/context/PlayerContext'
 
-export const SongCard = ({ song }: { song: Song }) => {
+export const VideoCard = ({ video }: { video: PlayableMedia }) => {
   const { playMedia, currentSong, isPlaying } = usePlayer()
 
-  const isCurrent = currentSong?.id === song.id
+  // Use video.id or video.youtubeId for comparison
+  const isCurrent =
+    currentSong?.id === video.id ||
+    (currentSong?.youtubeId && currentSong.youtubeId === video.youtubeId)
   const isActuallyPlaying = isCurrent && isPlaying
 
   return (
     <div
-      onClick={() => playMedia(song)} // <--- THE MAGIC CLICK
-      className={`group bg-card rounded overflow-hidden hover:bg-main transition-all border cursor-pointer
+      onClick={() => playMedia(video.youtubeId || video)} // Pass string ID or full object
+      className={`group h-80 w-80 bg-card rounded overflow-hidden hover:bg-main transition-all border cursor-pointer
         ${isCurrent ? 'border-accent ring-1 ring-accent' : 'border-gray-800 hover:border-gray-700'}`}
     >
-      <div className="relative aspect-square bg-surface overflow-hidden">
-        {song.coverArt && typeof song.coverArt === 'object' && song.coverArt.url ? (
+      <div className="relative aspect-square bg-surface">
+        {video.coverArt && typeof video.coverArt === 'object' && video.coverArt.url ? (
           <Image
-            src={song.coverArt.url}
-            alt={song.title}
+            src="placeholder.png"
+            alt="Video"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
           <div className="flex items-center justify-center h-full text-primary font-heading text-3xl font-bold">
-            {song.title}
+            {video.title}
           </div>
         )}
 
@@ -43,9 +45,9 @@ export const SongCard = ({ song }: { song: Song }) => {
       </div>
 
       <div className="p-4 flex flex-col justify-between space-y-2">
-        <h3 className="text-xl font-bold text-primary">{song.title}</h3>
-        <span className="text-secondary">{song.genres}</span>
-        <span className="text-card-foreground">{song.tagline}</span>
+        <h3 className="text-xl font-bold text-primary">{video.title}</h3>
+        <span className="text-secondary">{video.genres}</span>
+        <span className="text-card-foreground">{video.tagline}</span>
       </div>
     </div>
   )

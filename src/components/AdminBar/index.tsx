@@ -53,7 +53,7 @@ export const AdminBar: React.FC<{
   return (
     <div
       className={cn(
-        'bg-main backdrop-blur-3xl border-b border-white/10 text-white fixed top-0 items-center w-full h-[var(--admin-bar-height,36px)] z-40',
+        'bg-main/85 backdrop-blur-3xl border-b border-white/10 text-white fixed top-0 items-center w-full h-[var(--admin-bar-height,36px)] z-40',
         {
           flex: show,
           hidden: !show,

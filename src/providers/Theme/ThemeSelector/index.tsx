@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Palette } from 'lucide-react'
 import React, { useState } from 'react'
 
 import type { Theme } from './types'
@@ -37,16 +38,17 @@ export const ThemeSelector: React.FC = () => {
     <Select onValueChange={onThemeChange} value={value}>
       <SelectTrigger
         aria-label="Select a theme"
-        className="w-auto bg-[var(--bg-main)] text-[var(--text-body)] gap-2 pl-0 md:pl-3 border-none"
+        className="w-auto bg-accent text-body gap-2 pl-0 md:pl-3 border-none"
       >
+        <Palette />
         <SelectValue placeholder="Theme" />
       </SelectTrigger>
-      <SelectContent className="bg-[var(--bg-main)]">
+      <SelectContent className="bg-main">
         <SelectItem value="system">Auto</SelectItem>
         <SelectItem value="light">Light</SelectItem>
         <SelectItem value="dark">Dark</SelectItem>
         <SelectItem value="interstellar">Interstellar</SelectItem>
-        <SelectItem value="tan">Tan</SelectItem>
+        <SelectItem value="kelly_come_home">Kelly Come Home</SelectItem>
       </SelectContent>
     </Select>
   )

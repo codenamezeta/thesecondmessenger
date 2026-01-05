@@ -23,7 +23,7 @@
   /* UI Defaults (Borders/Inputs) */
   --border: 160 6% 30%;
   --input: 160 6% 19%;
-  --ring: 156 53% 71%;
+  --ring: 156 53% 25%;
   --radius: 0.5rem;
 
   --card: 160 6% 19%;
@@ -58,14 +58,14 @@
   --muted-foreground: 0 0% 52%;
 }
 
-[data-theme='tan'] {
-  --bg-main: 36 23% 66%; /* #bbac96 */
-  --bg-surface: 34 41% 29%; /* #684e2b */
-  --text-body: 328 27% 89%; /* #ebdce4 */
-  --text-muted: 0 0% 52%; /* #858585 */
-  --color-primary: 4 100% 18%; /* #5a0600 */
-  --color-secondary: 0 70% 9%; /* #270707 */
-  --color-accent: 41 100% 39%; /* #c98900 */
+[data-theme='kelly_come_home'] {
+  --bg-main: 30 7% 95%; /* #F2F1F0 */
+  --bg-surface: 21 16% 52%; /* #987E70 */
+  --text-body: 20 100% 5%; /* #180800 */
+  --text-muted: 30 21% 78%; /* #d3c7bb */
+  --color-primary: 11 70% 26%; /* #732514 */
+  --color-secondary: 33 85% 85%; /* #F9DBB7 */
+  --color-accent: 26 78% 77%; /* #F2BE97 */
 
   --border: 34 41% 20%;
   --input: 34 41% 29%;
