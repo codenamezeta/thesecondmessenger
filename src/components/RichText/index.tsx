@@ -62,12 +62,13 @@ type Props = {
 } & React.HTMLAttributes<HTMLDivElement>
 
 export default function RichText(props: Props) {
-  const { className, enableProse = true, enableGutter = true, ...rest } = props
+  const { className, enableProse = false, enableGutter = false, ...rest } = props
   return (
     <ConvertRichText
       converters={jsxConverters}
       className={cn(
-        'payload-richtext',
+        // 'payload-richtext',
+        // 'rich-text',
         {
           container: enableGutter,
           'max-w-none': !enableGutter,
@@ -79,3 +80,59 @@ export default function RichText(props: Props) {
     />
   )
 }
+
+// export function RichTextSimplified(props: Props) {
+//   // Helper component for rendering Payload CMS Rich Text (Lexical)
+//     if (!props) return null
+
+//     const renderChildren = (children: any[]) => {
+//       return children?.map((child: any, i: number) => {
+//         if (child.type === 'text') {
+//           let textNode: React.ReactNode = child.text
+//           if (child.format & 1) textNode = <strong key="bold">{textNode}</strong>
+//           if (child.format & 2) textNode = <em key="italic">{textNode}</em>
+//           if (child.format & 8) textNode = <u key="underline">{textNode}</u>
+//           return <span key={i}>{textNode}</span>
+//         }
+//         return null
+//       })
+//     }
+
+//     return (
+//       <div className="space-y-3 p-4 pb-12 text-xs text-muted font-sans">
+//         {props.map((node: any, i: number) => {
+//           if (node.type === 'heading') {
+//             const Tag = node.tag as keyof JSX.IntrinsicElements
+//             return (
+//               <Tag key={i} className="font-heading font-bold text-white mt-4 text-sm">
+//                 {renderChildren(node.children)}
+//               </Tag>
+//             )
+//           }
+//           if (node.type === 'paragraph') {
+//             return (
+//               <p key={i} className="leading-relaxed whitespace-pre-wrap">
+//                 {renderChildren(node.children)}
+//               </p>
+//             )
+//           }
+//           if (node.type === 'list') {
+//             const Tag = node.tag === 'ol' ? 'ol' : 'ul'
+//             return (
+//               <Tag
+//                 key={i}
+//                 className={`pl-4 space-y-1 ${node.tag === 'ol' ? 'list-decimal' : 'list-disc'}`}
+//               >
+//                 {node.children.map((li: any, j: number) => (
+//                   <li key={j} className="pl-1">
+//                     {renderChildren(li.children)}
+//                   </li>
+//                 ))}
+//               </Tag>
+//             )
+//           }
+//           return null
+//         })}
+//       </div>
+//     )
+//   }

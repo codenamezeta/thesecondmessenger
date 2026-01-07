@@ -1,35 +1,25 @@
 'use client'
 
 import type { PayloadAdminBarProps, PayloadMeUser } from '@payloadcms/admin-bar'
-
-import { cn } from '@/utilities/ui'
-import { useSelectedLayoutSegments } from 'next/navigation'
 import { PayloadAdminBar } from '@payloadcms/admin-bar'
-import React, { useState } from 'react'
+import { useSelectedLayoutSegments } from 'next/navigation'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-
-import './index.scss'
-
+import { cn } from '@/utilities/ui'
 import { getClientSideURL } from '@/utilities/getURL'
 
-const baseClass = 'admin-bar'
+// We don't need the SCSS import anymore if we use Tailwind
+// import './index.scss'
 
 const collectionLabels = {
-  pages: {
-    plural: 'Pages',
-    singular: 'Page',
-  },
-  posts: {
-    plural: 'Posts',
-    singular: 'Post',
-  },
-  projects: {
-    plural: 'Projects',
-    singular: 'Project',
-  },
+  pages: { plural: 'Pages', singular: 'Page' },
+  posts: { plural: 'Posts', singular: 'Post' },
+  projects: { plural: 'Playlists', singular: 'Playlist' },
+  releases: { plural: 'Releases', singular: 'Release' },
+  songs: { plural: 'Songs', singular: 'Song' }, // Added your new collections
 }
 
-const Title: React.FC = () => <span>Dashboard</span>
+const Title: React.FC = () => <span className="text-white font-bold">Dashboard</span>
 
 export const AdminBar: React.FC<{
   adminBarProps?: PayloadAdminBarProps
@@ -37,21 +27,38 @@ export const AdminBar: React.FC<{
   const { adminBarProps } = props || {}
   const segments = useSelectedLayoutSegments()
   const [show, setShow] = useState(false)
+
+  // Determine which collection we are viewing for the "Edit" button
   const collection = (
-    collectionLabels[segments?.[1] as keyof typeof collectionLabels] ? segments[1] : 'pages'
+    collectionLabels[segments?.[1] as keyof typeof collectionLabels] ? segments[1] : 'posts'
   ) as keyof typeof collectionLabels
+
   const router = useRouter()
 
   const onAuthChange = React.useCallback((user: PayloadMeUser) => {
     setShow(Boolean(user?.id))
   }, [])
 
+  // --- THE LOGIC TO PUSH THE NAV DOWN ---
+  useEffect(() => {
+    if (show) {
+      // 1. Set the variable so Nav moves down
+      document.documentElement.style.setProperty('--admin-bar-height', '36px')
+    } else {
+      // 2. Cleanup if logged out
+      document.documentElement.style.removeProperty('--admin-bar-height')
+    }
+  }, [show])
+
   return (
     <div
-      className={cn(baseClass, 'py-2 bg-black text-white', {
-        block: show,
-        hidden: !show,
-      })}
+      className={cn(
+        'bg-main/85 backdrop-blur-3xl border-b border-white/10 text-white fixed top-0 items-center w-full h-[var(--admin-bar-height,36px)] z-40',
+        {
+          flex: show,
+          hidden: !show,
+        },
+      )}
     >
       <div className="container">
         <PayloadAdminBar

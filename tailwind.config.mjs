@@ -1,16 +1,16 @@
 import tailwindcssAnimate from 'tailwindcss-animate'
 import typography from '@tailwindcss/typography'
+import plugin from 'tailwindcss/plugin'
 
 /** @type {import('tailwindcss').Config} */
 const config = {
+  darkMode: ['selector', '[data-theme="dark"]'],
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
   ],
-  darkMode: ['selector', '[data-theme="dark"]'],
-  plugins: [tailwindcssAnimate, typography],
   prefix: '',
   safelist: [
     'lg:col-span-4',
@@ -26,76 +26,72 @@ const config = {
     'border-warning',
     'bg-warning/30',
   ],
+  corePlugins: {
+    container: false,
+  },
   theme: {
-    container: {
-      center: true,
-      padding: {
-        '2xl': '2rem',
-        DEFAULT: '1rem',
-        lg: '2rem',
-        md: '2rem',
-        sm: '1rem',
-        xl: '2rem',
-      },
-      screens: {
-        '2xl': '86rem',
-        lg: '64rem',
-        md: '48rem',
-        sm: '40rem',
-        xl: '80rem',
-      },
-    },
     extend: {
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-      },
-      borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-      },
+      // --- THEME ENGINE MAPPING ---
       colors: {
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
+        // Semantic variables linked to globals.css
+        primary: 'hsl(var(--color-primary) / <alpha-value>)',
+        secondary: 'hsl(var(--color-secondary) / <alpha-value>)',
+        accent: 'hsl(var(--color-accent) / <alpha-value>)',
+
+        main: 'hsl(var(--bg-main) / <alpha-value>)', // Maps bg-background to your main variable
+        surface: {
+          DEFAULT: 'hsl(var(--bg-surface) / <alpha-value>)', // Maps bg-surface
+          foreground: 'hsl(var(--text-surface) / <alpha-value>)', // Text on surface
         },
-        background: 'hsl(var(--background))',
-        border: 'hsla(var(--border))',
+
+        // Shadcn/UI Standard Mappings (Required for UI components)
+        border: 'hsl(var(--border) / <alpha-value>)',
+        input: 'hsl(var(--input) / <alpha-value>)',
+        ring: 'hsl(var(--ring) / <alpha-value>)',
+        foreground: 'hsl(var(--text-body) / <alpha-value>)', // Maps text-foreground to your body text
+
+        // Status colors
+        success: '#10b981',
+        error: '#ef4444',
+        warning: '#f59e0b',
+
+        // Keep these if your UI components rely on specific hsl vars
+        muted: {
+          DEFAULT: 'hsl(var(--text-muted) / <alpha-value>)',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
-        },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        foreground: 'hsl(var(--foreground))',
-        input: 'hsl(var(--input))',
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
         },
         popover: {
           DEFAULT: 'hsl(var(--popover))',
           foreground: 'hsl(var(--popover-foreground))',
         },
-        primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
         },
-        ring: 'hsl(var(--ring))',
-        secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
-        },
-        success: 'hsl(var(--success))',
-        error: 'hsl(var(--error))',
-        warning: 'hsl(var(--warning))',
       },
+
+      // --- FONTS ---
       fontFamily: {
-        mono: ['var(--font-geist-mono)'],
+        heading: ['var(--font-heading)'],
+        body: ['var(--font-body)'],
+        mono: ['var(--font-mono)'], // Keep for admin bar/code
         sans: ['var(--font-geist-sans)'],
+      },
+
+      // --- ULTRAWIDE SUPPORT ---
+      screens: {
+        '3xl': '1920px', // Adds the new breakpoint
+      },
+
+      // --- ANIMATIONS ---
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
       },
       keyframes: {
         'accordion-down': {
@@ -107,47 +103,26 @@ const config = {
           to: { height: '0' },
         },
       },
-      typography: () => ({
-        DEFAULT: {
-          css: [
-            {
-              '--tw-prose-body': 'var(--text)',
-              '--tw-prose-headings': 'var(--text)',
-              h1: {
-                fontWeight: 'normal',
-                marginBottom: '0.25em',
-              },
-            },
-          ],
-        },
-        base: {
-          css: [
-            {
-              h1: {
-                fontSize: '2.5rem',
-              },
-              h2: {
-                fontSize: '1.25rem',
-                fontWeight: 600,
-              },
-            },
-          ],
-        },
-        md: {
-          css: [
-            {
-              h1: {
-                fontSize: '3.5rem',
-              },
-              h2: {
-                fontSize: '1.5rem',
-              },
-            },
-          ],
-        },
-      }),
+      animation: {
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
+      },
     },
   },
+  plugins: [
+    tailwindcssAnimate,
+    // typography,
+    plugin(function ({ addVariant }) {
+      // Add your custom theme variants here
+      addVariant('portrait', '@media (orientation: portrait)')
+      addVariant('landscape', '@media (orientation: landscape)')
+      addVariant('light', '[data-theme="light"] &')
+      addVariant('dark', '[data-theme="dark"] &')
+      addVariant('interstellar', '[data-theme="interstellar"] &')
+      addVariant('kelly_come_home', '[data-theme="kelly_come_home"] &')
+      // You can add more themes easily by duplicating the line above
+    }),
+  ],
 }
 
 export default config

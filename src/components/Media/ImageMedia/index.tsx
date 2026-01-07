@@ -47,6 +47,23 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
     src = getMediaUrl(url, cacheTag)
   }
 
+  // --- START FIX ---
+  if (typeof src === 'string') {
+    const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+
+    // 1. Strip the domain (Fixes "Private IP" error)
+    if (src.startsWith(serverUrl)) {
+      src = src.replace(serverUrl, '')
+    }
+
+    // 2. Strip the query string (Fixes "localPatterns" error)
+    // This turns "/api/media/img.jpg?timestamp=123" into "/api/media/img.jpg"
+    if (src.includes('?')) {
+      src = src.split('?')[0]
+    }
+  }
+  // --- END FIX ---
+
   const loading = loadingFromProps || (!priority ? 'lazy' : undefined)
 
   // NOTE: this is used by the browser to determine which image to download at different screen sizes

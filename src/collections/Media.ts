@@ -27,7 +27,7 @@ export const Media: CollectionConfig = {
     {
       name: 'alt',
       type: 'text',
-      //required: true,
+      // required: true,
     },
     {
       name: 'caption',
@@ -38,6 +38,15 @@ export const Media: CollectionConfig = {
         },
       }),
     },
+    // {
+    //   name: 'prefix',
+    //   type: 'text',
+    //   admin: {
+    //     readOnly: true, // You don't edit this manually, the hook does it
+    //     description: 'The virtual folder path for this file.',
+    //     hidden: true,
+    //   },
+    // },
   ],
   upload: {
     // Upload to the public/media directory in Next.js making them publicly accessible even outside of Payload

@@ -14,6 +14,8 @@ export const ContentBlock: React.FC<ContentBlockProps> = (props) => {
     half: '6',
     oneThird: '4',
     twoThirds: '8',
+    oneQuarter: '3',
+    threeQuarters: '9',
   }
 
   return (

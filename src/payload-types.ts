@@ -69,6 +69,10 @@ export interface Config {
   collections: {
     pages: Page;
     posts: Post;
+    songs: Song;
+    releases: Release;
+    playlists: Playlist;
+    presaves: Presave;
     media: Media;
     categories: Category;
     users: User;
@@ -78,19 +82,27 @@ export interface Config {
     search: Search;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
-    'payload-folders': FolderInterface;
+    folders: FolderInterface;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
   collectionsJoins: {
-    'payload-folders': {
-      documentsAndFolders: 'payload-folders' | 'media';
+    songs: {
+      relatedReleases: 'releases';
+      inPlaylists: 'playlists';
+    };
+    folders: {
+      documentsAndFolders: 'folders' | 'songs' | 'media';
     };
   };
   collectionsSelect: {
     pages: PagesSelect<false> | PagesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
+    songs: SongsSelect<false> | SongsSelect<true>;
+    releases: ReleasesSelect<false> | ReleasesSelect<true>;
+    playlists: PlaylistsSelect<false> | PlaylistsSelect<true>;
+    presaves: PresavesSelect<false> | PresavesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -100,7 +112,7 @@ export interface Config {
     search: SearchSelect<false> | SearchSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
-    'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
+    folders: FoldersSelect<false> | FoldersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -108,6 +120,7 @@ export interface Config {
   db: {
     defaultIDType: number;
   };
+  fallbackLocale: null;
   globals: {
     header: Header;
     footer: Footer;
@@ -363,7 +376,7 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "payload-folders".
+ * via the `definition` "folders".
  */
 export interface FolderInterface {
   id: number;
@@ -372,8 +385,12 @@ export interface FolderInterface {
   documentsAndFolders?: {
     docs?: (
       | {
-          relationTo?: 'payload-folders';
+          relationTo?: 'folders';
           value: number | FolderInterface;
+        }
+      | {
+          relationTo?: 'songs';
+          value: number | Song;
         }
       | {
           relationTo?: 'media';
@@ -383,7 +400,190 @@ export interface FolderInterface {
     hasNextPage?: boolean;
     totalDocs?: number;
   };
-  folderType?: 'media'[] | null;
+  folderType?: ('songs' | 'media')[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "songs".
+ */
+export interface Song {
+  id: number;
+  title: string;
+  /**
+   * Auto-synced from the related Release for the list view.
+   */
+  coverArt?: (number | null) | Media;
+  slug?: string | null;
+  /**
+   * Which Releases include this song?
+   */
+  relatedReleases?: {
+    docs?: (number | Release)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  /**
+   * Add this song to existing playlists.
+   */
+  inPlaylists?: {
+    docs?: (number | Playlist)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  /**
+   * The 11-character ID (e.g., dQw4w9WgXcQ). Required for the Global Player.
+   */
+  youtubeId?: string | null;
+  /**
+   * The song ID (e.g., 5VaIDMKwaYXgELXy6n0ODU). Required for Spotify Saves.
+   */
+  spotifyId?: string | null;
+  masterAudio?: (number | null) | Media;
+  /**
+   * Upload synchronized files for the deep-dive player.
+   */
+  stems?:
+    | {
+        stemName: string;
+        audioFile: number | Media;
+        volume?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  isrc?: string | null;
+  iswc?: string | null;
+  durationText?: string | null;
+  duration?: number | null;
+  isDynamic?: boolean | null;
+  bpm?: number | null;
+  bpmEnd?: number | null;
+  key?: string | null;
+  keyEnd?: string | null;
+  streamingLinks?:
+    | {
+        platform:
+          | 'YouTube Music'
+          | 'Spotify'
+          | 'Apple Music'
+          | 'Amazon Music'
+          | 'Tidal'
+          | 'Qobuz'
+          | 'Deezer'
+          | 'Pandora'
+          | 'SoundCloud'
+          | 'Bandcamp'
+          | 'Other';
+        url: string;
+        /**
+         * Optional text for hover states or extra context.
+         */
+        description?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  compositionType: 'Original' | 'Cover' | 'Public Domain';
+  recordingType: 'Studio' | 'Live' | 'Demo';
+  isExplicit?: boolean | null;
+  genres?: string | null;
+  moods?: string | null;
+  credits?:
+    | {
+        name: string;
+        category: 'Songwriter' | 'Performer' | 'Producer/Engineer' | 'Visuals' | 'Special Thanks';
+        /**
+         * Add multiple roles (e.g. "Guitar", "Backing Vocals")
+         */
+        roles?:
+          | {
+              role?: string | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * A one or two sentence tagline or "elevator pitch". SoundCloud limits to 140 characters.
+   */
+  tagline?: string | null;
+  /**
+   * The full story, sonic details, and lyrics. Supports embeds and images.
+   */
+  about?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Plain text version for search indexing and quick view.
+   */
+  lyrics?: string | null;
+  downloadPermissions?: {
+    allowMasterDownload?: boolean | null;
+    allowStemDownload?: boolean | null;
+    requiresEmail?: boolean | null;
+  };
+  bonusContent?:
+    | {
+        type?: ('Alternate Audio' | 'Video' | 'Artwork' | 'Sheet Music' | 'Other') | null;
+        label: string;
+        file?: (number | null) | Media;
+        accessLevel?: ('Public' | 'Press' | 'Members') | null;
+        id?: string | null;
+      }[]
+    | null;
+  folder?: (number | null) | FolderInterface;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "releases".
+ */
+export interface Release {
+  id: number;
+  title: string;
+  slug?: string | null;
+  releaseDate: string;
+  type: 'Single' | 'Double' | 'EP' | 'Album' | 'Other';
+  distribution?: ('Limited' | 'Global' | 'Exclusive' | 'Other') | null;
+  upc?: string | null;
+  coverArt: number | Media;
+  /**
+   * Drag and drop to reorder tracks.
+   */
+  tracks?: (number | Song)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "playlists".
+ */
+export interface Playlist {
+  id: number;
+  title: string;
+  slug?: string | null;
+  description?: string | null;
+  coverArt?: (number | null) | Media;
+  /**
+   * Add and reorder songs. Updates instantly on the site.
+   */
+  tracks?: (number | Song)[] | null;
+  isFeatured?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -491,7 +691,7 @@ export interface CallToActionBlock {
 export interface ContentBlock {
   columns?:
     | {
-        size?: ('oneThird' | 'half' | 'twoThirds' | 'full') | null;
+        size?: ('oneQuarter' | 'oneThird' | 'half' | 'twoThirds' | 'threeQuarters' | 'full') | null;
         richText?: {
           root: {
             type: string;
@@ -780,6 +980,20 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "presaves".
+ */
+export interface Presave {
+  id: number;
+  email: string;
+  spotifyId?: string | null;
+  refreshToken: string;
+  campaigns?: (number | Song)[] | null;
+  status?: ('active' | 'revoked') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -977,6 +1191,22 @@ export interface PayloadLockedDocument {
         value: number | Post;
       } | null)
     | ({
+        relationTo: 'songs';
+        value: number | Song;
+      } | null)
+    | ({
+        relationTo: 'releases';
+        value: number | Release;
+      } | null)
+    | ({
+        relationTo: 'playlists';
+        value: number | Playlist;
+      } | null)
+    | ({
+        relationTo: 'presaves';
+        value: number | Presave;
+      } | null)
+    | ({
         relationTo: 'media';
         value: number | Media;
       } | null)
@@ -1005,7 +1235,7 @@ export interface PayloadLockedDocument {
         value: number | Search;
       } | null)
     | ({
-        relationTo: 'payload-folders';
+        relationTo: 'folders';
         value: number | FolderInterface;
       } | null);
   globalSlug?: string | null;
@@ -1215,6 +1445,129 @@ export interface PostsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "songs_select".
+ */
+export interface SongsSelect<T extends boolean = true> {
+  title?: T;
+  coverArt?: T;
+  slug?: T;
+  relatedReleases?: T;
+  inPlaylists?: T;
+  youtubeId?: T;
+  spotifyId?: T;
+  masterAudio?: T;
+  stems?:
+    | T
+    | {
+        stemName?: T;
+        audioFile?: T;
+        volume?: T;
+        id?: T;
+      };
+  isrc?: T;
+  iswc?: T;
+  durationText?: T;
+  duration?: T;
+  isDynamic?: T;
+  bpm?: T;
+  bpmEnd?: T;
+  key?: T;
+  keyEnd?: T;
+  streamingLinks?:
+    | T
+    | {
+        platform?: T;
+        url?: T;
+        description?: T;
+        id?: T;
+      };
+  compositionType?: T;
+  recordingType?: T;
+  isExplicit?: T;
+  genres?: T;
+  moods?: T;
+  credits?:
+    | T
+    | {
+        name?: T;
+        category?: T;
+        roles?:
+          | T
+          | {
+              role?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  tagline?: T;
+  about?: T;
+  lyrics?: T;
+  downloadPermissions?:
+    | T
+    | {
+        allowMasterDownload?: T;
+        allowStemDownload?: T;
+        requiresEmail?: T;
+      };
+  bonusContent?:
+    | T
+    | {
+        type?: T;
+        label?: T;
+        file?: T;
+        accessLevel?: T;
+        id?: T;
+      };
+  folder?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "releases_select".
+ */
+export interface ReleasesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  releaseDate?: T;
+  type?: T;
+  distribution?: T;
+  upc?: T;
+  coverArt?: T;
+  tracks?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "playlists_select".
+ */
+export interface PlaylistsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  description?: T;
+  coverArt?: T;
+  tracks?: T;
+  isFeatured?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "presaves_select".
+ */
+export interface PresavesSelect<T extends boolean = true> {
+  email?: T;
+  spotifyId?: T;
+  refreshToken?: T;
+  campaigns?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1586,9 +1939,9 @@ export interface PayloadJobsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "payload-folders_select".
+ * via the `definition` "folders_select".
  */
-export interface PayloadFoldersSelect<T extends boolean = true> {
+export interface FoldersSelect<T extends boolean = true> {
   name?: T;
   folder?: T;
   documentsAndFolders?: T;
@@ -1636,7 +1989,8 @@ export interface Header {
   id: number;
   navItems?:
     | {
-        link: {
+        type: 'link' | 'dropdown';
+        link?: {
           type?: ('reference' | 'custom') | null;
           newTab?: boolean | null;
           reference?:
@@ -1651,6 +2005,27 @@ export interface Header {
           url?: string | null;
           label: string;
         };
+        dropdownLabel?: string | null;
+        dropdownItems?:
+          | {
+              link: {
+                type?: ('reference' | 'custom') | null;
+                newTab?: boolean | null;
+                reference?:
+                  | ({
+                      relationTo: 'pages';
+                      value: number | Page;
+                    } | null)
+                  | ({
+                      relationTo: 'posts';
+                      value: number | Post;
+                    } | null);
+                url?: string | null;
+                label: string;
+              };
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -1694,6 +2069,7 @@ export interface HeaderSelect<T extends boolean = true> {
   navItems?:
     | T
     | {
+        type?: T;
         link?:
           | T
           | {
@@ -1702,6 +2078,21 @@ export interface HeaderSelect<T extends boolean = true> {
               reference?: T;
               url?: T;
               label?: T;
+            };
+        dropdownLabel?: T;
+        dropdownItems?:
+          | T
+          | {
+              link?:
+                | T
+                | {
+                    type?: T;
+                    newTab?: T;
+                    reference?: T;
+                    url?: T;
+                    label?: T;
+                  };
+              id?: T;
             };
         id?: T;
       };

@@ -36,5 +36,22 @@
     "editor.codeActionsOnSave": {
       "source.fixAll.eslint": "explicit"
     }
-  }
+  },
+  "cSpell.words": [
+    "Bandcamp",
+    "CCOOOYYSSSSS",
+    "Deezer",
+    "disablekb",
+    "heros",
+    "isrc",
+    "iswc",
+    "metallophile",
+    "modestbranding",
+    "payloadcms",
+    "presaves",
+    "Qobuz",
+    "showinfo",
+    "Tracklist",
+    "unrs"
+  ]
 }
