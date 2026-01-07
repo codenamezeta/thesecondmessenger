@@ -67,13 +67,13 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
   const NavLogo = () => (
     <>
       {!logoError ? (
-        <div className="relative w-40 h-9">
+        <div className="relative w-40 h-12">
           <Image
             src="/imgs/logos/white.png"
             alt="The 2nd Messenger Logo"
             sizes="(max-width: 768px) 100vw, 160px"
             fill
-            className="object-contain object-left group-hover:opacity-80 transition-opacity"
+            className="object-contain object-left group-hover:opacity-80 transition-opacity light:invert"
             onError={() => setLogoError(true)}
             priority
           />

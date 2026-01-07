@@ -21,6 +21,9 @@ import { MediaBlock } from '@/blocks/MediaBlock/config'
 
 export const Songs: CollectionConfig = {
   slug: 'songs',
+  access: {
+    read: () => true,
+  },
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'coverArt', 'releaseDate', 'status'],
@@ -45,8 +48,9 @@ export const Songs: CollectionConfig = {
         const needsTitle = !data.title
         const needsCredits = !data.credits || data.credits.length === 0
         const needsGenres = !data.genres
+        const needsDuration = !data.duration
 
-        if (!needsTitle && !needsCredits && !needsGenres) {
+        if (!needsTitle && !needsCredits && !needsGenres && !needsDuration) {
           console.log('🎵 [Songs Hook] All fields already populated, skipping.')
           return data
         }
@@ -113,8 +117,9 @@ export const Songs: CollectionConfig = {
             data.genres = metadata.common.genre.join(', ')
           }
 
-          // Bonus: If you add a 'duration' number field to Songs, you can save this:
-          // if (metadata.format.duration) data.duration = metadata.format.duration
+          if (metadata.format.duration && needsDuration) {
+            data.duration = Math.round(metadata.format.duration)
+          }
         } catch (error) {
           console.error('🎵 [Songs Hook] Error extracting metadata:', error)
         }
@@ -190,6 +195,17 @@ export const Songs: CollectionConfig = {
               },
             },
             {
+              name: 'spotifyId',
+              type: 'text',
+              label: 'Spotify Song ID',
+              required: false,
+              unique: true,
+              admin: {
+                description:
+                  'The song ID (e.g., 5VaIDMKwaYXgELXy6n0ODU). Required for Spotify Saves.',
+              },
+            },
+            {
               name: 'masterAudio',
               type: 'upload',
               relationTo: 'media',
@@ -252,6 +268,52 @@ export const Songs: CollectionConfig = {
                       },
                     },
                     { name: 'iswc', type: 'text', label: 'ISWC Code' },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'durationText',
+                      type: 'text',
+                      label: 'Duration (MM:SS)',
+                      admin: {
+                        placeholder: '5:18',
+                      },
+                      hooks: {
+                        beforeValidate: [
+                          ({ value, siblingData }) => {
+                            if (typeof value === 'string') {
+                              const [mins, secs] = value.split(':').map(Number)
+                              if (!isNaN(mins) && !isNaN(secs)) {
+                                siblingData.duration = mins * 60 + secs
+                              }
+                            } else if (!value) {
+                              siblingData.duration = null
+                            }
+                            return value
+                          },
+                        ],
+                        afterRead: [
+                          ({ siblingData }) => {
+                            const seconds = siblingData?.duration
+                            if (typeof seconds === 'number') {
+                              const mm = Math.floor(seconds / 60)
+                              const ss = Math.round(seconds % 60)
+                                .toString()
+                                .padStart(2, '0')
+                              return `${mm}:${ss}`
+                            }
+                            return null
+                          },
+                        ],
+                      },
+                    },
+                    {
+                      name: 'duration',
+                      type: 'number',
+                      admin: { hidden: true },
+                    },
                   ],
                 },
                 // --- DYNAMIC BPM/KEY LOGIC ---

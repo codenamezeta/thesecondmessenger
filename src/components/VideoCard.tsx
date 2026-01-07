@@ -21,8 +21,8 @@ export const VideoCard = ({ video }: { video: PlayableMedia }) => {
       <div className="relative aspect-square bg-surface">
         {video.coverArt && typeof video.coverArt === 'object' && video.coverArt.url ? (
           <Image
-            src="placeholder.png"
-            alt="Video"
+            src={video.coverArt.url}
+            alt="alt"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"

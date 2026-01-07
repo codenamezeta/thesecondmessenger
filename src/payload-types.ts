@@ -72,6 +72,7 @@ export interface Config {
     songs: Song;
     releases: Release;
     playlists: Playlist;
+    presaves: Presave;
     media: Media;
     categories: Category;
     users: User;
@@ -101,6 +102,7 @@ export interface Config {
     songs: SongsSelect<false> | SongsSelect<true>;
     releases: ReleasesSelect<false> | ReleasesSelect<true>;
     playlists: PlaylistsSelect<false> | PlaylistsSelect<true>;
+    presaves: PresavesSelect<false> | PresavesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -434,6 +436,10 @@ export interface Song {
    * The 11-character ID (e.g., dQw4w9WgXcQ). Required for the Global Player.
    */
   youtubeId?: string | null;
+  /**
+   * The song ID (e.g., 5VaIDMKwaYXgELXy6n0ODU). Required for Spotify Saves.
+   */
+  spotifyId?: string | null;
   masterAudio?: (number | null) | Media;
   /**
    * Upload synchronized files for the deep-dive player.
@@ -448,6 +454,8 @@ export interface Song {
     | null;
   isrc?: string | null;
   iswc?: string | null;
+  durationText?: string | null;
+  duration?: number | null;
   isDynamic?: boolean | null;
   bpm?: number | null;
   bpmEnd?: number | null;
@@ -972,6 +980,20 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "presaves".
+ */
+export interface Presave {
+  id: number;
+  email: string;
+  spotifyId?: string | null;
+  refreshToken: string;
+  campaigns?: (number | Song)[] | null;
+  status?: ('active' | 'revoked') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1179,6 +1201,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'playlists';
         value: number | Playlist;
+      } | null)
+    | ({
+        relationTo: 'presaves';
+        value: number | Presave;
       } | null)
     | ({
         relationTo: 'media';
@@ -1431,6 +1457,7 @@ export interface SongsSelect<T extends boolean = true> {
   relatedReleases?: T;
   inPlaylists?: T;
   youtubeId?: T;
+  spotifyId?: T;
   masterAudio?: T;
   stems?:
     | T
@@ -1442,6 +1469,8 @@ export interface SongsSelect<T extends boolean = true> {
       };
   isrc?: T;
   iswc?: T;
+  durationText?: T;
+  duration?: T;
   isDynamic?: T;
   bpm?: T;
   bpmEnd?: T;
@@ -1524,6 +1553,19 @@ export interface PlaylistsSelect<T extends boolean = true> {
   coverArt?: T;
   tracks?: T;
   isFeatured?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "presaves_select".
+ */
+export interface PresavesSelect<T extends boolean = true> {
+  email?: T;
+  spotifyId?: T;
+  refreshToken?: T;
+  campaigns?: T;
+  status?: T;
   updatedAt?: T;
   createdAt?: T;
 }

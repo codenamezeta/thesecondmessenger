@@ -39,7 +39,10 @@ const config = {
         accent: 'hsl(var(--color-accent) / <alpha-value>)',
 
         main: 'hsl(var(--bg-main) / <alpha-value>)', // Maps bg-background to your main variable
-        surface: 'hsl(var(--bg-surface) / <alpha-value>)', // Maps bg-surface
+        surface: {
+          DEFAULT: 'hsl(var(--bg-surface) / <alpha-value>)', // Maps bg-surface
+          foreground: 'hsl(var(--text-surface) / <alpha-value>)', // Text on surface
+        },
 
         // Shadcn/UI Standard Mappings (Required for UI components)
         border: 'hsl(var(--border) / <alpha-value>)',
@@ -75,7 +78,7 @@ const config = {
       fontFamily: {
         heading: ['var(--font-heading)'],
         body: ['var(--font-body)'],
-        mono: ['var(--font-geist-mono)'], // Keep for admin bar/code
+        mono: ['var(--font-mono)'], // Keep for admin bar/code
         sans: ['var(--font-geist-sans)'],
       },
 
@@ -108,12 +111,15 @@ const config = {
   },
   plugins: [
     tailwindcssAnimate,
-    typography,
+    // typography,
     plugin(function ({ addVariant }) {
       // Add your custom theme variants here
+      addVariant('portrait', '@media (orientation: portrait)')
+      addVariant('landscape', '@media (orientation: landscape)')
       addVariant('light', '[data-theme="light"] &')
-      addVariant('tan', '[data-theme="tan"] &')
+      addVariant('dark', '[data-theme="dark"] &')
       addVariant('interstellar', '[data-theme="interstellar"] &')
+      addVariant('kelly_come_home', '[data-theme="kelly_come_home"] &')
       // You can add more themes easily by duplicating the line above
     }),
   ],

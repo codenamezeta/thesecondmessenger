@@ -11,6 +11,7 @@ import { Posts } from './collections/Posts'
 import { Songs } from './collections/Songs'
 import { Releases } from './collections/Releases'
 import { Playlists } from './collections/Playlists'
+import { Presaves } from './collections/Presaves'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
@@ -85,7 +86,7 @@ export default buildConfig({
       connectionString: process.env.POSTGRES_URL || '',
     },
   }),
-  collections: [Pages, Posts, Songs, Releases, Playlists, Media, Categories, Users],
+  collections: [Pages, Posts, Songs, Releases, Playlists, Presaves, Media, Categories, Users],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
   plugins: [

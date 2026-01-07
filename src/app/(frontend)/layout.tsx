@@ -13,9 +13,9 @@ import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { draftMode } from 'next/headers'
 
 import { PlayerProvider } from '@/context/PlayerContext'
-import { GlobalPlayer } from '@/components/GlobalPlayer' // <--- CHANGED IMPORT
+import { GlobalPlayer } from '@/components/GlobalPlayer'
 
-import { Rajdhani, Space_Grotesk } from 'next/font/google'
+import { Rajdhani, Space_Grotesk, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
 
@@ -37,13 +37,21 @@ const spaceGrotesk = Space_Grotesk({
   variable: '--font-body',
 })
 
+const jetBrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-mono',
+})
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { isEnabled } = await draftMode()
 
   return (
     <html
-      className={cn(`${rajdhani.variable} ${spaceGrotesk.variable}`)}
+      className={cn(`${rajdhani.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable}`)}
       lang="en"
+      data-scroll-behavior="smooth"
+      data-theme="system"
       suppressHydrationWarning
     >
       <head>

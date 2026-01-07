@@ -16,6 +16,7 @@ export const revalidatePost: CollectionAfterChangeHook<Post> = ({
       payload.logger.info(`Revalidating post at path: ${path}`)
 
       revalidatePath(path)
+      // @ts-expect-error Next.js 16 types incorrectly require a second argument
       revalidateTag('posts-sitemap')
     }
 
@@ -26,6 +27,7 @@ export const revalidatePost: CollectionAfterChangeHook<Post> = ({
       payload.logger.info(`Revalidating old post at path: ${oldPath}`)
 
       revalidatePath(oldPath)
+      // @ts-expect-error Next.js 16 types incorrectly require a second argument
       revalidateTag('posts-sitemap')
     }
   }
@@ -37,6 +39,7 @@ export const revalidateDelete: CollectionAfterDeleteHook<Post> = ({ doc, req: { 
     const path = `/posts/${doc?.slug}`
 
     revalidatePath(path)
+    // @ts-expect-error Next.js 16 types incorrectly require a second argument
     revalidateTag('posts-sitemap')
   }
 

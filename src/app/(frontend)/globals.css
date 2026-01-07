@@ -14,10 +14,14 @@
   --color-secondary: 14 68% 59%; /* #dd7250 */
   --color-accent: 335 100% 50%; /* #ff006a */
 
+  /* Layer 1: The Main Canvas (Page Background) */
   --bg-main: 150 14% 3%; /* #060807 */
+  /* Layer 2: Structural Elements (Sidebars, Headers, Sticky Navs) */
   --bg-surface: 160 6% 19%; /* #2d3331 */
+  --text-surface: 0 0% 88%; /* Text on surface */
 
   --text-body: 0 0% 88%; /* #e0e0e0 */
+  --text-inverse: 150 14% 3%; /* Text for inverse backgrounds */
   --text-muted: 0 0% 63%; /* #a0a0a0 */
 
   /* UI Defaults (Borders/Inputs) */
@@ -26,20 +30,27 @@
   --ring: 156 53% 25%;
   --radius: 0.5rem;
 
+  /* Layer 3: Isolated Content (Cards, Modals, Popovers) */
   --card: 160 6% 19%;
   --card-foreground: 0 0% 88%;
   --popover: 160 6% 19%;
   --popover-foreground: 0 0% 88%;
+
+  /* Status & Feedback */
   --muted-foreground: 0 0% 63%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
 
   --font-heading: 'Rajdhani', sans-serif;
   --font-body: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 /*  THEMES! */
 [data-theme='light'] {
   --bg-main: 0 0% 88%;
   --bg-surface: 0 0% 11%;
+  --text-surface: 0 0% 88%;
   --text-body: 0 0% 0%;
   --text-muted: 0 0% 52%;
   --color-primary: 182 100% 18%;
@@ -56,11 +67,14 @@
   --popover: 0 0% 100%;
   --popover-foreground: 0 0% 0%;
   --muted-foreground: 0 0% 52%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
 }
 
 [data-theme='kelly_come_home'] {
   --bg-main: 30 7% 95%; /* #F2F1F0 */
   --bg-surface: 21 16% 52%; /* #987E70 */
+  --text-surface: 30 7% 95%; /* Light text on the dark surface */
   --text-body: 20 100% 5%; /* #180800 */
   --text-muted: 30 21% 78%; /* #d3c7bb */
   --color-primary: 11 70% 26%; /* #732514 */
@@ -76,6 +90,8 @@
   --popover: 34 41% 29%;
   --popover-foreground: 328 27% 89%;
   --muted-foreground: 0 0% 52%;
+  --destructive: 11 70% 26%;
+  --destructive-foreground: 33 85% 85%;
 }
 
 /* "Interstellar" Theme */
@@ -85,6 +101,7 @@
   --color-accent: 340 93% 16%; /* #4e031c */
   --bg-main: 229 84% 5%; /* #020617 (Deep Blue Space) */
   --bg-surface: 217 33% 17%; /* #1e293b */
+  --text-surface: 210 40% 98%;
 
   --text-body: 210 40% 98%;
   --text-muted: 215 20% 65%;
@@ -98,6 +115,8 @@
   --popover: 217 33% 17%;
   --popover-foreground: 210 40% 98%;
   --muted-foreground: 215 20% 65%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
 }
 
 @layer base {
@@ -110,11 +129,11 @@
   body {
     font-family: var(--font-body);
     font-size: var(--base);
-    line-height: 1.5; /* Standard UI line height */
     -webkit-font-smoothing: antialiased;
     /* padding-top: 5vh; */
     width: 100vw;
     min-height: 100vh;
+    padding-top: calc(var(--main-nav-bar-height)+var(--admin-bar-height, 0px));
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
@@ -167,12 +186,17 @@
     /* padding-right: 0.5rem; */
   }
 
+  .invert {
+    filter: invert(0.8);
+  }
+
   /* --- THE RICH TEXT WRAPPER ---
      Apply this class to the container of Blog Posts, Bios, or Lyrics.
      This restores your "Space Industrial" layout logic ONLY where you want it.
   */
-  .rich-text {
-    @apply text-lg;
+
+  .rich-text > :first-child {
+    margin-top: 0;
   }
 
   .rich-text h1,
@@ -183,33 +207,32 @@
   .rich-text h6 {
     font-family: var(--font-heading);
     color: hsl(var(--color-primary));
-    margin-top: 2em; /* Margin is relative to font size now */
+    margin-top: 1em;
     margin-bottom: 0em;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    font-weight: 600;
     line-height: 1.1;
   }
 
   /* Fluid Typography (Scoped to content) */
   .rich-text h1 {
-    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-size: clamp(2.5rem, 4vw, 4rem);
   }
   .rich-text h2 {
-    font-size: clamp(2rem, 4vw, 3rem);
+    font-size: clamp(2rem, 3vw, 3rem);
   }
   .rich-text h3 {
-    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-size: clamp(1.75rem, 2vw, 2.5rem);
   }
 
   .rich-text p {
     max-width: clamp(45ch, 70ch, 80ch);
-    margin-bottom: 1.2em; /* Proper paragraph spacing */
+    margin-bottom: 0.5em; /* Proper paragraph spacing */
   }
 
   .rich-text ol,
   .rich-text ul {
-    margin: 1.5em 0;
+    margin: 0.75em 0;
     padding-left: 1.5em;
     max-width: 70ch;
   }

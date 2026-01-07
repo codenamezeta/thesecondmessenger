@@ -239,16 +239,6 @@ export const GlobalPlayer = () => {
     safePlayerCall((player) => player.seekTo(newTime, true))
   }
 
-  const formatTime = (seconds: number) => {
-    if (!seconds) return '0:00'
-    const date = new Date(seconds * 1000)
-    const hh = date.getUTCHours()
-    const mm = date.getUTCMinutes()
-    const ss = date.getUTCSeconds().toString().padStart(2, '0')
-    if (hh) return `${hh}:${mm.toString().padStart(2, '0')}:${ss}`
-    return `${mm}:${ss}`
-  }
-
   const closePlayer = () => {
     setIsPlaying(false)
     setControlsVisible(false)
@@ -327,7 +317,6 @@ export const GlobalPlayer = () => {
           setIsSeeking={setIsSeeking}
           currentTime={currentTime}
           duration={duration}
-          formatTime={formatTime}
           toggleVideo={toggleVideo}
           playNext={playNext}
           playPrevious={playPrevious}

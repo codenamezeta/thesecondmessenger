@@ -19,6 +19,7 @@ import {
   VolumeX,
 } from 'lucide-react'
 import { cn } from '@/utilities/ui'
+import formatTime from '@/utilities/formatTime'
 
 interface BottomBarProps {
   currentSong: any
@@ -41,7 +42,6 @@ interface BottomBarProps {
   setIsSeeking: (seeking: boolean) => void
   currentTime: number
   duration: number
-  formatTime: (seconds: number) => string
   onClose: () => void
   playNext: () => void
   playPrevious: () => void
@@ -67,7 +67,6 @@ export const BottomBar = ({
   setIsSeeking,
   currentTime,
   duration,
-  formatTime,
   onClose,
   playNext,
   playPrevious,
@@ -219,9 +218,9 @@ export const BottomBar = ({
           </div>
           {/* Time display */}
           <div className="hidden md:flex self-center text-[0.6em] font-mono text-muted gap-1">
-            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(currentTime as any)}</span>
             <span className="opacity-75">/</span>
-            <span>{formatTime(duration)}</span>
+            <span>{formatTime(duration as any)}</span>
           </div>
         </div>
 
