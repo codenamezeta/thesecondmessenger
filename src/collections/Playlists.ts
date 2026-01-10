@@ -4,6 +4,9 @@ import { formatSlug } from './utils/formatSlug'
 
 export const Playlists: CollectionConfig = {
   slug: 'playlists',
+  access: {
+    read: () => true,
+  },
   admin: {
     useAsTitle: 'title',
   },

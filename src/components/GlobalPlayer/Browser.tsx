@@ -96,7 +96,7 @@ export const Browser = ({
       id="media_player_browser"
       className={cn(
         // AUDIO/HIDDEN (Default): Hidden but mounted (for audio playback)
-        'opacity-0 translate-y-full w-full container h-full flex flex-col flex-auto border border-white/20 rounded-xl transition-all duration-700 ease-in-out overflow-hidden bg-main/50 backdrop-blur-lg pointer-events-auto',
+        'opacity-0 translate-y-full w-full container h-full flex flex-col flex-auto border border-white/20 rounded-xl transition-all duration-700 ease-in-out overflow-hidden bg-background/50 backdrop-blur-lg pointer-events-auto',
         // THEATER MODE
         isVideoEnabled && 'translate-y-0 opacity-100',
         // MINI MODE: (Bottom right corner)
@@ -105,7 +105,7 @@ export const Browser = ({
       )}
     >
       {/* Header over all panels */}
-      <div className="flex items-center justify-center border-b border-white/10 bg-main/50 px-4 py-2 transition-all duration-500 ease-in-out">
+      <div className="flex items-center justify-center border-b border-white/10 bg-background/50 px-4 py-2 transition-all duration-500 ease-in-out">
         {/* Library Toggle */}
         <button
           onClick={() => setIsLibraryPanelOpen((prev) => !prev)}

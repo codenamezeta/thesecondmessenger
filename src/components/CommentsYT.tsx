@@ -6,6 +6,8 @@ import Script from 'next/script'
 import { ThumbsUp, MessageSquare, Loader2, LogIn, Send, Reply as ReplyIcon } from 'lucide-react'
 import { postCommentAction, replyToCommentAction } from '@/actions/youtube'
 import { cn } from '@/utilities/ui'
+import { Button } from './ui/button'
+import { Input } from './ui/input'
 
 interface CommentSnippet {
   textDisplay: string
@@ -226,19 +228,19 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
       </div>
       <div className="flex-1 space-y-1">
         <div className="flex items-baseline gap-2">
-          <span className="font-bold text-sm text-white">{snippet.authorDisplayName}</span>
-          <span className="text-xs text-muted">{formatDate(snippet.publishedAt)}</span>
+          <span className="font-bold text-sm text-foreground">{snippet.authorDisplayName}</span>
+          <span className="text-xs text-muted-foreground">{formatDate(snippet.publishedAt)}</span>
         </div>
-        <p className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">
+        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
           {snippet.textDisplay}
         </p>
-        <div className="flex items-center gap-4 pt-1">
-          <div className="flex items-center gap-1 text-xs text-muted">
+        <div className="flex items-center gap-2 pb-2">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <ThumbsUp size={12} />
             <span>{snippet.likeCount > 0 ? snippet.likeCount : ''}</span>
           </div>
           {!isReply && (
-            <button
+            <Button
               onClick={() => {
                 if (!user) {
                   login()
@@ -247,29 +249,33 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
                 setReplyingToId(replyingToId === commentId ? null : commentId)
                 setReplyText('')
               }}
-              className="flex items-center gap-1 text-xs text-muted hover:text-white transition-colors"
+              variant="link"
+              size="sm"
+              className="flex items-center gap-1  p-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               <ReplyIcon size={12} /> Reply
-            </button>
+            </Button>
           )}
         </div>
         {replyingToId === commentId && (
           <div className="mt-3 flex gap-2">
-            <input
+            <Input
               autoFocus
               type="text"
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               placeholder="Write a reply..."
-              className="flex-1 bg-transparent border-b border-white/20 focus:border-primary outline-none py-1 text-sm text-white placeholder:text-muted"
+              className="flex-1 bg-transparent rounded-[3px] border-r-0 border-t-0 border-b border-border focus:border-none focus:bg-input outline-none py-2 text-sm text-foreground placeholder:text-muted-foreground"
             />
-            <button
+            <Button
               onClick={() => handleReplySubmit(commentId)}
               disabled={!replyText.trim()}
-              className="text-primary hover:text-white disabled:opacity-50 text-xs uppercase font-bold"
+              variant="outline"
+              size="sm"
+              className="text-xs flex items-center gap-2 uppercase font-bold"
             >
-              Send
-            </button>
+              Submit
+            </Button>
           </div>
         )}
       </div>
@@ -280,19 +286,21 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
     <aside className="w-full mx-auto">
       <Script src="https://accounts.google.com/gsi/client" onLoad={handleGsiLoad} />
 
-      <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
-        <h3 className="text-xl font-heading text-white uppercase tracking-wider flex items-center gap-2">
-          <MessageSquare size={20} className="text-primary" />
+      <div className="flex items-center justify-between mb-6 border-b border-border pb-4">
+        <h3 className="text-xl font-heading text-foreground uppercase tracking-wider flex items-center gap-2">
+          <MessageSquare size={20} className="text-accent" />
           Comms Channel
         </h3>
         {!commentsDisabled &&
           (!user ? (
-            <button
+            <Button
               onClick={login}
-              className="text-xs flex items-center gap-2 px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 border border-white/10 transition-colors text-muted hover:text-white"
+              variant="outline"
+              size="sm"
+              className="text-xs flex items-center gap-2"
             >
               <LogIn size={14} /> Sign In to Transmit
-            </button>
+            </Button>
           ) : (
             <div className="flex items-center gap-2">
               {user.profileImageUrl && (
@@ -304,7 +312,7 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
                   className="rounded-full"
                 />
               )}
-              <span className="text-xs text-white">{user.displayName}</span>
+              <span className="text-xs text-foreground">{user.displayName}</span>
             </div>
           ))}
       </div>
@@ -322,32 +330,45 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
             />
           )}
           <div className="flex-1 flex gap-2">
-            <input
+            <Input
               type="text"
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Public comms channel open & secure. What's your message?"
-              className="flex-1 bg-transparent border-b border-white/20 focus:border-primary outline-none py-2 text-sm text-white placeholder:text-muted transition-colors"
+              placeholder="Hailing frequencies open. What's your message?"
+              className="flex-1 bg-transparent border-x-0 border-t-0 border-b border-border focus:border-none focus:bg-input outline-none py-2 text-sm text-foreground placeholder:text-muted-foreground"
             />
-            <button
+            <Button
               onClick={postComment}
               disabled={!newComment.trim() || isPosting}
-              className="p-2 text-muted hover:text-primary disabled:opacity-50 transition-colors"
+              variant="ghost"
+              size="sm"
+              className="text-xs flex items-center gap-2 uppercase font-bold"
             >
-              {isPosting ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
-            </button>
+              {isPosting ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />} Send
+            </Button>
           </div>
         </div>
       )}
 
       {/* List */}
       {commentsDisabled ? (
-        <div className="flex justify-center py-8 text-muted italic border border-white/5 rounded bg-white/5">
-          Transmission channel closed (Comments are disabled).
+        <div className="flex justify-center py-8 text-muted-foreground italic font-mono text-center rounded bg-background">
+          Hailing frequencies closed.
+          <br />
+          (YouTube disables comments for audio only releases.)
         </div>
       ) : isLoading && comments.length === 0 ? (
         <div className="flex justify-center py-12">
           <Loader2 className="animate-spin text-primary" />
+        </div>
+      ) : comments.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center space-y-3 opacity-60">
+          <MessageSquare size={32} className="text-muted-foreground" />
+          <p className="text-sm text-muted-foreground font-mono">
+            No signals detected on this frequency.
+            <br />
+            Be the first to transmit.
+          </p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -375,12 +396,14 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
       )}
 
       {nextPageToken && (
-        <button
+        <Button
           onClick={() => fetchComments(nextPageToken)}
-          className="mt-8 w-full py-2 text-xs uppercase tracking-widest text-muted hover:text-white border border-white/5 hover:border-white/20 rounded transition-all"
+          variant="outline"
+          size="lg"
+          className="mt-8 w-full py-2 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground border border-border hover:border-border/20 rounded-lg transition-all"
         >
           Load More Transmissions
-        </button>
+        </Button>
       )}
     </aside>
   )

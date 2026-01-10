@@ -38,12 +38,12 @@ export const ThemeSelector: React.FC = () => {
     <Select onValueChange={onThemeChange} value={value}>
       <SelectTrigger
         aria-label="Select a theme"
-        className="w-auto bg-surface text-body gap-2 border border-body"
+        className="w-auto bg-background text-foreground gap-2 border border-input"
       >
         <Palette />
         <SelectValue placeholder="Theme" />
       </SelectTrigger>
-      <SelectContent className="bg-card">
+      <SelectContent className="bg-card text-card-foreground border border-border rounded-lg">
         <SelectItem value="system">Auto</SelectItem>
         <SelectItem value="light">Light</SelectItem>
         <SelectItem value="dark">Dark</SelectItem>

@@ -33,40 +33,44 @@ const config = {
     extend: {
       // --- THEME ENGINE MAPPING ---
       colors: {
-        // Semantic variables linked to globals.css
-        primary: 'hsl(var(--color-primary) / <alpha-value>)',
-        secondary: 'hsl(var(--color-secondary) / <alpha-value>)',
-        accent: 'hsl(var(--color-accent) / <alpha-value>)',
-
-        main: 'hsl(var(--bg-main) / <alpha-value>)', // Maps bg-background to your main variable
-        surface: {
-          DEFAULT: 'hsl(var(--bg-surface) / <alpha-value>)', // Maps bg-surface
-          foreground: 'hsl(var(--text-surface) / <alpha-value>)', // Text on surface
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
         },
-
-        // Shadcn/UI Standard Mappings (Required for UI components)
-        border: 'hsl(var(--border) / <alpha-value>)',
-        input: 'hsl(var(--input) / <alpha-value>)',
-        ring: 'hsl(var(--ring) / <alpha-value>)',
-        foreground: 'hsl(var(--text-body) / <alpha-value>)', // Maps text-foreground to your body text
-
-        // Status colors
-        success: '#10b981',
-        error: '#ef4444',
-        warning: '#f59e0b',
-
-        // Keep these if your UI components rely on specific hsl vars
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
         muted: {
-          DEFAULT: 'hsl(var(--text-muted) / <alpha-value>)',
+          DEFAULT: 'hsl(var(--muted))',
           foreground: 'hsl(var(--muted-foreground))',
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
         },
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
+        sidebar: {
+          DEFAULT: 'hsl(var(--sidebar-background))',
+          foreground: 'hsl(var(--sidebar-foreground))',
+          primary: 'hsl(var(--sidebar-primary))',
+          'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
+          accent: 'hsl(var(--sidebar-accent))',
+          'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+          border: 'hsl(var(--sidebar-border))',
+          ring: 'hsl(var(--sidebar-ring))',
         },
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',

@@ -1,7 +1,8 @@
 //* src/collections/Songs.ts
 import { CollectionConfig } from 'payload'
 import { formatSlug } from './utils/formatSlug'
-import { parseBuffer } from 'music-metadata'
+import { parseStream } from 'music-metadata'
+import { getServerSideURL } from '../utilities/getURL'
 import {
   lexicalEditor,
   HeadingFeature,
@@ -74,25 +75,41 @@ export const Songs: CollectionConfig = {
           // 2. Fetch the stream (Works for Local or Vercel Blob/S3)
           let fileUrl = mediaFile.url
           if (fileUrl.startsWith('/')) {
-            const protocol = req.protocol ? req.protocol.replace(':', '') : 'http'
-            const host = req.headers.get('host') || 'localhost:3000'
-            fileUrl = `${protocol}://${host}${fileUrl}`
+            fileUrl = `${getServerSideURL()}${fileUrl}`
           }
 
           console.log('🎵 [Songs Hook] Fetching URL:', fileUrl)
           const response = await fetch(fileUrl)
+
+          if (!response.ok) {
+            console.error(
+              `🎵 [Songs Hook] Failed to fetch media file: ${response.status} ${response.statusText}`,
+            )
+            return data
+          }
+
           if (!response.body) {
             console.warn('🎵 [Songs Hook] Fetch response has no body.')
             return data
           }
 
-          // 3. Parse Metadata using music-metadata
-          // We cast the web stream to a Node stream if necessary, or just read the buffer
-          // For simplicity/compatibility, we can read the buffer
-          const arrayBuffer = await response.arrayBuffer()
-          const buffer = new Uint8Array(arrayBuffer)
+          // 3. Parse Metadata using music-metadata stream
+          // We stream directly from the Fetch response, avoiding loading the whole file into RAM
+          // @ts-ignore - response.body is a ReadableStream, music-metadata expects Node stream or similar
+          // but newer versions often handle web streams or we might need a tiny adapter if it strictly requires Node stream.
+          // However, for many environments, this just works or we can use a small utility if it fails.
+          // Let's try passing the body first. If it fails, we might need to cast/transform.
+          // Actually, music-metadata `parseStream` takes a Node.js Readable stream.
+          // Fetch body is a Web ReadableStream. We can use `Readable.fromWeb(response.body)` if Node 16+
 
-          const metadata = await parseBuffer(buffer, mediaFile.mimeType || undefined)
+          const { Readable } = await import('stream')
+          // @ts-ignore
+          const nodeStream = Readable.fromWeb(response.body)
+
+          const metadata = await parseStream(nodeStream, {
+            mimeType: mediaFile.mimeType || undefined,
+          })
+
           console.log('🎵 [Songs Hook] Metadata extracted:', {
             title: metadata.common.title,
             composers: metadata.common.composer,
@@ -122,11 +139,61 @@ export const Songs: CollectionConfig = {
           }
         } catch (error) {
           console.error('🎵 [Songs Hook] Error extracting metadata:', error)
+          // Ensure we don't crash the upload even if metadata fails
+        }
+
+        return data
+      },
+      // --- HOOK: PULL PARENT RELEASE DATA ---
+      // If the song is being saved and lacks a date/cover, try to find its parent Release and copy them.
+      async ({ data, req, originalDoc }) => {
+        if (!data) return data
+        try {
+          // We can only look up parents for existing songs (need an ID)
+          const songId =
+            originalDoc?.id || ((req as any).params ? (req as any).params.id : undefined)
+
+          if (!songId) return data
+
+          // Only search if we are missing fields
+          if (!data.releaseDate || !data.coverArt) {
+            const { docs: releases } = await req.payload.find({
+              collection: 'releases',
+              where: {
+                tracks: {
+                  equals: songId,
+                },
+              },
+              limit: 1,
+              depth: 0,
+            })
+
+            if (releases.length > 0) {
+              const release = releases[0] as any
+
+              if (!data.releaseDate && release.releaseDate) {
+                data.releaseDate = release.releaseDate
+                req.payload.logger.info(
+                  `🎵 [Songs Hook] Pulled release date from "${release.title}"`,
+                )
+              }
+
+              if (!data.coverArt && release.coverArt) {
+                const artId =
+                  typeof release.coverArt === 'object' ? release.coverArt.id : release.coverArt
+                data.coverArt = artId
+                req.payload.logger.info(`🎵 [Songs Hook] Pulled cover art from "${release.title}"`)
+              }
+            }
+          }
+        } catch (error) {
+          req.payload.logger.error(`🎵 [Songs Hook] Failed to pull parent release data: ${error}`)
         }
 
         return data
       },
     ],
+    afterChange: [],
   },
   fields: [
     {
@@ -141,7 +208,7 @@ export const Songs: CollectionConfig = {
       admin: {
         readOnly: true, // You don't edit this manually
         position: 'sidebar', // Tucks it away nicely
-        description: 'Auto-synced from the related Release for the list view.',
+        description: 'Auto-synced from the related Release.',
       },
     },
     {
@@ -150,6 +217,15 @@ export const Songs: CollectionConfig = {
       admin: { position: 'sidebar' },
       hooks: {
         beforeValidate: [formatSlug('title')],
+      },
+    },
+    {
+      name: 'releaseDate',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        readOnly: true, // <--- Locked down
+        description: 'Auto-synced from the related Release.',
       },
     },
     {

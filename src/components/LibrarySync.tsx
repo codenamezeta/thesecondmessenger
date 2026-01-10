@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { Check, Loader2, Save, Youtube, Music } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Check, Loader2, Save } from 'lucide-react'
+import { FaSpotify, FaYoutube } from 'react-icons/fa'
 import { cn } from '@/utilities/ui'
 import { getSpotifyAuthUrl, likeYouTubeVideo, subscribeToChannel } from '@/actions/library-sync'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -102,7 +103,7 @@ export const LibrarySync = ({
   // --- RENDER: ALREADY CONNECTED ---
   if (status === 'connected') {
     return (
-      <div className="bg-surface/5 border border-primary/30 rounded-lg p-6 relative overflow-hidden">
+      <div className="bg-muted/5 border border-primary/30 rounded-lg p-6 relative overflow-hidden">
         <h4 className="text-white font-heading uppercase tracking-widest mb-2 flex items-center gap-2 text-xs">
           <Check size={16} className="text-primary" />
           Status: {isReleased ? 'Link Active' : 'Pre-Save Active'}
@@ -127,7 +128,9 @@ export const LibrarySync = ({
 
   // --- RENDER: DEFAULT ---
   return (
-    <div className="bg-surface/5 border border-white/10 rounded-lg p-6 relative overflow-hidden group space-y-3">
+    <div className="bg-background border border-primary/20 rounded-lg p-6 relative overflow-hidden group space-y-3">
+      {/* Decorative "Scanner" Line */}
+      <div className="absolute inset-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
       <h4 className="text-white font-heading uppercase tracking-widest mb-2 flex items-center gap-2 text-xs">
         <Save size={16} className="text-primary" />
         {isReleased ? 'Library Sync' : 'Pre-Save Protocol'}
@@ -139,13 +142,14 @@ export const LibrarySync = ({
         disabled={status === 'loading'}
         className={cn(
           'w-full py-3 px-4 rounded font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all',
-          'bg-[#1DB954aa] hover:bg-[#1ed760] text-black',
+          // 'bg-[#1DB954aa] hover:bg-[#1ed760] text-black',
+          'text-foreground border border-primary/20 bg-background hover:bg-[#1ed760] hover:text-black',
         )}
       >
         {status === 'loading' && activePlatform === 'spotify' ? (
           <Loader2 size={16} className="animate-spin" />
         ) : (
-          <Music size={16} />
+          <FaSpotify size={20} />
         )}
         {isReleased ? 'Save on Spotify' : 'Pre-Save on Spotify'}
       </button>
@@ -157,19 +161,19 @@ export const LibrarySync = ({
           disabled={status === 'loading'}
           className={cn(
             'w-full py-3 px-4 rounded font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all',
-            'bg-[#FF0000] hover:bg-red-600 text-white',
+            'bg-background hover:bg-[#FF0000] text-foreground border border-primary/20 hover:text-white',
           )}
         >
           {status === 'loading' && activePlatform === 'youtube' ? (
             <Loader2 size={16} className="animate-spin" />
           ) : (
-            <Youtube size={16} />
+            <FaYoutube size={20} />
           )}
           {isReleased ? 'Like on YouTube' : 'Subscribe on YouTube'}
         </button>
       )}
 
-      <p className="text-[9px] text-muted/50 text-center uppercase tracking-widest">
+      <p className="text-[9px] text-muted-foreground text-center uppercase tracking-widest">
         - Neural Link Secured -
       </p>
     </div>
