@@ -4,7 +4,7 @@ import redirects from './redirects.js'
 
 const NEXT_PUBLIC_SERVER_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
   ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-  : undefined || process.env.__NEXT_PRIVATE_ORIGIN || 'http://localhost:3000'
+  : undefined || process.env.__NEXT_PRIVATE_ORIGIN || 'http://localhost:8080'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -17,7 +17,7 @@ const nextConfig = {
       {
         protocol: 'http',
         hostname: 'localhost',
-        port: '3000',
+        // port: '8080',
         // Remove 'pathname' restriction for localhost.
         // It saves you from debugging if the path is /media or /api/media
         pathname: '/**',
@@ -47,6 +47,17 @@ const nextConfig = {
   },
   reactStrictMode: true,
   redirects,
+  // Optimize resource preloading to reduce console warnings
+  experimental: {
+    optimizePackageImports: ['@payloadcms/ui', '@payloadcms/richtext-lexical'],
+  },
+  // Reduce unnecessary preloading
+  onDemandEntries: {
+    // Period (in ms) where the server will keep pages in the buffer
+    maxInactiveAge: 25 * 1000,
+    // Number of pages that should be kept simultaneously without being disposed
+    pagesBufferLength: 2,
+  },
 }
 
 export default withPayload(nextConfig, { devBundleServerPackages: false })

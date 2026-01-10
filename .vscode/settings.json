@@ -1,57 +1,180 @@
 {
-  "npm.packageManager": "pnpm",
+  "editor.tabSize": 2,
+  // * I like Fira Code, Hermit, or JetBrains Mono
+  "editor.fontFamily": "Fira Code",
+  "editor.fontSize": 14,
+  "editor.wordWrap": "on",
+  "editor.formatOnSave": true,
+  "editor.fontLigatures": true,
+  "cSpell.userWords": [
+    "alexa",
+    "allowfullscreen",
+    "Ashly",
+    "bandcore",
+    "Bernardino",
+    "browserslist",
+    "cloudinary",
+    "codenamezeta",
+    "Covina",
+    "crossorigin",
+    "Cucamonga",
+    "Dimas",
+    "ecommerce",
+    "Ethereum",
+    "Fabba",
+    "Fira",
+    "flexbox",
+    "Follet",
+    "frameborder",
+    "frontpage",
+    "grammerly",
+    "imgs",
+    "importmap",
+    "linkedin",
+    "Litecoin",
+    "mailchimp",
+    "Merch",
+    "michaelzeta",
+    "middleground",
+    "Monokai",
+    "neumorphism",
+    "Paramore",
+    "photoshoots",
+    "Photoshop",
+    "pinterest",
+    "Playstation",
+    "presale",
+    "Roboto",
+    "rockstar",
+    "Rockstars",
+    "saltrounds",
+    "Sawtelle",
+    "scrollspy",
+    "signin",
+    "signup",
+    "Soleil",
+    "soundcloud",
+    "sveltejs",
+    "Tiktok",
+    "transformative",
+    "tributing",
+    "trinas",
+    "ULTRAWIDE",
+    "Unmutes",
+    "vercel",
+    "vids",
+    "wirelessly",
+    "youtube"
+  ],
+  "dateTime.showDayOfWeek": true,
+  "dateTime.use24HourClock": false,
+  "terminal.integrated.cursorStyle": "line",
+  "terminal.integrated.fontFamily": "MesloLGS NF",
+  "terminal.integrated.fontSize": 12,
+  "terminal.integrated.shellIntegration.enabled": true,
+  "terminal.integrated.defaultProfile.windows": "Git Bash",
+  "terminal.integrated.defaultProfile.linux": "zsh",
+  // "terminal.integrated.fontSize": 16,
+  // "terminal.integrated.fontFamily": "Fira Code",
+  "workbench.iconTheme": "vscode-great-icons",
+  // "material-icon-theme.saturation": 0.67,
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#111",
+    "editor.selectionBackground": "#007f80",
+    "statusBar.background": "#004240",
+    "statusBar.foreground": "#000"
+  },
+  "prettier.jsxSingleQuote": true,
+  "prettier.semi": false,
+  "prettier.singleQuote": true,
+  "better-comments.tags": [
+    {
+      "tag": "!",
+      "color": "#FF2D00",
+      "strikethrough": false,
+      "underline": false,
+      "backgroundColor": "transparent",
+      "bold": true,
+      "italic": false
+    },
+    {
+      "tag": "?",
+      "color": "#3498DB",
+      "strikethrough": false,
+      "underline": false,
+      "backgroundColor": "transparent",
+      "bold": false,
+      "italic": false
+    },
+    {
+      "tag": "//",
+      "color": "#474747",
+      "strikethrough": true,
+      "underline": false,
+      "backgroundColor": "transparent",
+      "bold": false,
+      "italic": false
+    },
+    {
+      "tag": "todo",
+      "color": "#FF8C00",
+      "strikethrough": false,
+      "underline": false,
+      "backgroundColor": "transparent",
+      "bold": false,
+      "italic": false
+    },
+    {
+      "tag": "*",
+      "color": "#98C379",
+      "strikethrough": false,
+      "underline": false,
+      "backgroundColor": "transparent",
+      "bold": false,
+      "italic": false
+    },
+    {
+      "tag": "Doc",
+      "color": "#66361e",
+      "strikethrough": false,
+      "underline": false,
+      "backgroundColor": "transparent",
+      "bold": false,
+      "italic": true
+    },
+    {
+      "tag": "-",
+      "color": "#006666",
+      "strikethrough": false,
+      "underline": false,
+      "backgroundColor": "transparent",
+      "bold": false,
+      "italic": true
+    },
+    {
+      "tag": "@",
+      "color": "#661e56",
+      "strikethrough": false,
+      "underline": false,
+      "backgroundColor": "transparent",
+      "bold": false,
+      "italic": true
+    }
+  ],
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "javascript.format.semicolons": "remove",
+  "typescript.format.semicolons": "remove",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": "explicit"
-    }
-  },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": "explicit"
-    }
-  },
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": "explicit"
-    }
-  },
-  "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
-  },
-  "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
-  },
-  "editor.formatOnSaveMode": "file",
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "[javascript][typescript][typescriptreact]": {
-    "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": "explicit"
-    }
-  },
-  "cSpell.words": [
-    "Bandcamp",
-    "CCOOOYYSSSSS",
-    "Deezer",
-    "disablekb",
-    "heros",
-    "isrc",
-    "iswc",
-    "metallophile",
-    "modestbranding",
-    "payloadcms",
-    "presaves",
-    "Qobuz",
-    "showinfo",
-    "Tracklist",
-    "unrs"
-  ]
+  "workbench.colorTheme": "1-Twilight Wave (Zahids Recommended)",
+  // "geminicodeassist.chat.changeView": "Default diff view",
+  // "geminicodeassist.updateChannel": "Insiders",
+  "terminal.integrated.cursorStyleInactive": "line",
+  "terminal.integrated.cursorBlinking": true,
+  "security.allowedUNCHosts": ["wsl.localhost"],
+  "diffEditor.codeLens": true,
+  // "github.copilot.nextEditSuggestions.enabled": true,
+  // "geminicodeassist.project": "celtic-asset-55k9n",
+  "remote.autoForwardPortsSource": "hybrid",
+  "cSpell.words": ["collapsibles", "payloadcms", "presaves"]
 }

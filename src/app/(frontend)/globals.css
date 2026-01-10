@@ -5,106 +5,158 @@
 :root {
   --base: 1rem;
 
+  --font-heading: 'Rajdhani', sans-serif;
+  --font-body: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
   /* --- THEME VARIABLES (Swappable) --- */
   /* NOTE: Colors are defined as HSL channels (Hue Saturation Lightness) 
      to allow Tailwind opacity modifiers (e.g. bg-primary/50) to work. */
 
-  /* Default Theme (Space Industrial) */
-  --color-primary: 156 53% 71%; /* #8ddbbc */
-  --color-secondary: 14 68% 59%; /* #dd7250 */
-  --color-accent: 335 100% 50%; /* #ff006a */
+  /* - Default Theme (Space Industrial) - */
+  --primary: 156 50% 67%; /* hsl(156 50% 67%) */
+  --primary-foreground: 150 14% 2%; /* hsl(150 14% 3%) */
 
-  /* Layer 1: The Main Canvas (Page Background) */
-  --bg-main: 150 14% 3%; /* #060807 */
-  /* Layer 2: Structural Elements (Sidebars, Headers, Sticky Navs) */
-  --bg-surface: 160 6% 19%; /* #2d3331 */
-  --text-surface: 0 0% 88%; /* Text on surface */
+  --secondary: 14 68% 59%; /* hsl(14 68% 59%) */
+  --secondary-foreground: 150 14% 3%; /* hsl(150 14% 3%) */
 
-  --text-body: 0 0% 88%; /* #e0e0e0 */
-  --text-inverse: 150 14% 3%; /* Text for inverse backgrounds */
-  --text-muted: 0 0% 63%; /* #a0a0a0 */
+  --accent: 335 100% 25%; /* hsl(335 100% 25%) */
+  --accent-foreground: 0 0% 98%; /* hsl(0 0% 98%) */
+
+  --background: 14 15% 0%; /* hsl(14 15% 2%) */
+  --foreground: 0 0% 88%; /* hsl(0 0% 88%) */
+
+  --muted: 14 15% 5%; /* hsl(14 20% 7.5%) */
+  --muted-foreground: 14 5% 33%; /* hsl(14 20% 20%) */
+
+  --card: 160 5% 20%; /* hsl(160 5% 20%) */
+  --card-foreground: 0 0% 85%; /* hsl(0 0% 85%) */
+
+  --popover: 160 10% 50%; /* hsl(160 10% 50%) */
+  --popover-foreground: 0 0% 85%; /* hsl(0 0% 85%) */
+
+  --sidebar-background: 160 5% 0.5%; /* hsl(160 5% 0.5%) */
+  --sidebar-foreground: 0 0% 75%; /* hsl(0 0% 75%) */
+
+  --sidebar-primary: 160 20% 20%; /* hsl(160 20% 20%) */
+  --sidebar-primary-foreground: var(--primary); /* hsl(var(--primary)) */
+
+  --sidebar-accent: 335 20% 20%; /* hsl(335 20% 20%) */
+  --sidebar-accent-foreground: var(--accent); /* hsl(var(--accent)) */
+
+  --text-inverse: 150 14% 3%; /* Text for inverse backgrounds - custom utility kept for now */
 
   /* UI Defaults (Borders/Inputs) */
-  --border: 160 6% 30%;
-  --input: 160 6% 19%;
-  --ring: 156 53% 25%;
-  --radius: 0.5rem;
+  --border: 160 10% 33%; /* hsl(160 10% 33%) */
+  --input: 160 5% 1%; /* hsl(160 5% 1%) */
+  --ring: var(--primary); /* hsl(var(--primary)) */
+  --radius: 0.25rem;
 
-  /* Layer 3: Isolated Content (Cards, Modals, Popovers) */
-  --card: 160 6% 19%;
-  --card-foreground: 0 0% 88%;
-  --popover: 160 6% 19%;
-  --popover-foreground: 0 0% 88%;
-
-  /* Status & Feedback */
-  --muted-foreground: 0 0% 63%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-
-  --font-heading: 'Rajdhani', sans-serif;
-  --font-body: 'Space Grotesk', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --destructive: 0 75% 33%; /* hsl(0 75% 33%) */
+  --destructive-foreground: 0 0% 98%; /* hsl(0 0% 98%) */
 }
 
 /*  THEMES! */
 [data-theme='light'] {
-  --bg-main: 0 0% 88%;
-  --bg-surface: 0 0% 11%;
-  --text-surface: 0 0% 88%;
-  --text-body: 0 0% 0%;
-  --text-muted: 0 0% 52%;
-  --color-primary: 182 100% 18%;
-  --color-secondary: 325 100% 30%;
-  --color-accent: 103 100% 17%;
+  --primary: 182 100% 18%;
+  --primary-foreground: 0 0% 98%;
 
-  --border: 0 0% 20%;
-  --input: 0 0% 20%;
-  --ring: 182 100% 18%;
-  --radius: 0.5rem;
+  --secondary: 325 100% 30%;
+  --secondary-foreground: 0 0% 98%;
 
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 0%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 0%;
-  --muted-foreground: 0 0% 52%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
+  --accent: 335 67% 50%; /* hsl(335 67% 50%) */
+  --accent-foreground: 0 0% 98%; /* hsl(0 0% 98%) */
+
+  --background: 0 0% 85%; /* hsl(0 0% 85%) */
+  --foreground: 14 15% 2%; /* hsl(14 15% 2%) */
+
+  --muted: 0 2% 80%; /* hsl(0 10% 20%) */
+  --muted-foreground: 14 5% 33%; /* hsl(14 20% 7.5%) */
+
+  --card: 182 20% 80%; /* hsl(182 5% 20%) */
+  --card-foreground: 182 20% 2%; /* hsl(0 0% 85%) */
+
+  --popover: 182 10% 50%; /* hsl(182 10% 50%) */
+  --popover-foreground: 0 0% 85%; /* hsl(0 0% 85%) */
+
+  --sidebar-background: 182 5% 95%; /* hsl(182 5% 95%) */
+  --sidebar-foreground: 0 0% 5%; /* hsl(0 0% 5%) */
+
+  --sidebar-primary: 182 20% 20%; /* hsl(182 20% 20%) */
+  --sidebar-primary-foreground: var(--primary); /* hsl(var(--primary)) */
+
+  --sidebar-accent: 335 20% 20%; /* hsl(335 20% 20%) */
+  --sidebar-accent-foreground: var(--accent); /* hsl(var(--accent)) */
+
+  --text-inverse: 150 14% 3%; /* Text for inverse backgrounds - custom utility kept for now */
+
+  /* UI Defaults (Borders/Inputs) */
+  --border: 182 10% 5%; /* hsl(182 10% 5%) */
+  --input: 182 5% 88%; /* hsl(182 5% 1%) */
+  --ring: var(--primary); /* hsl(var(--primary)) */
+  --radius: 0.15rem;
+
+  --destructive: 0 75% 33%; /* hsl(0 75% 33%) */
+  --destructive-foreground: 0 0% 98%; /* hsl(0 0% 98%) */
 }
 
 [data-theme='kelly_come_home'] {
-  --bg-main: 30 7% 95%; /* #F2F1F0 */
-  --bg-surface: 21 16% 52%; /* #987E70 */
-  --text-surface: 30 7% 95%; /* Light text on the dark surface */
-  --text-body: 20 100% 5%; /* #180800 */
-  --text-muted: 30 21% 78%; /* #d3c7bb */
-  --color-primary: 11 70% 26%; /* #732514 */
-  --color-secondary: 33 85% 85%; /* #F9DBB7 */
-  --color-accent: 26 78% 77%; /* #F2BE97 */
+  --background: 30 7% 95%; /* #F2F1F0 */
+  --foreground: 20 100% 5%; /* #180800 */
 
-  --border: 34 41% 20%;
-  --input: 34 41% 29%;
-  --ring: 4 100% 18%;
+  --primary: 11 70% 26%; /* #732514 */
+  --primary-foreground: 33 85% 85%;
 
-  --card: 34 41% 29%;
-  --card-foreground: 328 27% 89%;
-  --popover: 34 41% 29%;
-  --popover-foreground: 328 27% 89%;
-  --muted-foreground: 0 0% 52%;
-  --destructive: 11 70% 26%;
-  --destructive-foreground: 33 85% 85%;
+  --secondary: 33 85% 85%; /* #F9DBB7 */
+  --secondary-foreground: 11 70% 26%;
+
+  --accent: 26 78% 77%; /* #F2BE97 */
+  --accent-foreground: 11 70% 26%;
+
+  --muted: 21 16% 52%; /* #987E70 */
+  --muted-foreground: 30 21% 50%; /* #d3c7bb - Light text on muted surface */
+
+  --card: 24 20% 80%; /* hsl(24 5% 20%) */
+  --card-foreground: 24 20% 2%; /* hsl(0 0% 85%) */
+
+  --popover: 24 10% 50%; /* hsl(24 10% 50%) */
+  --popover-foreground: 0 0% 85%; /* hsl(0 0% 85%) */
+
+  --sidebar-background: 24 5% 95%; /* hsl(24 5% 95%) */
+  --sidebar-foreground: 0 0% 5%; /* hsl(0 0% 5%) */
+
+  --sidebar-primary: 24 20% 20%; /* hsl(24 20% 20%) */
+  --sidebar-primary-foreground: var(--primary); /* hsl(var(--primary)) */
+
+  --sidebar-accent: 335 20% 20%; /* hsl(335 20% 20%) */
+  --sidebar-accent-foreground: var(--accent); /* hsl(var(--accent)) */
+
+  --text-inverse: 150 14% 3%; /* Text for inverse backgrounds - custom utility kept for now */
+
+  /* UI Defaults (Borders/Inputs) */
+  --border: 24 10% 33%; /* hsl(24 10% 33%) */
+  --input: 24 5% 100%; /* hsl(24 5% 1%) */
+  --ring: var(--primary); /* hsl(var(--primary)) */
+  --radius: 0.15rem;
+
+  --destructive: 0 85% 50%; /* hsl(0 85% 50%) */
+  --destructive-foreground: 0 0% 98%; /* hsl(0 0% 98%) */
 }
 
 /* "Interstellar" Theme */
 [data-theme='interstellar'] {
-  --color-primary: 83 78% 55%; /* #a3e635 (Lime) */
-  --color-secondary: 217 39% 43%; /* #426397 (Blue) */
-  --color-accent: 340 93% 16%; /* #4e031c */
-  --bg-main: 229 84% 5%; /* #020617 (Deep Blue Space) */
-  --bg-surface: 217 33% 17%; /* #1e293b */
-  --text-surface: 210 40% 98%;
+  --primary: 83 78% 55%; /* #a3e635 (Lime) */
+  --primary-foreground: 229 84% 5%;
+  --secondary: 217 39% 43%; /* #426397 (Blue) */
+  --secondary-foreground: 210 40% 98%;
+  --accent: 340 93% 16%; /* #4e031c */
+  --accent-foreground: 210 40% 98%;
 
-  --text-body: 210 40% 98%;
-  --text-muted: 215 20% 65%;
+  --background: 229 84% 4%; /* #020617 (Deep Blue Space) */
+  --foreground: 210 40% 98%;
+
+  --muted: 217 33% 17%; /* #1e293b */
+  --muted-foreground: 215 20% 65%;
 
   --border: 217 33% 30%;
   --input: 217 33% 17%;
@@ -114,7 +166,7 @@
   --card-foreground: 210 40% 98%;
   --popover: 217 33% 17%;
   --popover-foreground: 210 40% 98%;
-  --muted-foreground: 215 20% 65%;
+
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 210 40% 98%;
 }
@@ -122,8 +174,8 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    background-color: hsl(var(--bg-main));
-    color: hsl(var(--text-body));
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 
   body {
@@ -144,10 +196,10 @@
     width: 0.25em;
   }
   ::-webkit-scrollbar-track {
-    box-shadow: inset 0 0 6px hsl(var(--bg-main));
+    box-shadow: inset 0 0 6px hsl(var(--background));
   }
   ::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--color-secondary));
+    background-color: hsl(var(--secondary));
   }
 
   /* Reset Links to be predictable in UI */
@@ -206,7 +258,7 @@
   .rich-text h5,
   .rich-text h6 {
     font-family: var(--font-heading);
-    color: hsl(var(--color-primary));
+    color: hsl(var(--primary));
     margin-top: 1em;
     margin-bottom: 0em;
     text-transform: uppercase;
@@ -244,17 +296,17 @@
     list-style-type: square;
   }
   .rich-text li::marker {
-    color: hsl(var(--color-secondary));
+    color: hsl(var(--secondary));
   }
 
   .rich-text a {
-    color: hsl(var(--color-primary));
+    color: hsl(var(--primary));
     border-bottom: 1px solid transparent;
   }
   .rich-text a:hover {
-    color: hsl(var(--color-accent));
-    text-shadow: 0 0 8px hsl(var(--color-accent));
-    border-bottom-color: hsl(var(--color-accent));
+    color: hsl(var(--accent));
+    text-shadow: 0 0 8px hsl(var(--accent));
+    border-bottom-color: hsl(var(--accent));
   }
 }
 
@@ -279,7 +331,7 @@
 
     #player_controls_song_info {
       @apply auto-flex;
-      border-bottom: 1px solid hsl(var(--bg-surface));
+      border-bottom: 1px solid hsl(var(--muted));
       width: 100%;
       & > a {
         width: 100%;

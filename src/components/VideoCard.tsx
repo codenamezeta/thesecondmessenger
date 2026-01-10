@@ -15,10 +15,10 @@ export const VideoCard = ({ video }: { video: PlayableMedia }) => {
   return (
     <div
       onClick={() => playMedia(video.youtubeId || video)} // Pass string ID or full object
-      className={`group h-80 w-80 bg-card rounded overflow-hidden hover:bg-main transition-all border cursor-pointer
+      className={`group h-80 w-80 bg-card rounded overflow-hidden hover:bg-background transition-all border cursor-pointer
         ${isCurrent ? 'border-accent ring-1 ring-accent' : 'border-gray-800 hover:border-gray-700'}`}
     >
-      <div className="relative aspect-square bg-surface">
+      <div className="relative aspect-square bg-muted">
         {video.coverArt && typeof video.coverArt === 'object' && video.coverArt.url ? (
           <Image
             src={video.coverArt.url}
@@ -38,7 +38,7 @@ export const VideoCard = ({ video }: { video: PlayableMedia }) => {
           className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-300
           ${isActuallyPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
         >
-          <div className="flex items-center justify-center bg-secondary text-body w-12 h-12 p-4 rounded-full">
+          <div className="flex items-center justify-center bg-secondary text-foreground w-12 h-12 p-4 rounded-full">
             {isActuallyPlaying ? '❚❚' : '▶'}
           </div>
         </div>

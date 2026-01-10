@@ -73,6 +73,7 @@ export interface Config {
     releases: Release;
     playlists: Playlist;
     presaves: Presave;
+    'mailing-list': MailingList;
     media: Media;
     categories: Category;
     users: User;
@@ -103,6 +104,7 @@ export interface Config {
     releases: ReleasesSelect<false> | ReleasesSelect<true>;
     playlists: PlaylistsSelect<false> | PlaylistsSelect<true>;
     presaves: PresavesSelect<false> | PresavesSelect<true>;
+    'mailing-list': MailingListSelect<false> | MailingListSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -412,10 +414,14 @@ export interface Song {
   id: number;
   title: string;
   /**
-   * Auto-synced from the related Release for the list view.
+   * Auto-synced from the related Release.
    */
   coverArt?: (number | null) | Media;
   slug?: string | null;
+  /**
+   * Auto-synced from the related Release.
+   */
+  releaseDate?: string | null;
   /**
    * Which Releases include this song?
    */
@@ -986,9 +992,20 @@ export interface Presave {
   id: number;
   email: string;
   spotifyId?: string | null;
-  refreshToken: string;
+  refreshToken?: string | null;
   campaigns?: (number | Song)[] | null;
-  status?: ('active' | 'revoked') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mailing-list".
+ */
+export interface MailingList {
+  id: number;
+  email: string;
+  source?: ('spotify_presave' | 'newsletter_signup' | 'merch_purchase') | null;
+  tags?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1205,6 +1222,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'presaves';
         value: number | Presave;
+      } | null)
+    | ({
+        relationTo: 'mailing-list';
+        value: number | MailingList;
       } | null)
     | ({
         relationTo: 'media';
@@ -1454,6 +1475,7 @@ export interface SongsSelect<T extends boolean = true> {
   title?: T;
   coverArt?: T;
   slug?: T;
+  releaseDate?: T;
   relatedReleases?: T;
   inPlaylists?: T;
   youtubeId?: T;
@@ -1565,7 +1587,17 @@ export interface PresavesSelect<T extends boolean = true> {
   spotifyId?: T;
   refreshToken?: T;
   campaigns?: T;
-  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mailing-list_select".
+ */
+export interface MailingListSelect<T extends boolean = true> {
+  email?: T;
+  source?: T;
+  tags?: T;
   updatedAt?: T;
   createdAt?: T;
 }

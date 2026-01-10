@@ -99,23 +99,23 @@ export const Share = ({ url: propUrl, title, className }: ShareProps) => {
   return (
     <div
       className={cn(
-        'bg-surface/5 border border-primary/20 rounded-lg p-6 relative overflow-hidden group',
+        'bg-background border border-primary/20 rounded-lg p-6 relative overflow-hidden group',
         className,
       )}
     >
       {/* Decorative "Scanner" Line */}
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+      <div className="absolute inset-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 bg-primary/10 rounded-full text-primary animate-pulse">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="p-2 bg-primary/10 border border-primary/20 rounded-full text-primary animate-pulse">
           <Share2 size={20} />
         </div>
         <div>
-          <h4 className="text-white font-heading font-bold uppercase tracking-widest text-sm">
+          <h4 className="text-foreground font-heading font-bold uppercase tracking-widest text-sm">
             Relay Signal
           </h4>
-          <p className="text-[10px] text-muted font-mono uppercase tracking-wide">
+          <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wide">
             Amplify the transmission
           </p>
         </div>
@@ -123,12 +123,12 @@ export const Share = ({ url: propUrl, title, className }: ShareProps) => {
 
       {/* Copy Input Zone */}
       <div className="relative flex items-center mb-6">
-        <div className="w-full bg-black/40 border border-white/10 rounded-l-md py-3 px-4 text-xs font-mono text-gray-400 truncate border-r-0">
+        <div className="w-full bg-background border border-border/50 rounded-l-md py-3 px-4 text-xs font-mono text-muted-foreground truncate border-r-0">
           {currentUrl}
         </div>
         <button
           onClick={handleCopy}
-          className="bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-r-md px-4 py-2.5 transition-all flex items-center gap-2 min-w-[100px] justify-center group/btn"
+          className="bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-r-md px-4 py-3 transition-all flex items-center gap-2 min-w-[100px] justify-center group/btn"
         >
           {copied ? <Check size={16} /> : <Copy size={16} />}
           <span className="text-xs font-bold uppercase tracking-wider">
@@ -161,9 +161,9 @@ export const Share = ({ url: propUrl, title, className }: ShareProps) => {
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-              'flex flex-col items-center justify-center gap-2 p-3 rounded bg-white/5 border border-white/5 transition-all duration-300',
+              'flex flex-col items-center justify-center gap-2 p-3 rounded bg-muted border border-muted transition-all duration-300',
               link.color,
-              'hover:bg-white/10',
+              'hover:bg-muted/50',
             )}
             title={`Share on ${link.name}`}
           >

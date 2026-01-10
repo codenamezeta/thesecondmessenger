@@ -17,6 +17,7 @@ import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
+import { MailingList } from '@/collections/MailingList'
 import { getServerSideURL } from './utilities/getURL'
 import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 
@@ -32,6 +33,7 @@ export default buildConfig({
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
       // beforeDashboard: ['@/components/BeforeDashboard'],
+      afterDashboard: ['@/components/Dashboard/PresaveStats'],
     },
     importMap: {
       baseDir: path.resolve(dirname),
@@ -86,7 +88,18 @@ export default buildConfig({
       connectionString: process.env.POSTGRES_URL || '',
     },
   }),
-  collections: [Pages, Posts, Songs, Releases, Playlists, Presaves, Media, Categories, Users],
+  collections: [
+    Pages,
+    Posts,
+    Songs,
+    Releases,
+    Playlists,
+    Presaves,
+    MailingList,
+    Media,
+    Categories,
+    Users,
+  ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
   plugins: [

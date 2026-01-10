@@ -18,7 +18,7 @@ export const SearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-start justify-center pt-32 px-4">
-      <div className="w-full max-w-2xl bg-surface border border-primary/30 rounded-lg shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+      <div className="w-full max-w-2xl bg-card border border-primary/30 rounded-lg shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center border-b border-white/10 p-4">
           <Search className="text-primary w-6 h-6 mr-4" />

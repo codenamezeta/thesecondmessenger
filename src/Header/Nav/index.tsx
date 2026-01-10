@@ -44,7 +44,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
 
   // --- THE LOGIC TO PUSH THE NAV DOWN ---
   useEffect(() => {
-    const heightValue: number = 100 / 12 // 1/12th of the screen height is my magic number. :)
+    const heightValue: number = 100 / 16 // 1/16th of the screen height
     document.documentElement.style.setProperty('--main-nav-bar-height', `${heightValue}vh`)
   }, [])
 
@@ -67,19 +67,18 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
   const NavLogo = () => (
     <>
       {!logoError ? (
-        <div className="relative w-40 h-12">
-          <Image
-            src="/imgs/logos/white.png"
-            alt="The 2nd Messenger Logo"
-            sizes="(max-width: 768px) 100vw, 160px"
-            fill
-            className="object-contain object-left group-hover:opacity-80 transition-opacity light:invert"
-            onError={() => setLogoError(true)}
-            priority
-          />
-        </div>
+        <Image
+          src="/imgs/logos/silver.png"
+          alt="The 2nd Messenger Logo"
+          sizes="(max-width: 768px) 100vw, 160px"
+          width={144}
+          height={144}
+          className="object-contain group-hover:opacity-80 transition-opacity light:invert"
+          onError={() => setLogoError(true)}
+          priority
+        />
       ) : (
-        <div className="text-xl font-heading font-bold tracking-widest text-white group-hover:text-primary transition-colors leading-tight">
+        <div className="w-40 h-12 text-xl font-heading font-bold tracking-widest text-foreground group-hover:text-primary transition-colors leading-tight">
           THE 2ND
           <br />
           MESSENGER
@@ -91,7 +90,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
   return (
     <>
       {/* --- DESKTOP NAV --- */}
-      <nav className="fixed flex w-full h-[var(--main-nav-bar-height)] top-[var(--admin-bar-height,0px)] z-40 bg-main/85 backdrop-blur-3xl border-b border-body/20">
+      <nav className="fixed flex w-full h-[var(--main-nav-bar-height)] top-[var(--admin-bar-height,0px)] z-40 bg-background/80 backdrop-blur-3xl border-b border-border/50">
         <div className="container flex justify-between">
           {/* Logo */}
           <Link href="/" className="group flex flex-col justify-center z-40">
@@ -120,7 +119,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
                   >
                     <div className="relative h-full flex items-center cursor-pointer">
                       <button
-                        className={`flex items-center gap-1 transition-colors ${isOpen ? 'text-primary' : 'text-muted hover:text-primary'}`}
+                        className={`flex items-center gap-1 transition-colors uppercase ${isOpen ? 'text-secondary' : 'text-foreground/50 hover:text-secondary'}`}
                       >
                         {dropdownLabel}
                         <ChevronDown
@@ -137,15 +136,16 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
                       ${isOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'}
                   `}
                       >
-                        <div className="bg-black/75 backdrop-blur-xl border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.5)] rounded-sm overflow-hidden p-2 relative">
+                        <div className="bg-background/95 backdrop-blur-xl border border-border/10 shadow-[0_10px_40px_rgba(0,0,0,0.5)] rounded-sm overflow-hidden p-2 relative">
                           <div className="absolute top-0 right-0 w-4 h-4 border-t border-r border-primary/50"></div>
+                          <div className="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-primary/50"></div>
                           <div className="flex flex-col gap-1 relative z-40">
                             {dropdownItems.map((subItem: any, j: number) => (
                               <CMSLink
                                 key={j}
                                 {...subItem.link}
                                 appearance="noStyle"
-                                className="px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center justify-between group/sub"
+                                className="px-4 py-3 text-sm text-foreground/50 hover:text-foreground hover:bg-border/5 transition-colors flex items-center justify-between group/sub"
                               />
                             ))}
                           </div>
@@ -162,7 +162,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
                   <CMSLink
                     {...item.link}
                     appearance="noStyle"
-                    className="relative py-2 hover:text-primary transition-colors flex items-center gap-2 text-muted"
+                    className="relative py-2 hover:text-primary transition-colors flex items-center gap-2 text-foreground/50"
                   />
                 </li>
               )
@@ -172,7 +172,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
             <li>
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="text-muted hover:text-primary transition-colors p-2"
+                className="text-foreground/50 hover:text-primary transition-colors p-2"
                 aria-label="Search Site"
               >
                 <SearchIcon size={20} />
@@ -183,9 +183,9 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
           {/* Mobile Trigger */}
           <button
             onClick={() => setNavOpen(true)}
-            className="landscape-hidden text-white hover:text-primary pl-2"
+            className="landscape-hidden text-foreground hover:text-primary pl-2 transition-colors"
           >
-            <Menu size={40} />
+            <Menu size={48} />
           </button>
         </div>
       </nav>
@@ -196,7 +196,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
       {/* --- MOBILE SIDE SHEET --- */}
       <div
         className={cn(
-          'fixed inset-0 bg-black/75 backdrop-blur-sm z-50 transition-opacity duration-300',
+          'fixed inset-0 bg-sidebar/50 backdrop-blur-sm z-50 transition-opacity duration-300',
           navOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         )}
         onClick={() => setNavOpen(false)}
@@ -204,15 +204,18 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
 
       <aside
         className={cn(
-          'fixed top-[var(--admin-bar-height,0px)] right-0 h-full w-[85vw] max-w-sm bg-surface border-l border-primary/75 z-50 transform transition-transform duration-300 ease-out shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col',
+          'fixed top-[var(--admin-bar-height,0px)] right-0 h-full w-[85vw] max-w-sm bg-sidebar border-l border-sidebar-primary/50 z-50 transform transition-transform duration-300 ease-out shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col',
           navOpen ? 'translate-x-0' : 'translate-x-full',
         )}
       >
-        <div className="p-6 flex justify-between items-center border-b border-white/10">
+        <div className="p-6 flex justify-between items-center border-b border-border/20">
           <Link href="/" onClick={() => setNavOpen(false)} className="group">
             <NavLogo />
           </Link>
-          <button onClick={() => setNavOpen(false)} className="text-muted hover:text-white">
+          <button
+            onClick={() => setNavOpen(false)}
+            className="text-sidebar-foreground hover:text-sidebar-primary"
+          >
             <X size={28} />
           </button>
         </div>
@@ -234,7 +237,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
                     <div>
                       <button
                         onClick={() => setMobileActiveIndex(isOpen ? null : i)}
-                        className="flex items-center justify-between w-full text-2xl font-heading uppercase text-white hover:text-primary transition-colors"
+                        className="flex items-center justify-between w-full text-2xl font-heading uppercase text-sidebar-foreground hover:text-secondary transition-colors"
                       >
                         {dropdownLabel}
                         <ChevronDown
@@ -246,13 +249,13 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
                         className={`grid transition-[grid-template-rows] duration-300 ease-out ${isOpen ? 'grid-rows-[1fr] mt-4' : 'grid-rows-[0fr]'}`}
                       >
                         <div className="overflow-hidden">
-                          <ul className="border-l-2 border-primary/20 pl-4 space-y-4 mb-2">
+                          <ul className="border-l-2 border-sidebar-primary pl-4 space-y-4 mb-2">
                             {dropdownItems.map((subItem: any, j: number) => (
                               <li key={j}>
                                 <CMSLink
                                   {...subItem.link}
                                   appearance="noStyle"
-                                  className="flex items-center gap-2 text-lg text-gray-400 hover:text-primary uppercase font-heading tracking-wide"
+                                  className="flex items-center gap-2 text-lg text-sidebar-foreground hover:text-primary uppercase font-heading tracking-wide"
                                   onClick={() => setNavOpen(false)}
                                 />
                               </li>
@@ -270,7 +273,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
                   <CMSLink
                     {...item.link}
                     appearance="noStyle"
-                    className="block text-2xl font-heading uppercase text-white hover:text-primary transition-colors"
+                    className="block text-2xl font-heading uppercase text-sidebar-foreground hover:text-primary transition-colors"
                   />
                 </li>
               )
@@ -278,8 +281,10 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
           </ul>
         </nav>
 
-        <div className="p-6 border-t border-white/10 text-center">
-          <div className="text-xs font-mono text-gray-600">SECURE CONNECTION ESTABLISHED</div>
+        <div className="p-6 border-t border-muted text-center">
+          <div className="text-xs font-mono text-muted-foreground/50">
+            SECURE CONNECTION ESTABLISHED
+          </div>
         </div>
       </aside>
     </>
