@@ -90,7 +90,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
   return (
     <>
       {/* --- DESKTOP NAV --- */}
-      <nav className="fixed flex w-full h-[var(--main-nav-bar-height)] top-[var(--admin-bar-height,0px)] z-40 bg-background/80 backdrop-blur-3xl border-b border-border/50">
+      <nav className="fixed flex w-full h-[var(--main-nav-bar-height)] top-[var(--admin-bar-height,0px)] z-40 bg-background/50 backdrop-blur-3xl border-b border-border/50">
         <div className="container flex justify-between">
           {/* Logo */}
           <Link href="/" className="group flex flex-col justify-center z-40">

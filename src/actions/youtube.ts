@@ -2,6 +2,45 @@
 
 const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
 
+export async function getChannelVideos(maxResults = 20) {
+  const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
+  const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID // Add this to your .env
+
+  if (!API_KEY || !CHANNEL_ID) return []
+
+  // 1. Get "Uploads" Playlist ID (It's usually the channel ID with 'UU' instead of 'UC')
+  // But strictly, we should fetch the channel details to get the exact ID.
+  // For simplicity/performance, we can just replace 'UC' with 'UU' if you know your ID.
+  const uploadsPlaylistId = CHANNEL_ID.replace('UC', 'UU')
+
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=${maxResults}&key=${API_KEY}`,
+      {
+        next: { revalidate: 3600 }, // Cache for 1 hour
+      },
+    )
+
+    if (!res.ok) return []
+
+    const data = await res.json()
+
+    // Map to our "VisualLog" format
+    return data.items.map((item: any) => ({
+      id: item.id,
+      youtubeId: item.snippet.resourceId.videoId,
+      title: item.snippet.title,
+      publishedDate: item.snippet.publishedAt,
+      description: item.snippet.description,
+      category: 'Transmission Log', // Default category since API doesn't give us one
+      linkedSong: null,
+    }))
+  } catch (error) {
+    console.error('YouTube Fetch Error:', error)
+    return []
+  }
+}
+
 async function handleResponse(res: Response, defaultMessage: string) {
   if (!res.ok) {
     let errorMessage = defaultMessage

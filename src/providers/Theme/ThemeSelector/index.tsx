@@ -1,13 +1,14 @@
 'use client'
 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Palette } from 'lucide-react'
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
+import { Palette, ChevronUp } from 'lucide-react'
 import React, { useState } from 'react'
 
 import type { Theme } from './types'
@@ -19,37 +20,45 @@ export const ThemeSelector: React.FC = () => {
   const { setTheme } = useTheme()
   const [value, setValue] = useState('')
 
-  const onThemeChange = (themeToSet: Theme & 'system') => {
-    if (themeToSet === 'system') {
+  const onThemeChange = (themeToSet: string) => {
+    if (themeToSet === 'dark') {
       setTheme(null)
-      setValue('system')
+      setValue('dark')
     } else {
-      setTheme(themeToSet)
+      setTheme(themeToSet as Theme)
       setValue(themeToSet)
     }
   }
 
   React.useEffect(() => {
     const preference = window.localStorage.getItem(themeLocalStorageKey)
-    setValue(preference ?? 'system')
+    setValue(preference ?? 'dark')
   }, [])
 
   return (
-    <Select onValueChange={onThemeChange} value={value}>
-      <SelectTrigger
-        aria-label="Select a theme"
-        className="w-auto bg-background text-foreground gap-2 border border-input"
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          className="w-auto bg-background text-foreground gap-2 border border-input"
+        >
+          <Palette className="h-4 w-4" />
+          Theme
+          <ChevronUp className="h-4 w-4 opacity-50 ml-1" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        side="top"
+        align="end"
+        className="bg-card text-card-foreground border border-border rounded-lg"
       >
-        <Palette />
-        <SelectValue placeholder="Theme" />
-      </SelectTrigger>
-      <SelectContent className="bg-card text-card-foreground border border-border rounded-lg">
-        <SelectItem value="system">Auto</SelectItem>
-        <SelectItem value="light">Light</SelectItem>
-        <SelectItem value="dark">Dark</SelectItem>
-        <SelectItem value="interstellar">Interstellar</SelectItem>
-        <SelectItem value="kelly_come_home">Kelly Come Home</SelectItem>
-      </SelectContent>
-    </Select>
+        <DropdownMenuRadioGroup value={value} onValueChange={onThemeChange}>
+          <DropdownMenuRadioItem value="light">Light</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="dark">Dark</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="interstellar">Interstellar</DropdownMenuRadioItem>
+          {/* <DropdownMenuRadioItem value="kelly_come_home">Kelly Come Home</DropdownMenuRadioItem> */}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

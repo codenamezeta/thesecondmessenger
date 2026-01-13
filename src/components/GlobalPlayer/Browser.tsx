@@ -96,21 +96,21 @@ export const Browser = ({
       id="media_player_browser"
       className={cn(
         // AUDIO/HIDDEN (Default): Hidden but mounted (for audio playback)
-        'opacity-0 translate-y-full w-full container h-full flex flex-col flex-auto border border-white/20 rounded-xl transition-all duration-700 ease-in-out overflow-hidden bg-background/50 backdrop-blur-lg pointer-events-auto',
+        'opacity-0 translate-y-full container flex flex-col flex-auto border-primary/50 border-0 rounded-xl transition-all duration-700 ease-in-out overflow-hidden bg-transparent backdrop-blur-lg pointer-events-auto',
         // THEATER MODE
-        isVideoEnabled && 'translate-y-0 opacity-100',
+        isVideoEnabled && 'opacity-100 translate-y-0 border size-full',
         // MINI MODE: (Bottom right corner)
         miniMode &&
-          'flex-none h-72 w-auto mt-auto ml-auto mr-4 mb-4 rounded border border-primary/20 shadow-2xl',
+          'flex-none h-72 w-auto mt-auto ml-auto mr-4 mb-4 rounded-lg border border-primary/20 shadow-2xl',
       )}
     >
       {/* Header over all panels */}
-      <div className="flex items-center justify-center border-b border-white/10 bg-background/50 px-4 py-2 transition-all duration-500 ease-in-out">
+      <div className="flex items-center justify-center border-b border-border/50 bg-transparent px-4 py-2 transition-all duration-500 ease-in-out">
         {/* Library Toggle */}
         <button
           onClick={() => setIsLibraryPanelOpen((prev) => !prev)}
           className={cn(
-            'flex items-center gap-1 mr-auto p-[0.5em] text-xs uppercase tracking-wide text-muted border border-white/10 rounded hover:text-primary hover:bg-primary/10 hover:border-primary/50 hover:scale-105 transition-all',
+            'flex items-center gap-1 mr-auto p-[0.5em] text-xs uppercase tracking-wide text-muted-foreground border border-border/50 rounded-md hover:text-primary hover:bg-primary/10 hover:border-primary/50 hover:scale-105 transition-all',
             isLibraryPanelOpen && 'text-primary bg-primary/10 border-primary/20',
           )}
           title="Open Library to view Queue & Playlists"
@@ -123,7 +123,7 @@ export const Browser = ({
 
         <button
           onClick={toggleVideo}
-          className="hidden sm:flex items-center justify-center w-32 truncate gap-1 ml-2 px-2 py-1 bg-card/60 hover:bg-white/10 text-muted hover:text-white rounded-l-full backdrop-blur-md border border-r border-white/10 transition-all"
+          className="hidden sm:flex items-center justify-center w-32 truncate gap-1 ml-2 px-2 py-1 bg-muted/20 text-muted-foreground hover:text-foreground rounded-l-full border border-r border-border/50 transition-all"
         >
           <ChevronDown size={16} />
           <span className="text-[0.67em] font-bold uppercase">
@@ -134,7 +134,7 @@ export const Browser = ({
         {/* Mini Mode Toggle */}
         <button
           onClick={() => setMiniMode(!miniMode)}
-          className="hidden sm:flex items-center justify-center w-32 truncate gap-1 mr-2 px-2 py-1 bg-card/60 hover:bg-white/10 text-muted hover:text-white rounded-r-full backdrop-blur-md border border-l-0 border-white/10 transition-all"
+          className="hidden sm:flex items-center justify-center w-32 truncate gap-1 mr-2 px-2 py-1 bg-muted/20 text-muted-foreground hover:text-foreground rounded-r-full border border-l-0 border-border/50 transition-all"
         >
           <span className="text-[0.67em] font-bold uppercase">
             {miniMode ? 'Theater Mode' : 'Mini Player'}
@@ -151,7 +151,7 @@ export const Browser = ({
         <button
           onClick={() => setIsDetailsPanelOpen((prev) => !prev)}
           className={cn(
-            'flex items-center gap-1 ml-auto p-[0.5em] text-xs uppercase tracking-wide text-muted border border-white/10 rounded hover:text-primary hover:bg-primary/10 hover:border-primary/50 hover:scale-105 transition-all',
+            'flex items-center gap-1 ml-auto p-[0.5em] text-xs uppercase tracking-wide text-muted-foreground border border-border/50 rounded-md hover:text-primary hover:bg-primary/10 hover:border-primary/50 hover:scale-105 transition-all',
             isDetailsPanelOpen && 'text-primary bg-primary/10 border-primary/20',
           )}
           title="Open Song Details Panel"
@@ -166,19 +166,19 @@ export const Browser = ({
         {/* --- LIBRARY PANEL --- */}
         <div
           className={cn(
-            'flex flex-col h-full transition-all duration-700 ease-in-out overflow-hidden border-white/10 bg-black/40',
+            'flex flex-col h-full transition-all duration-700 ease-in-out overflow-hidden border-border/50 bg-transparent',
             isLibraryPanelOpen ? 'w-2/5 translate-x-0 min-w-60' : '-translate-x-full w-0 min-w-0',
           )}
         >
           {/* Library Panel Header */}
-          <div className="flex items-center justify-around border-b border-white/10 bg-black/20">
+          <div className="flex items-center justify-around border-b border-border/50 bg-transparent">
             <button
               onClick={() => setActiveLibraryTab('playlists')}
               className={cn(
                 'text-xs font-heading uppercase tracking-wider h-12 w-full transition-colors duration-300',
                 activeLibraryTab === 'playlists'
                   ? 'text-primary bg-primary/20 border-b-2 border-primary'
-                  : 'text-muted hover:text-white hover:bg-primary/10',
+                  : 'text-foreground/75 bg-transparent hover:text-foreground hover:bg-primary/10',
               )}
             >
               Playlists
@@ -189,7 +189,7 @@ export const Browser = ({
                 'text-xs font-heading uppercase tracking-wider h-12 w-full transition-colors duration-300',
                 activeLibraryTab === 'queue'
                   ? 'text-primary bg-primary/20 border-b-2 border-primary'
-                  : 'text-muted hover:text-white hover:bg-primary/10',
+                  : 'text-foreground/75 bg-transparent hover:text-foreground hover:bg-primary/10',
               )}
             >
               Queue
@@ -217,13 +217,13 @@ export const Browser = ({
                       key={`${song.id || song.youtubeId}-${index}`}
                       onClick={() => playPlaylist(queue, index)}
                       className={cn(
-                        'p-3 rounded border cursor-pointer flex items-center gap-3 transition-all duration-300 ease-in-out',
+                        'p-3 rounded-md border cursor-pointer flex items-center gap-3 transition-all duration-300 ease-in-out',
                         isNowPlaying
-                          ? 'bg-primary/10 border-primary/20'
-                          : 'bg-white/5 hover:bg-white/10 border-transparent hover:border-white/20 opacity-60 hover:opacity-80 hover:scale-y-110',
+                          ? 'bg-primary/20 border-primary/50'
+                          : 'bg-transparent hover:bg-card/50 border-border/50 hover:border-border opacity-50 hover:opacity-80 hover:scale-y-105',
                       )}
                     >
-                      <div className="w-8 h-8 bg-black relative rounded overflow-hidden shrink-0">
+                      <div className="size-12 bg-transparent relative rounded-lg overflow-hidden shrink-0">
                         {coverArtUrl ? (
                           <Image
                             src={coverArtUrl}
@@ -233,24 +233,24 @@ export const Browser = ({
                             sizes="32px"
                           />
                         ) : (
-                          <div className="w-full h-full bg-black/50 flex items-center justify-center text-xs text-muted">
+                          <div className="size-full bg-muted/75 flex items-center justify-center text-xs text-foreground/75">
                             {index + 1}
                           </div>
                         )}
                       </div>
                       <div className="overflow-hidden">
                         {isNowPlaying && (
-                          <p className="text-muted tracking-widest text-xs truncate">Now Playing</p>
+                          <p className="text-foreground/75 tracking-widest text-[0.67rem] truncate">
+                            Now Playing
+                          </p>
                         )}
-                        <p className="text-white font-bold font-heading truncate">
-                          {displaySong?.title}
-                        </p>
-                        <p className="text-xs text-muted truncate">
+                        <p className="text-white font-bold font-heading">{displaySong?.title}</p>
+                        <p className="text-xs text-foreground/75 truncate">
                           {song.artist
                             ? song.artist
                             : displaySong?.artist
                               ? displaySong.artist
-                              : 'YouTube'}
+                              : ''}
                         </p>
                       </div>
                     </li>
@@ -259,25 +259,13 @@ export const Browser = ({
               </ol>
             ) : (
               <ul className="space-y-2 p-2">
-                <li
-                  onClick={() => playPlaylist(allSongs, 0)}
-                  className="p-3 rounded border border-transparent hover:border-white/20 bg-white/5 hover:bg-white/10 cursor-pointer flex items-center gap-3 transition-all"
-                >
-                  <div className="w-12 h-12 bg-black relative rounded overflow-hidden shrink-0 flex items-center justify-center bg-primary/20 text-primary">
-                    <Library size={24} />
-                  </div>
-                  <div>
-                    <p className="font-heading text-sm font-bold text-white">Discography</p>
-                    <p className="text-xs text-muted">All Tracks</p>
-                  </div>
-                </li>
                 {playlists.map((playlist) => (
                   <li
                     key={playlist.id}
                     onClick={() => playPlaylist(playlist.tracks || [], 0)}
-                    className="p-3 rounded border border-transparent hover:border-white/20 bg-white/5 hover:bg-white/10 cursor-pointer flex items-center gap-3 transition-all"
+                    className="p-3 rounded-md border border-border/20 hover:border-border/50 bg-card/20 hover:bg-card/50 cursor-pointer flex items-center gap-3 transition-all"
                   >
-                    <div className="w-12 h-12 bg-black relative rounded overflow-hidden shrink-0">
+                    <div className="size-12 bg-primary/20 relative rounded-md overflow-hidden shrink-0">
                       {playlist.coverImage?.url ? (
                         <Image
                           src={playlist.coverImage.url}
@@ -287,14 +275,18 @@ export const Browser = ({
                           sizes="48px"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-primary/20 text-primary">
+                        <div className="size-full flex items-center justify-center bg-primary/20 text-primary">
                           <Library size={20} />
                         </div>
                       )}
                     </div>
                     <div>
-                      <p className="font-heading text-sm font-bold text-white">{playlist.title}</p>
-                      <p className="text-xs text-muted">{playlist.tracks?.length || 0} Tracks</p>
+                      <p className="font-heading text-sm font-bold text-foreground">
+                        {playlist.title}
+                      </p>
+                      <p className="text-xs text-foreground/75">
+                        {playlist.tracks?.length || 0} Tracks
+                      </p>
                     </div>
                   </li>
                 ))}
@@ -310,12 +302,12 @@ export const Browser = ({
         <div
           id="media_player_details_panel"
           className={cn(
-            'flex flex-col h-full transition-all duration-700 ease-in-out overflow-hidden border-white/10 bg-black/40',
+            'flex flex-col h-full transition-all duration-700 ease-in-out overflow-hidden border-border/50 bg-transparent',
             isDetailsPanelOpen ? 'w-2/5 -translate-x-0 min-w-60' : 'translate-x-full w-0 min-w-0',
           )}
         >
           {/* Panel Header */}
-          <div className="flex items-baseline w-full justify-around py-4 border-b border-white/10 bg-black/20">
+          <div className="flex items-baseline w-full justify-around border-b border-border/50 bg-transparent">
             {details.map((tab, i) => (
               <button
                 key={i}
@@ -323,8 +315,10 @@ export const Browser = ({
                   setActiveDetailsTab(tab)
                 }}
                 className={cn(
-                  'text-xs font-heading uppercase tracking-wider transition-colors',
-                  activeDetailsTab === tab ? 'text-secondary' : 'text-muted hover:text-white',
+                  'size-full py-3 text-xs font-heading uppercase tracking-wider transition-colors cursor-pointer',
+                  activeDetailsTab === tab
+                    ? 'text-secondary border-b-2 border-secondary bg-secondary/20'
+                    : 'text-foreground/75 hover:text-foreground hover:bg-secondary/20',
                 )}
               >
                 {tab}
@@ -337,22 +331,27 @@ export const Browser = ({
             {activeDetailsTab === 'about' && (
               <>
                 {currentSong?.about && typeof currentSong.about === 'object' ? (
-                  <RichText data={currentSong.about} className="p-3 pb-12 text-sm" enableProse />
+                  <pre>
+                    <RichText
+                      data={currentSong.about}
+                      className="whitespace-pre-wrap p-3 pb-12 text-sm"
+                    />
+                  </pre>
                 ) : (
-                  <pre className="whitespace-pre-wrap font-mono text-xs text-muted p-3 pb-12">
+                  <pre className="whitespace-pre-wrap font-mono text-xs text-foreground/50 p-3 pb-12">
                     {currentSong?.description || 'Sorry, there are no details yet available.'}
                   </pre>
                 )}
               </>
             )}
             {activeDetailsTab === 'lyrics' && (
-              <pre className="whitespace-pre-wrap font-mono text-xs text-muted p-3 pb-12">
+              <pre className="whitespace-pre-wrap font-mono text-xs text-foreground/50 p-3 pb-12">
                 {currentSong?.lyrics}
               </pre>
             )}
             {activeDetailsTab === 'stems' && (
-              <div className="flex flex-col items-center justify-center text-muted gap-4 h-full">
-                <Layers size={48} className="opacity-20" />
+              <div className="flex flex-col items-center justify-center text-foreground/50 gap-4 h-full">
+                <Layers size={48} className="opacity-50" />
                 <p className="text-center text-sm">
                   Stem Player functionality
                   <br />
@@ -372,8 +371,10 @@ export const Browser = ({
                         <ul className="flex flex-col gap-3">
                           {credits.map((credit: any) => (
                             <li key={credit.id} className="flex flex-col">
-                              <span className="text-white font-bold text-sm">{credit.name}</span>
-                              <span className="text-xs text-muted">
+                              <span className="text-foreground font-bold text-sm">
+                                {credit.name}
+                              </span>
+                              <span className="text-xs text-foreground/50">
                                 {Array.isArray(credit.roles)
                                   ? credit.roles
                                       .map((r: any) => (typeof r === 'string' ? r : r.role))
@@ -387,7 +388,7 @@ export const Browser = ({
                     ))}
                   </div>
                 ) : (
-                  <pre className="whitespace-pre-wrap font-mono text-xs text-muted p-3 pb-12">
+                  <pre className="whitespace-pre-wrap font-mono text-xs text-foreground/50 p-3 pb-12">
                     {String(currentSong?.credits || '')}
                   </pre>
                 )}

@@ -33,7 +33,7 @@ export const NewsletterSignup = () => {
   }
 
   return (
-    <div className="bg-muted/5 border border-white/10 p-6 rounded-lg">
+    <div className="bg-muted border border-primary/20 p-6 rounded-lg">
       <div className="flex items-center gap-3 mb-2 text-primary">
         <Mail size={18} />
         <h4 className="font-heading uppercase tracking-widest text-sm">Join the Network</h4>
@@ -45,11 +45,11 @@ export const NewsletterSignup = () => {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="flex-1 bg-black/50 border border-white/20 rounded px-3 py-2 text-sm text-white focus:border-primary outline-none font-mono placeholder:text-gray-600"
+          className="flex-1 bg-input border border-border/50 rounded px-3 py-2 text-sm text-foreground focus:border-primary outline-none font-mono placeholder:text-gray-600"
         />
         <button
           disabled={status === 'loading'}
-          className="bg-white/10 hover:bg-white/20 border border-white/10 text-white p-2 rounded"
+          className="bg-white/10 hover:bg-border/50 border border-border/50 text-foreground p-2 rounded"
         >
           {status === 'loading' ? (
             <Loader2 size={18} className="animate-spin" />

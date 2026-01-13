@@ -187,7 +187,16 @@ export async function likeYouTubeVideo(videoId: string, accessToken: string) {
 /**
  * 4. YOUTUBE: Subscribe (Pre-Save Equivalent)
  */
-export async function subscribeToChannel(channelId: string, accessToken: string) {
+// ... (imports)
+
+export async function subscribeToChannel(channelId: string | undefined, accessToken: string) {
+  const targetChannelId = channelId || process.env.YOUTUBE_CHANNEL_ID
+
+  if (!targetChannelId) {
+    console.error('No Channel ID provided for subscription')
+    return { success: false }
+  }
+
   try {
     const res = await fetch('https://www.googleapis.com/youtube/v3/subscriptions?part=snippet', {
       method: 'POST',
@@ -199,13 +208,23 @@ export async function subscribeToChannel(channelId: string, accessToken: string)
         snippet: {
           resourceId: {
             kind: 'youtube#channel',
-            channelId: channelId,
+            channelId: targetChannelId,
           },
         },
       }),
     })
 
-    if (!res.ok) throw new Error('Failed to subscribe')
+    if (!res.ok) {
+      const errorData = await res.json()
+
+      // Handle "Already Subscribed" as success
+      if (errorData?.error?.errors?.[0]?.reason === 'subscriptionDuplicate') {
+        return { success: true }
+      }
+
+      console.error('YouTube Subscribe Error:', JSON.stringify(errorData, null, 2))
+      throw new Error(`Failed to subscribe: ${errorData.error?.message || res.statusText}`)
+    }
     return { success: true }
   } catch (error) {
     console.error(error)

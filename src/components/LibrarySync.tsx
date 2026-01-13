@@ -6,13 +6,13 @@ import { FaSpotify, FaYoutube } from 'react-icons/fa'
 import { cn } from '@/utilities/ui'
 import { getSpotifyAuthUrl, likeYouTubeVideo, subscribeToChannel } from '@/actions/library-sync'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useYouTubeAuth } from '@/context/YouTubeAuthContext'
 
 interface LibrarySyncProps {
   songId: string
   youtubeId?: string
   spotifyId?: string
   isReleased: boolean
-  userAccessToken?: string
   initialIsSaved?: boolean // <--- Receive the DB check
 }
 
@@ -21,11 +21,11 @@ export const LibrarySync = ({
   youtubeId,
   spotifyId,
   isReleased,
-  userAccessToken,
   initialIsSaved = false,
 }: LibrarySyncProps) => {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user, login } = useYouTubeAuth()
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'connected'>(
     initialIsSaved ? 'connected' : 'idle',
@@ -49,19 +49,24 @@ export const LibrarySync = ({
 
   // --- YOUTUBE HANDLER ---
   const handleYouTube = async () => {
-    if (!userAccessToken || !youtubeId) {
-      alert('Please sign in to YouTube first via the Comments section!')
+    if (!user?.accessToken) {
+      login()
       return
     }
+
+    // If we have no youtube ID, we can't do anything (unless we just want to sub, which is fallback)
+    // But usually this button appears only if youtubeId is present.
+    if (!youtubeId && isReleased) return
 
     setStatus('loading')
     setActivePlatform('youtube')
 
     let result
-    if (isReleased) {
-      result = await likeYouTubeVideo(youtubeId, userAccessToken)
+    if (isReleased && youtubeId) {
+      result = await likeYouTubeVideo(youtubeId, user.accessToken)
     } else {
-      result = await subscribeToChannel('UC_YOUR_CHANNEL_ID', userAccessToken)
+      // Setup your channel ID here or pull from config
+      result = await subscribeToChannel(undefined, user.accessToken)
     }
 
     if (result.success) {

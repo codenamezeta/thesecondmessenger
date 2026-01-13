@@ -23,7 +23,7 @@
   --accent: 335 100% 25%; /* hsl(335 100% 25%) */
   --accent-foreground: 0 0% 98%; /* hsl(0 0% 98%) */
 
-  --background: 14 15% 0%; /* hsl(14 15% 2%) */
+  --background: 156 15% 1%; /* hsl(14 15% 2%) */
   --foreground: 0 0% 88%; /* hsl(0 0% 88%) */
 
   --muted: 14 15% 5%; /* hsl(14 20% 7.5%) */
@@ -207,6 +207,13 @@
     color: inherit; /* Let utility classes control color */
     text-decoration: none;
     transition: all 0.2s ease-in-out;
+  }
+
+  .scanlines {
+    background-image: url('/scanlines.png');
+    background-repeat: no-repeat;
+    background-size: cover;
+    opacity: 1;
   }
 }
 

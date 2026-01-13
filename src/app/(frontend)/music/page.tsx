@@ -1,4 +1,3 @@
-import React from 'react'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import { MusicArchive } from '@/components/MusicArchive'
@@ -21,22 +20,20 @@ export default async function MusicPage() {
   })
 
   return (
-    <div className="min-h-screen pt-24 pb-20">
-      <main className="container">
-        {/* Header */}
-        <div className="mb-12 border-b border-border/50 pb-8">
-          <h1 className="text-4xl md:text-6xl font-heading text-foreground uppercase tracking-widest mb-4">
-            Transmission Log
-          </h1>
-          <p className="text-muted-foreground font-mono max-w-2xl">
-            Accessing complete audio database. Select a file to initiate playback or retrieve data
-            cache.
-          </p>
-        </div>
+    <main className="container pt-24 bg-transparent">
+      {/* Header */}
+      <div className="mb-12 border-b border-border/50 pb-8">
+        <h1 className="text-4xl md:text-6xl font-heading text-foreground uppercase tracking-widest mb-4">
+          Transmission Log
+        </h1>
+        <p className="text-muted-foreground font-mono max-w-2xl">
+          Accessing complete audio database. Select a file to initiate playback or retrieve data
+          cache.
+        </p>
+      </div>
 
-        {/* The Interactive Component */}
-        <MusicArchive initialSongs={songs.docs} />
-      </main>
-    </div>
+      {/* The Interactive Component */}
+      <MusicArchive initialSongs={songs.docs} />
+    </main>
   )
 }

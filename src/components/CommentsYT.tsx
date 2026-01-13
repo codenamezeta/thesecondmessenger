@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
-import Script from 'next/script'
 import { ThumbsUp, MessageSquare, Loader2, LogIn, Send, Reply as ReplyIcon } from 'lucide-react'
 import { postCommentAction, replyToCommentAction } from '@/actions/youtube'
 import { cn } from '@/utilities/ui'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
+import { useYouTubeAuth } from '@/context/YouTubeAuthContext'
 
 interface CommentSnippet {
   textDisplay: string
@@ -39,14 +39,12 @@ interface CommentThread {
 }
 
 const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
-const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
 
 export default function CommentsYT({ videoId }: { videoId: string }) {
+  const { user, login } = useYouTubeAuth()
   const [comments, setComments] = useState<CommentThread[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [nextPageToken, setNextPageToken] = useState<string | null>(null)
-  const [user, setUser] = useState<any>(null)
-  const [tokenClient, setTokenClient] = useState<any>(null)
   const [newComment, setNewComment] = useState('')
   const [isPosting, setIsPosting] = useState(false)
   const [commentsDisabled, setCommentsDisabled] = useState(false)
@@ -91,69 +89,7 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
     fetchComments()
   }, [fetchComments])
 
-  // --- 2. Auth & Posting (Google Identity Services) ---
-  // Note: Requires NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env
-  const fetchProfile = useCallback(async (accessToken: string) => {
-    try {
-      const res = await fetch(
-        `https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true&key=${API_KEY}`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        },
-      )
-      if (!res.ok) throw new Error('Token invalid')
-      const data = await res.json()
-      if (data.items?.[0]) {
-        const snippet = data.items[0].snippet
-        setUser({
-          displayName: snippet.title,
-          profileImageUrl: snippet.thumbnails?.default?.url,
-          accessToken, // Store token for posting
-        })
-        localStorage.setItem('yt_access_token', accessToken)
-      }
-    } catch (e) {
-      console.error('Failed to fetch user profile', e)
-      localStorage.removeItem('yt_access_token')
-      setUser(null)
-    }
-  }, [])
-
-  useEffect(() => {
-    const token = localStorage.getItem('yt_access_token')
-    if (token) {
-      fetchProfile(token)
-    }
-  }, [fetchProfile])
-
-  const handleGsiLoad = useCallback(() => {
-    if (!CLIENT_ID || typeof window === 'undefined' || !(window as any).google) return
-
-    const client = (window as any).google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/youtube.force-ssl',
-      callback: (tokenResponse: any) => {
-        if (tokenResponse && tokenResponse.access_token) {
-          fetchProfile(tokenResponse.access_token)
-        }
-      },
-    })
-    setTokenClient(client)
-  }, [fetchProfile])
-
-  useEffect(() => {
-    if ((window as any).google && !tokenClient) {
-      handleGsiLoad()
-    }
-  }, [tokenClient, handleGsiLoad])
-
-  const login = () => {
-    if (tokenClient) {
-      tokenClient.requestAccessToken()
-    } else {
-      alert('Google Sign-In is not initialized. Check your Client ID configuration.')
-    }
-  }
+  // --- 2. Posting ---
 
   const postComment = async () => {
     if (!newComment.trim() || !user?.accessToken) return
@@ -284,11 +220,9 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
 
   return (
     <aside className="w-full mx-auto">
-      <Script src="https://accounts.google.com/gsi/client" onLoad={handleGsiLoad} />
-
       <div className="flex items-center justify-between mb-6 border-b border-border pb-4">
         <h3 className="text-xl font-heading text-foreground uppercase tracking-wider flex items-center gap-2">
-          <MessageSquare size={20} className="text-accent" />
+          <MessageSquare size={20} className="text-primary" />
           Comms Channel
         </h3>
         {!commentsDisabled &&
@@ -297,7 +231,7 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
               onClick={login}
               variant="outline"
               size="sm"
-              className="text-xs flex items-center gap-2"
+              className="text-xs tracking-wider flex items-center gap-2 border-secondary text-secondary hover:border-primary"
             >
               <LogIn size={14} /> Sign In to Transmit
             </Button>
