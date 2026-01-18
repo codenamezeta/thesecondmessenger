@@ -58,4 +58,9 @@ export const searchFields: Field[] = [
       },
     ],
   },
+  {
+    name: 'body',
+    type: 'textarea', // text is small, textarea is for larger content
+    index: true,
+  },
 ]

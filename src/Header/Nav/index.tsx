@@ -68,12 +68,12 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
     <>
       {!logoError ? (
         <Image
-          src="/imgs/logos/silver.png"
+          src="/imgs/logos/radio-dish-logo.png"
           alt="The 2nd Messenger Logo"
           sizes="(max-width: 768px) 100vw, 160px"
-          width={144}
-          height={144}
-          className="object-contain group-hover:opacity-80 transition-opacity light:invert"
+          width={200}
+          height={50}
+          className="object-contain opacity-85 group-hover:opacity-100 transition-opacity light:invert"
           onError={() => setLogoError(true)}
           priority
         />
@@ -119,7 +119,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
                   >
                     <div className="relative h-full flex items-center cursor-pointer">
                       <button
-                        className={`flex items-center gap-1 transition-colors uppercase ${isOpen ? 'text-secondary' : 'text-foreground/50 hover:text-secondary'}`}
+                        className={`flex items-center gap-1 transition-colors uppercase ${isOpen ? 'text-secondary' : 'text-foreground/75 hover:text-secondary'}`}
                       >
                         {dropdownLabel}
                         <ChevronDown
@@ -145,7 +145,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
                                 key={j}
                                 {...subItem.link}
                                 appearance="noStyle"
-                                className="px-4 py-3 text-sm text-foreground/50 hover:text-foreground hover:bg-border/5 transition-colors flex items-center justify-between group/sub"
+                                className="px-4 py-3 text-sm text-foreground/75 hover:text-foreground hover:bg-border/5 transition-colors flex items-center justify-between group/sub"
                               />
                             ))}
                           </div>
@@ -162,7 +162,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
                   <CMSLink
                     {...item.link}
                     appearance="noStyle"
-                    className="relative py-2 hover:text-primary transition-colors flex items-center gap-2 text-foreground/50"
+                    className="relative py-2 hover:text-primary transition-colors flex items-center gap-2 text-foreground/75"
                   />
                 </li>
               )

@@ -44,7 +44,11 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
 
     const cacheTag = resource.updatedAt
 
-    src = getMediaUrl(url, cacheTag)
+    if (url && url.startsWith('/')) {
+      src = cacheTag ? `${url}?${cacheTag}` : url
+    } else {
+      src = getMediaUrl(url, cacheTag)
+    }
   }
 
   // --- START FIX ---

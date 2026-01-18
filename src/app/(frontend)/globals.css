@@ -14,13 +14,13 @@
      to allow Tailwind opacity modifiers (e.g. bg-primary/50) to work. */
 
   /* - Default Theme (Space Industrial) - */
-  --primary: 156 50% 67%; /* hsl(156 50% 67%) */
+  --primary: 160 100% 75%; /* hsl(160 100% 75%) */
   --primary-foreground: 150 14% 2%; /* hsl(150 14% 3%) */
 
-  --secondary: 14 68% 59%; /* hsl(14 68% 59%) */
+  --secondary: 25 100% 67%; /* hsl(14 68% 59%) */
   --secondary-foreground: 150 14% 3%; /* hsl(150 14% 3%) */
 
-  --accent: 335 100% 25%; /* hsl(335 100% 25%) */
+  --accent: 340 100% 33%; /* hsl(335 100% 25%) */
   --accent-foreground: 0 0% 98%; /* hsl(0 0% 98%) */
 
   --background: 156 15% 1%; /* hsl(14 15% 2%) */

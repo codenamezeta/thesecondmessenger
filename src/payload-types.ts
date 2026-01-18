@@ -1029,6 +1029,18 @@ export interface Redirect {
       | ({
           relationTo: 'posts';
           value: number | Post;
+        } | null)
+      | ({
+          relationTo: 'songs';
+          value: number | Song;
+        } | null)
+      | ({
+          relationTo: 'releases';
+          value: number | Release;
+        } | null)
+      | ({
+          relationTo: 'playlists';
+          value: number | Playlist;
         } | null);
     url?: string | null;
   };
@@ -1062,10 +1074,23 @@ export interface Search {
   id: number;
   title?: string | null;
   priority?: number | null;
-  doc: {
-    relationTo: 'posts';
-    value: number | Post;
-  };
+  doc:
+    | {
+        relationTo: 'pages';
+        value: number | Page;
+      }
+    | {
+        relationTo: 'posts';
+        value: number | Post;
+      }
+    | {
+        relationTo: 'songs';
+        value: number | Song;
+      }
+    | {
+        relationTo: 'playlists';
+        value: number | Playlist;
+      };
   slug?: string | null;
   meta?: {
     title?: string | null;
@@ -1080,6 +1105,7 @@ export interface Search {
         id?: string | null;
       }[]
     | null;
+  body?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1927,6 +1953,7 @@ export interface SearchSelect<T extends boolean = true> {
         title?: T;
         id?: T;
       };
+  body?: T;
   updatedAt?: T;
   createdAt?: T;
 }

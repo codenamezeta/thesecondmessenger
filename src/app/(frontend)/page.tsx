@@ -22,13 +22,13 @@ export default async function HomePage() {
     payload.find({
       collection: 'songs',
       sort: '-releaseDate',
-      limit: 1,
+      limit: 1, // The very most recent song is the featured song.
     }),
     // B. Recent Logs (Grid)
     payload.find({
       collection: 'songs',
       sort: '-releaseDate',
-      limit: 4,
+      limit: 5, // Needs to be 5 to account for the featured song at index 0
       page: 1,
     }),
     // C. Videos
@@ -44,7 +44,7 @@ export default async function HomePage() {
 
   const featuredSong = latestSongData.docs[0]
   // Filter out the featured song from the recent list so it doesn't duplicate
-  const recentSongs = recentSongsData.docs.filter((s) => s.id !== featuredSong?.id).slice(0, 4)
+  const recentSongs = recentSongsData.docs.filter((s) => s.id !== featuredSong?.id).slice(0, 4) // Slice is redundant because payload fetch already limited.
 
   const songMap = new Map(allSongsForLinking.docs.map((s) => [s.youtubeId, s]))
   const videos = rawVideos.map((video: any) => ({
@@ -55,7 +55,7 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen pb-20">
       {/* --- HERO SECTION: ACTIVE TRANSMISSION --- */}
-      <section className="relative w-full min-h-[85vh] flex items-center justify-center overflow-hidden bg-background border-b border-border/50 py-20">
+      <main className="relative w-full min-h-[85vh] flex items-center justify-center overflow-hidden bg-background border-b border-border/50 py-20">
         {/* Dynamic Background Blur (Adjusted to 2xl) */}
         {featuredSong && (featuredSong.coverArt as any)?.url && (
           <div className="absolute inset-0 z-0 opacity-30 dark:opacity-20 pointer-events-none select-none">
@@ -144,7 +144,7 @@ export default async function HomePage() {
             )}
           </div>
         </div>
-      </section>
+      </main>
 
       {/* --- SECTION 2: THE DATA STREAM (Recent Songs) --- */}
       <section className="py-24 container">

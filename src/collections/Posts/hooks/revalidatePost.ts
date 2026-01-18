@@ -15,9 +15,14 @@ export const revalidatePost: CollectionAfterChangeHook<Post> = ({
 
       payload.logger.info(`Revalidating post at path: ${path}`)
 
-      revalidatePath(path)
-      // @ts-expect-error Next.js 16 types incorrectly require a second argument
-      revalidateTag('posts-sitemap')
+      try {
+        revalidatePath(path)
+        revalidatePath('/posts')
+        // @ts-expect-error Next.js 16 types incorrectly require a second argument
+        revalidateTag('posts-sitemap')
+      } catch (error) {
+        payload.logger.error({ msg: 'Error revalidating path', error })
+      }
     }
 
     // If the post was previously published, we need to revalidate the old path
@@ -26,21 +31,34 @@ export const revalidatePost: CollectionAfterChangeHook<Post> = ({
 
       payload.logger.info(`Revalidating old post at path: ${oldPath}`)
 
-      revalidatePath(oldPath)
-      // @ts-expect-error Next.js 16 types incorrectly require a second argument
-      revalidateTag('posts-sitemap')
+      try {
+        revalidatePath(oldPath)
+        revalidatePath('/posts')
+        // @ts-expect-error Next.js 16 types incorrectly require a second argument
+        revalidateTag('posts-sitemap')
+      } catch (error) {
+        payload.logger.error({ msg: 'Error revalidating old path', error })
+      }
     }
   }
   return doc
 }
 
-export const revalidateDelete: CollectionAfterDeleteHook<Post> = ({ doc, req: { context } }) => {
+export const revalidateDelete: CollectionAfterDeleteHook<Post> = ({
+  doc,
+  req: { context, payload },
+}) => {
   if (!context.disableRevalidate) {
     const path = `/posts/${doc?.slug}`
 
-    revalidatePath(path)
-    // @ts-expect-error Next.js 16 types incorrectly require a second argument
-    revalidateTag('posts-sitemap')
+    try {
+      revalidatePath(path)
+      revalidatePath('/posts')
+      // @ts-expect-error Next.js 16 types incorrectly require a second argument
+      revalidateTag('posts-sitemap')
+    } catch (error) {
+      payload.logger.error({ msg: 'Error revalidating path', error })
+    }
   }
 
   return doc
