@@ -20,7 +20,12 @@ import {
 } from 'lucide-react'
 import type { Media } from '@/payload-types'
 
-// --- 1. Types ---
+import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
+import { MusicRecordingSchema } from '@/components/Schema/MusicRecording'
+import { generateMeta } from '@/utilities/generateMeta'
+import { PayloadRedirects } from '@/components/PayloadRedirects'
+
+// --- Types ---
 type Args = {
   params: Promise<{
     slug: string
@@ -36,11 +41,24 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
   })
   const song = songs.docs[0]
 
-  if (!song) return { title: '404 - Not Found' }
+  // FIX: Use generateMeta utility if song not found, or generate custom meta
+  if (!song) return generateMeta({ doc: null })
+
+  const ogImage =
+    typeof song.coverArt === 'object' && song.coverArt?.url
+      ? song.coverArt.url
+      : '/website-template-OG.webp'
 
   return {
     title: `${song.title} | The Second Messenger`,
     description: song.tagline || `Listen to ${song.title} by The Second Messenger.`,
+    openGraph: {
+      title: `${song.title} | The Second Messenger`,
+      description: song.tagline || `Listen to ${song.title} by The Second Messenger.`,
+      url: `/songs/${slug}`,
+      images: [{ url: ogImage }],
+      type: 'music.song',
+    },
   }
 }
 
@@ -84,6 +102,8 @@ export default async function SongPage({ params }: Args) {
 
   return (
     <article className="min-h-screen pb-12">
+      <MusicRecordingSchema song={song} />
+      <PayloadRedirects disableNotFound url={`/songs/${slug}`} />
       {/* HERO */}
       <SongHero song={song} />
 

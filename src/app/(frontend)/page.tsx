@@ -9,6 +9,8 @@ import { ArrowRight, Disc, Activity, Radio, ExternalLink, Music, Film } from 'lu
 import { SongCard } from '@/components/SongCard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
+import { MusicGroupSchema } from '@/components/Schema/MusicGroup'
+
 export const metadata = {
   title: 'Mission Control | The Second Messenger',
   description: 'Central command for audio transmissions and visual logs.',
@@ -54,6 +56,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen pb-20">
+      <MusicGroupSchema />
       {/* --- HERO SECTION: ACTIVE TRANSMISSION --- */}
       <main className="relative w-full min-h-[85vh] flex items-center justify-center overflow-hidden bg-background border-b border-border/50 py-20">
         {/* Dynamic Background Blur (Adjusted to 2xl) */}

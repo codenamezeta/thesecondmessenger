@@ -86,9 +86,32 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
 export const metadata: Metadata = {
   metadataBase: new URL(getServerSideURL()),
+  // 1. Title Template: %s is replaced by the page title
+  title: {
+    template: '%s | The Second Messenger',
+    default: 'The Second Messenger',
+  },
+  description: 'The secure data terminal and official audio archive for The Second Messenger.',
+  // 2. Canonical URL (Self-referencing is best practice)
+  alternates: {
+    canonical: './',
+  },
+  // 3. Robots (Allow indexing, follow links)
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  // 4. Social Cards
   openGraph: mergeOpenGraph(),
   twitter: {
     card: 'summary_large_image',
-    creator: '@codenamezeta',
+    creator: '@codenamezeta', // Update if you have a band handle
   },
 }
