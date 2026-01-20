@@ -40,7 +40,7 @@ export const MusicRecordingSchema = ({ song }: { song: Song }) => {
   }
 
   return (
-    <Script
+    <script
       id={`music-schema-${song.id}`}
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
