@@ -88,7 +88,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(getServerSideURL()),
   // 1. Title Template: %s is replaced by the page title
   title: {
-    template: '%s | The Second Messenger',
+    template: '%s',
     default: 'The Second Messenger',
   },
   description: 'The secure data terminal and official audio archive for The Second Messenger.',

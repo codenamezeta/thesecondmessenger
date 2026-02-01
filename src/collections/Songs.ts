@@ -260,6 +260,12 @@ export const Songs: CollectionConfig = {
           label: 'Media',
           fields: [
             {
+              name: 'masterAudio',
+              type: 'upload',
+              relationTo: 'media',
+              label: 'Master Recording (MP3/WAV)',
+            },
+            {
               name: 'youtubeId',
               type: 'text',
               label: 'YouTube Video ID',
@@ -282,10 +288,54 @@ export const Songs: CollectionConfig = {
               },
             },
             {
-              name: 'masterAudio',
-              type: 'upload',
-              relationTo: 'media',
-              label: 'Master Recording (MP3/WAV)',
+              name: 'streamingLinks',
+              type: 'array',
+              label: 'Streaming & External Links',
+              admin: {
+                initCollapsed: false,
+                // components: {
+                //   RowLabel: ({ data }: { data: any }) => data?.platform || 'New Link',
+                // } as any,
+              },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'platform',
+                      type: 'select',
+                      required: true,
+                      options: [
+                        'YouTube Music',
+                        'Spotify',
+                        'Apple Music',
+                        'Amazon Music',
+                        'Tidal',
+                        'Qobuz',
+                        'Deezer',
+                        'Pandora',
+                        'SoundCloud',
+                        'Bandcamp',
+                        'Other',
+                      ],
+                    },
+                    {
+                      name: 'url',
+                      type: 'text',
+                      required: true,
+                      label: 'URL',
+                    },
+                  ],
+                },
+                {
+                  name: 'description',
+                  type: 'text',
+                  label: 'Tooltip / Note',
+                  admin: {
+                    description: 'Optional text for hover states or extra context.',
+                  },
+                },
+              ],
             },
             {
               name: 'stems',
@@ -308,9 +358,44 @@ export const Songs: CollectionConfig = {
           label: 'Metadata',
           fields: [
             {
-              type: 'collapsible',
+              type: 'group',
               label: 'Recording Details',
               fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'compositionType',
+                      type: 'select',
+                      options: [
+                        'Original',
+                        'Cover',
+                        'Public Domain',
+                        'Remix',
+                        'Arrangement',
+                        'Derivative Work',
+                        'Interpolation',
+                        'Mashup',
+                        'Sample',
+                        'Other',
+                      ],
+                      defaultValue: 'Original',
+                      required: true,
+                    },
+                    {
+                      name: 'recordingType',
+                      type: 'select',
+                      options: ['Studio', 'Live', 'Demo', 'Other'],
+                      defaultValue: 'Studio',
+                      required: true,
+                    },
+                  ],
+                },
+                {
+                  name: 'isExplicit',
+                  type: 'checkbox',
+                  label: 'Explicit Content / Parental Advisory',
+                },
                 {
                   type: 'row',
                   fields: [
@@ -394,12 +479,6 @@ export const Songs: CollectionConfig = {
                 },
                 // --- DYNAMIC BPM/KEY LOGIC ---
                 {
-                  name: 'isDynamic',
-                  type: 'checkbox',
-                  label: 'Song changes Key or Tempo?',
-                  defaultValue: false,
-                },
-                {
                   type: 'row',
                   fields: [
                     { name: 'bpm', type: 'number', label: 'BPM', required: false },
@@ -408,7 +487,7 @@ export const Songs: CollectionConfig = {
                       type: 'number',
                       label: 'BPM (End)',
                       admin: {
-                        condition: (data, siblingData) => siblingData.isDynamic,
+                        condition: (data, siblingData) => siblingData.changesTempo,
                       },
                     },
                   ],
@@ -422,98 +501,127 @@ export const Songs: CollectionConfig = {
                       type: 'text',
                       label: 'Key (End)',
                       admin: {
-                        condition: (data, siblingData) => siblingData.isDynamic,
+                        condition: (data, siblingData) => siblingData.changesKey,
                       },
                     },
                   ],
                 },
+                {
+                  name: 'changesTempo',
+                  type: 'checkbox',
+                  label: 'Song changes Tempo?',
+                  defaultValue: false,
+                },
+                {
+                  name: 'changesKey',
+                  type: 'checkbox',
+                  label: 'Song changes Key?',
+                  defaultValue: false,
+                },
               ],
             },
             {
-              name: 'streamingLinks',
-              type: 'array',
-              label: 'Streaming & External Links',
+              name: 'popularity',
+              type: 'number',
+              label: 'Popularity Score (0-1000)',
+              defaultValue: 0,
+              min: 0,
+              max: 1000,
               admin: {
-                initCollapsed: true,
-                // components: {
-                //   RowLabel: ({ data }: { data: any }) => data?.platform || 'New Link',
-                // } as any,
+                description: 'Used for sorting "Popular" lists. 1000 = Biggest Hit.',
+              },
+            },
+            {
+              type: 'group',
+              label: 'Tags',
+              admin: {
+                description: 'Define the DNA of the song for search and filtering.',
               },
               fields: [
                 {
                   type: 'row',
                   fields: [
                     {
-                      name: 'platform',
-                      type: 'select',
-                      required: true,
-                      options: [
-                        'YouTube Music',
-                        'Spotify',
-                        'Apple Music',
-                        'Amazon Music',
-                        'Tidal',
-                        'Qobuz',
-                        'Deezer',
-                        'Pandora',
-                        'SoundCloud',
-                        'Bandcamp',
-                        'Other',
-                      ],
+                      name: 'genres',
+                      type: 'relationship',
+                      label: 'Genres',
+                      relationTo: 'tags',
+                      hasMany: true,
+                      filterOptions: { category: { equals: 'genre' } },
                     },
                     {
-                      name: 'url',
-                      type: 'text',
-                      required: true,
-                      label: 'URL',
+                      name: 'styles',
+                      type: 'relationship',
+                      label: 'Styles',
+                      relationTo: 'tags',
+                      hasMany: true,
+                      filterOptions: { category: { equals: 'style' } },
                     },
                   ],
                 },
-                {
-                  name: 'description',
-                  type: 'text',
-                  label: 'Tooltip / Note',
-                  admin: {
-                    description: 'Optional text for hover states or extra context.',
-                  },
-                },
-              ],
-            },
-            {
-              type: 'collapsible',
-              label: 'Classification (Genre, Type, Content)',
-              fields: [
                 {
                   type: 'row',
                   fields: [
                     {
-                      name: 'compositionType',
-                      type: 'select',
-                      options: ['Original', 'Cover', 'Public Domain'],
-                      defaultValue: 'Original',
-                      required: true,
+                      name: 'moods',
+                      type: 'relationship',
+                      label: 'Moods',
+                      relationTo: 'tags',
+                      hasMany: true,
+                      filterOptions: { category: { equals: 'mood' } },
                     },
                     {
-                      name: 'recordingType',
-                      type: 'select',
-                      options: ['Studio', 'Live', 'Demo'],
-                      defaultValue: 'Studio',
-                      required: true,
-                    },
-                    {
-                      name: 'isExplicit',
-                      type: 'checkbox',
-                      label: 'Explicit Content / Parental Advisory',
+                      name: 'themes',
+                      type: 'relationship',
+                      label: 'Themes',
+                      relationTo: 'tags',
+                      hasMany: true,
+                      filterOptions: { category: { equals: 'theme' } },
                     },
                   ],
                 },
                 {
-                  name: 'genres',
-                  type: 'text',
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'instruments',
+                      type: 'relationship',
+                      label: 'Instruments',
+                      relationTo: 'tags',
+                      hasMany: true,
+                      filterOptions: { category: { equals: 'instrument' } },
+                    },
+                    {
+                      name: 'production',
+                      type: 'relationship',
+                      label: 'Production',
+                      relationTo: 'tags',
+                      hasMany: true,
+                      filterOptions: { category: { equals: 'production' } },
+                    },
+                  ],
                 },
+                // Extras
                 {
-                  name: 'moods',
-                  type: 'text',
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'arrangements',
+                      type: 'relationship',
+                      label: 'Arrangement',
+                      relationTo: 'tags',
+                      hasMany: true,
+                      filterOptions: { category: { equals: 'arrangement' } },
+                    },
+                    {
+                      name: 'otherTags',
+                      type: 'relationship',
+                      label: 'Other',
+                      relationTo: 'tags',
+                      hasMany: true,
+                      filterOptions: { category: { equals: 'other' } },
+                    },
+                  ],
                 },
               ],
             },

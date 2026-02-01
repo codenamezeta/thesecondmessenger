@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { SongCard } from '@/components/SongCard'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { SongHero } from '@/components/SongHero'
@@ -20,10 +21,12 @@ import {
 } from 'lucide-react'
 import type { Media } from '@/payload-types'
 
-import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { MusicRecordingSchema } from '@/components/Schema/MusicRecording'
 import { generateMeta } from '@/utilities/generateMeta'
+import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
+
+import { cache } from 'react'
 
 // --- Types ---
 type Args = {
@@ -32,48 +35,111 @@ type Args = {
   }>
 }
 
-export async function generateMetadata({ params }: Args): Promise<Metadata> {
-  const { slug } = await params
+// --- Data Fetching ---
+const querySongBySlug = cache(async (slug: string) => {
   const payload = await getPayload({ config: configPromise })
-  const songs = await payload.find({
+  const result = await payload.find({
     collection: 'songs',
     where: { slug: { equals: slug } },
+    depth: 2, // Vital: We need the Tag names, not just IDs
   })
-  const song = songs.docs[0]
+  return result.docs[0] || null
+})
 
-  // FIX: Use generateMeta utility if song not found, or generate custom meta
+// --- Metadata & SEO ---
+
+// --- HELPER 1: Smart List Formatting (Oxford Comma support) ---
+const formatList = (items: string[]) => {
+  if (!items || items.length === 0) return ''
+  // "Dark, Sad, and Cinematic"
+  const listFormatter = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' })
+  return listFormatter.format(items)
+}
+
+// --- HELPER 2: Safety Check for Relations ---
+const resolveTags = (field: any): string[] => {
+  if (!field || !Array.isArray(field)) return []
+  return field
+    .map((tag: any) => (typeof tag === 'object' && tag.name ? tag.name : null))
+    .filter((name): name is string => Boolean(name))
+}
+
+export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
+  const { slug = '' } = await paramsPromise
+  const song = (await querySongBySlug(slug)) as any // Type assertion for the new fields
+
   if (!song) return generateMeta({ doc: null })
 
-  const ogImage =
-    typeof song.coverArt === 'object' && song.coverArt?.url
-      ? song.coverArt.url
-      : '/website-template-OG.webp'
+  // 1. EXTRACT & CURATE DATA
+  // We limit the number of tags used in the sentence to prevent "Keyword Stuffing"
+  const moods = resolveTags(song.moods)
+    .slice(0, 2)
+    .map((s) => s.toLowerCase())
+  const genres = resolveTags(song.genres).slice(0, 2)
+  const themes = resolveTags(song.themes)
+    .slice(0, 3)
+    .map((s) => s.toLowerCase())
+
+  // 2. CONSTRUCT "ROBOT CONTEXT" SENTENCE
+  // Pattern: "A [Mood] and [Mood] [Genre] track by The Second Messenger..."
+  let generatedContext = ''
+
+  const moodString = moods.length > 0 ? `${formatList(moods)} ` : ''
+  const genreString = genres.length > 0 ? formatList(genres) : 'Rock' // Default fallback
+
+  generatedContext = `A ${moodString}${genreString} track by The Second Messenger`
+
+  // "...exploring themes of [Theme], [Theme], and [Theme]."
+  if (themes.length > 0) {
+    generatedContext += `, exploring themes of ${formatList(themes)}`
+  }
+
+  generatedContext += '.'
+
+  // 3. HYBRID DESCRIPTION
+  let finalDescription = ''
+  if (song.tagline) {
+    // Option A: Human Hook + Robot Context
+    finalDescription = `${song.tagline} ${generatedContext}`
+  } else {
+    // Option B: Full Robot
+    finalDescription = `${song.title} is ${generatedContext.toLowerCase()}`
+  }
+
+  // 4. KEYWORDS META (Dump everything here for internal search/crawlers)
+  const allKeywords = [
+    song.title,
+    'The Second Messenger',
+    ...resolveTags(song.genres),
+    ...resolveTags(song.moods),
+    ...resolveTags(song.themes),
+    ...resolveTags(song.instruments),
+    ...resolveTags(song.styles),
+    ...resolveTags(song.production),
+    ...resolveTags(song.artists), // If you have artists/credits
+  ].join(', ')
 
   return {
     title: `${song.title} | The Second Messenger`,
-    description: song.tagline || `Listen to ${song.title} by The Second Messenger.`,
-    openGraph: {
+    description: finalDescription,
+    keywords: allKeywords,
+    openGraph: mergeOpenGraph({
       title: `${song.title} | The Second Messenger`,
-      description: song.tagline || `Listen to ${song.title} by The Second Messenger.`,
+      description: finalDescription,
       url: `/songs/${slug}`,
-      images: [{ url: ogImage }],
+      images: [{ url: (song.coverArt as any)?.url }],
       type: 'music.song',
-    },
+    }),
   }
 }
 
 export default async function SongPage({ params }: Args) {
   const { slug } = await params
-  const payload = await getPayload({ config: configPromise })
-  const { docs } = await payload.find({
-    collection: 'songs',
-    where: { slug: { equals: slug } },
-    depth: 2, // Ensure we get depth for credits/media
-  })
-
-  const song = docs[0]
+  const song = await querySongBySlug(slug)
 
   if (!song) return notFound()
+
+  const payload = await getPayload({ config: configPromise })
 
   // --- CHECK SAVED STATUS ---
   let isSaved = false
@@ -98,7 +164,24 @@ export default async function SongPage({ params }: Args) {
       // Cookie might be invalid or user deleted, fail gracefully
     }
   }
-  // --------------------------
+
+  // Related Songs
+
+  const moodIds = song.moods?.map((m: any) => (typeof m === 'object' ? m.id : m)) || []
+  const genreIds = song.genres?.map((g: any) => (typeof g === 'object' ? g.id : g)) || []
+
+  const relatedSongs = await payload.find({
+    collection: 'songs',
+    limit: 3,
+    where: {
+      and: [
+        { id: { not_equals: song.id } }, // Exclude current song
+        {
+          or: [{ moods: { in: moodIds } }, { genres: { in: genreIds } }],
+        },
+      ],
+    },
+  })
 
   return (
     <article className="min-h-screen pb-12">
@@ -308,6 +391,20 @@ export default async function SongPage({ params }: Args) {
 
         {/* Comments */}
         {song.youtubeId && <CommentsYT videoId={song.youtubeId} />}
+
+        {/* Related Songs */}
+        {relatedSongs.docs.length > 0 && (
+          <section className="pt-6 mt-12 border-t border-border/50 col-span-full">
+            <h3 className="text-2xl font-heading text-foreground uppercase tracking-widest mb-8">
+              Convergent Signals
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {relatedSongs.docs.map((s) => (
+                <SongCard key={s.id} song={s} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </article>
   )

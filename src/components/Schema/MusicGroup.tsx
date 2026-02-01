@@ -41,7 +41,7 @@ export const MusicGroupSchema = () => {
   }
 
   return (
-    <script
+    <Script
       id="music-group-schema"
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}

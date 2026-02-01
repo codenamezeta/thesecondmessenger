@@ -3,9 +3,10 @@ import { FieldHook } from 'payload'
 
 const format = (val: string): string =>
   val
-    .replace(/ /g, '-')
-    .replace(/[^\w-]+/g, '')
-    .toLowerCase()
+    .replace(/ /g, '-') // Replace space with hyphen
+    .replace(/--/g, '-') // Replace multiple hyphens with single hyphen
+    .replace(/[^\w-]+/g, '') // Remove non-alphanumeric characters
+    .toLowerCase() // Convert to lowercase
 
 export const formatSlug =
   (fallback: string): FieldHook =>

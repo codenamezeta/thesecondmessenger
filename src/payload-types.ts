@@ -76,6 +76,7 @@ export interface Config {
     'mailing-list': MailingList;
     media: Media;
     categories: Category;
+    tags: Tag;
     users: User;
     redirects: Redirect;
     forms: Form;
@@ -107,6 +108,7 @@ export interface Config {
     'mailing-list': MailingListSelect<false> | MailingListSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    tags: TagsSelect<false> | TagsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -438,6 +440,7 @@ export interface Song {
     hasNextPage?: boolean;
     totalDocs?: number;
   };
+  masterAudio?: (number | null) | Media;
   /**
    * The 11-character ID (e.g., dQw4w9WgXcQ). Required for the Global Player.
    */
@@ -446,27 +449,6 @@ export interface Song {
    * The song ID (e.g., 5VaIDMKwaYXgELXy6n0ODU). Required for Spotify Saves.
    */
   spotifyId?: string | null;
-  masterAudio?: (number | null) | Media;
-  /**
-   * Upload synchronized files for the deep-dive player.
-   */
-  stems?:
-    | {
-        stemName: string;
-        audioFile: number | Media;
-        volume?: number | null;
-        id?: string | null;
-      }[]
-    | null;
-  isrc?: string | null;
-  iswc?: string | null;
-  durationText?: string | null;
-  duration?: number | null;
-  isDynamic?: boolean | null;
-  bpm?: number | null;
-  bpmEnd?: number | null;
-  key?: string | null;
-  keyEnd?: string | null;
   streamingLinks?:
     | {
         platform:
@@ -489,11 +471,52 @@ export interface Song {
         id?: string | null;
       }[]
     | null;
-  compositionType: 'Original' | 'Cover' | 'Public Domain';
-  recordingType: 'Studio' | 'Live' | 'Demo';
+  /**
+   * Upload synchronized files for the deep-dive player.
+   */
+  stems?:
+    | {
+        stemName: string;
+        audioFile: number | Media;
+        volume?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  compositionType:
+    | 'Original'
+    | 'Cover'
+    | 'Public Domain'
+    | 'Remix'
+    | 'Arrangement'
+    | 'Derivative Work'
+    | 'Interpolation'
+    | 'Mashup'
+    | 'Sample'
+    | 'Other';
+  recordingType: 'Studio' | 'Live' | 'Demo' | 'Other';
   isExplicit?: boolean | null;
-  genres?: string | null;
-  moods?: string | null;
+  isrc?: string | null;
+  iswc?: string | null;
+  durationText?: string | null;
+  duration?: number | null;
+  bpm?: number | null;
+  bpmEnd?: number | null;
+  key?: string | null;
+  keyEnd?: string | null;
+  changesTempo?: boolean | null;
+  changesKey?: boolean | null;
+  /**
+   * Used for sorting "Popular" lists. 1000 = Biggest Hit.
+   */
+  popularity?: number | null;
+  genres?: (number | Tag)[] | null;
+  styles?: (number | Tag)[] | null;
+  moods?: (number | Tag)[] | null;
+  themes?: (number | Tag)[] | null;
+  instruments?: (number | Tag)[] | null;
+  production?: (number | Tag)[] | null;
+  arrangements?: (number | Tag)[] | null;
+  otherTags?: (number | Tag)[] | null;
   credits?:
     | {
         name: string;
@@ -590,6 +613,18 @@ export interface Playlist {
    */
   tracks?: (number | Song)[] | null;
   isFeatured?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags".
+ */
+export interface Tag {
+  id: number;
+  name: string;
+  category: 'genre' | 'style' | 'mood' | 'production' | 'theme' | 'instrument' | 'arrangement' | 'other';
+  slug?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1262,6 +1297,10 @@ export interface PayloadLockedDocument {
         value: number | Category;
       } | null)
     | ({
+        relationTo: 'tags';
+        value: number | Tag;
+      } | null)
+    | ({
         relationTo: 'users';
         value: number | User;
       } | null)
@@ -1504,26 +1543,9 @@ export interface SongsSelect<T extends boolean = true> {
   releaseDate?: T;
   relatedReleases?: T;
   inPlaylists?: T;
+  masterAudio?: T;
   youtubeId?: T;
   spotifyId?: T;
-  masterAudio?: T;
-  stems?:
-    | T
-    | {
-        stemName?: T;
-        audioFile?: T;
-        volume?: T;
-        id?: T;
-      };
-  isrc?: T;
-  iswc?: T;
-  durationText?: T;
-  duration?: T;
-  isDynamic?: T;
-  bpm?: T;
-  bpmEnd?: T;
-  key?: T;
-  keyEnd?: T;
   streamingLinks?:
     | T
     | {
@@ -1532,11 +1554,36 @@ export interface SongsSelect<T extends boolean = true> {
         description?: T;
         id?: T;
       };
+  stems?:
+    | T
+    | {
+        stemName?: T;
+        audioFile?: T;
+        volume?: T;
+        id?: T;
+      };
   compositionType?: T;
   recordingType?: T;
   isExplicit?: T;
+  isrc?: T;
+  iswc?: T;
+  durationText?: T;
+  duration?: T;
+  bpm?: T;
+  bpmEnd?: T;
+  key?: T;
+  keyEnd?: T;
+  changesTempo?: T;
+  changesKey?: T;
+  popularity?: T;
   genres?: T;
+  styles?: T;
   moods?: T;
+  themes?: T;
+  instruments?: T;
+  production?: T;
+  arrangements?: T;
+  otherTags?: T;
   credits?:
     | T
     | {
@@ -1738,6 +1785,17 @@ export interface CategoriesSelect<T extends boolean = true> {
         label?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags_select".
+ */
+export interface TagsSelect<T extends boolean = true> {
+  name?: T;
+  category?: T;
+  slug?: T;
   updatedAt?: T;
   createdAt?: T;
 }
