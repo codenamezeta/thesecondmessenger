@@ -227,7 +227,7 @@ export default async function SongPage({ params }: Args) {
         </section>
 
         {/* === RIGHT COLUMN: Sidebar === */}
-        <aside className="space-y-8 flex flex-col gap-2">
+        <section className="space-y-8 flex flex-col gap-2">
           {/* 1. Share Links */}
           {/* We pass the full URL string manually if we want SSR, 
       or let the component calculate it on the client. 
@@ -387,14 +387,14 @@ export default async function SongPage({ params }: Args) {
               </div>
             </div>
           )}
-        </aside>
+        </section>
 
         {/* Comments */}
         {song.youtubeId && <CommentsYT videoId={song.youtubeId} />}
 
         {/* Related Songs */}
         {relatedSongs.docs.length > 0 && (
-          <section className="pt-6 mt-12 border-t border-border/50 col-span-full">
+          <aside className="pt-6 mt-12 border-t border-border/50 col-start-1 col-span-1">
             <h3 className="text-2xl font-heading text-foreground uppercase tracking-widest mb-8">
               Convergent Signals
             </h3>
@@ -403,7 +403,7 @@ export default async function SongPage({ params }: Args) {
                 <SongCard key={s.id} song={s} />
               ))}
             </div>
-          </section>
+          </aside>
         )}
       </div>
     </article>

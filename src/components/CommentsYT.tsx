@@ -219,7 +219,7 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
   )
 
   return (
-    <aside className="w-full mx-auto">
+    <section className="w-full mx-auto">
       <div className="flex items-center justify-between mb-6 border-b border-border pb-4">
         <h3 className="text-xl font-heading text-foreground uppercase tracking-wider flex items-center gap-2">
           <MessageSquare size={20} className="text-primary" />
@@ -339,6 +339,6 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
           Load More Transmissions
         </Button>
       )}
-    </aside>
+    </section>
   )
 }

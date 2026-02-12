@@ -1,8 +1,4 @@
-type Duration = {
-  seconds: number | null | undefined
-}
-
-export default function formatTime(seconds: Duration): string {
+export default function formatTime(seconds: number | null | undefined): string {
   if (typeof seconds !== 'number') return '0:00'
 
   const date = new Date(seconds * 1000)
