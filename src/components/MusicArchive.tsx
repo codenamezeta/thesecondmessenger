@@ -52,8 +52,16 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
 
         // Extended Fields
         if (s.lyrics && s.lyrics.toLowerCase().includes(q)) return true
-        if (s.moods && s.moods.toLowerCase().includes(q)) return true
-        if (s.genres && s.genres.toLowerCase().includes(q)) return true
+        if (
+          s.moods &&
+          s.moods.some((m) => typeof m !== 'number' && m.name.toLowerCase().includes(q))
+        )
+          return true
+        if (
+          s.genres &&
+          s.genres.some((g) => typeof g !== 'number' && g.name.toLowerCase().includes(q))
+        )
+          return true
 
         // Credits (Array of objects)
         if (s.credits && s.credits.some((c) => c.name.toLowerCase().includes(q))) return true

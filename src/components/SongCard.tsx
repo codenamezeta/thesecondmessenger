@@ -9,11 +9,11 @@ import {
   Disc,
   Activity,
   Clock,
-  FileAudio,
+  // FileAudio,
   Zap,
   Music2,
-  Fingerprint,
-  Hash,
+  // Fingerprint,
+  // Hash,
   Globe,
   AlertCircle,
 } from 'lucide-react'
@@ -96,9 +96,9 @@ export const SongCard = ({ song, className }: SongCardProps) => {
       </div>
 
       {/* --- 2. THE HOLO FOIL & TEXTURE --- */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-20 mix-blend-overlay">
-        {/* Noise Texture using SVG filter would be ideal, but using a CSS noise gradient for now */}
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxmaWx0ZXIgaWQ9Im4iPjxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIwLjUiIHN0aXRjaFRpbGVzPSJzdGl0Y2giLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ0cmFuc3BhcmVudCIvPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIiBmaWx0ZXI9InVybCgjbikiLz48L3N2Zz4=')] opacity-30" />
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden mix-blend-screen">
+        {/* Sparse Particle Texture using SVG filter */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPgogIDxmaWx0ZXIgaWQ9Im4iPgogICAgPGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuMTIiIG51bU9jdGF2ZXM9IjUiIHN0aXRjaFRpbGVzPSJzdGl0Y2giIC8+CiAgICA8ZmVDb2xvck1hdHJpeCB0eXBlPSJtYXRyaXgiIHZhbHVlcz0iMCAwIDAgMCAxICAwIDAgMCAwIDEgIDAgMCAwIDAgMSAgMCAwIDAgMTAwIC04MCIgLz4KICA8L2ZpbHRlcj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWx0ZXI9InVybCgjbikiIG9wYWNpdHk9IjAuNiIgLz4KPC9zdmc+')]" />
       </div>
 
       {/* Shine Effect */}
@@ -196,7 +196,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
 
               {/* TAGLINE */}
               {song.tagline && (
-                <p className="text-xs text-muted-foreground/80 italic font-serif leading-snug line-clamp-2 border-l-2 border-white/10 pl-2">
+                <p className="text-xs text-muted-foreground italic font-serif leading-snug line-clamp-2 border-l-2 border-white/10 pl-2">
                   &quot;{song.tagline}&quot;
                 </p>
               )}

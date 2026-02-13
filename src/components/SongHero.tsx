@@ -81,7 +81,9 @@ export const SongHero = ({ song }: { song: Song }) => {
               <div className="flex items-center gap-2 border border-border px-3 py-1.5 rounded bg-muted">
                 <Music2 size={12} className="text-secondary/75" />
                 <span className="text-foreground/80">
-                  {typeof song.genres === 'string' ? song.genres.split(',')[0] : 'Song'}
+                  {song.genres?.[0] && typeof song.genres[0] !== 'number'
+                    ? song.genres[0].name
+                    : 'Song'}
                 </span>
               </div>
 
