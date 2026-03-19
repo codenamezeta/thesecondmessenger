@@ -1,0 +1,61 @@
+import type { Block } from 'payload'
+
+export const Code: Block = {
+  slug: 'code',
+  interfaceName: 'CodeBlock',
+  fields: [
+    {
+      name: 'language',
+      type: 'select',
+      defaultValue: 'typescript',
+      options: [
+        {
+          label: 'Typescript',
+          value: 'typescript',
+        },
+        {
+          label: 'Javascript',
+          value: 'javascript',
+        },
+        {
+          label: 'CSS',
+          value: 'css',
+        },
+        {
+          label: 'HTML',
+          value: 'html',
+        },
+        {
+          label: 'JSON',
+          value: 'json',
+        },
+        {
+          label: 'YAML',
+          value: 'yaml',
+        },
+        {
+          label: 'SQL',
+          value: 'sql',
+        },
+        {
+          label: 'Markdown',
+          value: 'markdown',
+        },
+        {
+          label: 'Shell',
+          value: 'shell',
+        },
+        {
+          label: 'Python',
+          value: 'python',
+        },
+      ],
+    },
+    {
+      name: 'code',
+      type: 'code',
+      label: false,
+      required: true,
+    },
+  ],
+}
