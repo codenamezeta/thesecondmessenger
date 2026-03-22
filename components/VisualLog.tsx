@@ -10,7 +10,6 @@ import {
   Music,
   Link as LinkIcon,
   AlertCircle,
-  ArrowRight,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react'
@@ -28,9 +27,9 @@ type Video = {
   category: string
   description?: string
   linkedSong?: {
-    id: string
+    id: number
     title: string
-    slug: string
+    slug?: string | null
   } | null
 }
 
@@ -45,7 +44,7 @@ export const VisualLog = ({ videos }: VisualLogProps) => {
 
   if (!videos || videos.length === 0) {
     return (
-      <div className="p-12 border border-border/50 border-dashed rounded-md text-center text-muted-foreground">
+      <div className="rounded-md border border-dashed border-border/50 p-12 text-center text-muted-foreground">
         <AlertCircle className="mx-auto mb-4" />
         No transmission signal detected.
       </div>
@@ -60,15 +59,15 @@ export const VisualLog = ({ videos }: VisualLogProps) => {
   }
 
   return (
-    <div className="flex flex-col xl:flex-row gap-8 items-start">
+    <div className="flex flex-col items-start gap-8 xl:flex-row">
       {/* --- LEFT: MASTER PLAYER --- */}
-      <div className="w-full xl:w-[65%] space-y-6">
+      <div className="w-full space-y-6 xl:w-[65%]">
         {/* The Viewscreen */}
-        <div className="relative p-3 aspect-video bg-primary/5 border border-primary/20 rounded-md overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.9)] group z-10">
+        <div className="group relative z-10 aspect-video overflow-hidden rounded-md border border-primary/20 bg-primary/5 p-3 shadow-[0_0_50px_rgba(0,0,0,0.9)]">
           {/* Using React-YouTube instead of iframe for control */}
           <YouTube
             videoId={activeVideo.youtubeId}
-            className="w-full h-full border border-primary/10"
+            className="h-full w-full border border-primary/10"
             iframeClassName="w-full h-full"
             onPlay={onVideoPlay} // <--- THE MAGIC HOOK
             opts={{
@@ -83,22 +82,22 @@ export const VisualLog = ({ videos }: VisualLogProps) => {
           />
 
           {/* Corner Decor */}
-          <div className="absolute top-2 left-2 size-3 border-t border-l border-primary/50 pointer-events-none" />
-          <div className="absolute top-2 right-2 size-3 border-t border-r border-primary/50 pointer-events-none" />
-          <div className="absolute bottom-2 left-2 size-3 border-b border-l border-primary/50 pointer-events-none" />
-          <div className="absolute bottom-2 right-2 size-3 border-b border-r border-primary/50 pointer-events-none" />
+          <div className="pointer-events-none absolute top-2 left-2 size-3 border-t border-l border-primary/50" />
+          <div className="pointer-events-none absolute top-2 right-2 size-3 border-t border-r border-primary/50" />
+          <div className="pointer-events-none absolute bottom-2 left-2 size-3 border-b border-l border-primary/50" />
+          <div className="pointer-events-none absolute right-2 bottom-2 size-3 border-r border-b border-primary/50" />
         </div>
 
         {/* Video Info Block */}
-        <div className="bg-card/20 border border-border/50 rounded-md p-6">
-          <div className="flex flex-wrap items-center gap-3 mb-3">
+        <div className="rounded-md border border-border/50 bg-card/20 p-6">
+          <div className="mb-3 flex flex-wrap items-center gap-3">
             {/* Category Badge */}
-            <span className="text-[10px] font-mono uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">
+            <span className="rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 font-mono text-[10px] tracking-widest text-primary uppercase">
               {activeVideo.category}
             </span>
 
             {/* Date */}
-            <span className="text-[10px] font-mono text-card-foreground/80 flex items-center gap-1">
+            <span className="flex items-center gap-1 font-mono text-[10px] text-card-foreground/80">
               <Calendar size={10} />
               {new Date(activeVideo.publishedDate).toLocaleDateString()}
             </span>
@@ -106,8 +105,8 @@ export const VisualLog = ({ videos }: VisualLogProps) => {
             {/* LINKED SONG BADGE (If matched!) */}
             {activeVideo.linkedSong && (
               <Link
-                href={`/songs/${activeVideo.linkedSong.slug}`}
-                className="flex items-center gap-1 text-[10px] font-mono uppercase tracking-widest text-card-foreground/80 bg-popover/20 px-2 py-0.5 rounded-md border border-border hover:bg-popover hover:text-popover-foreground transition-colors ml-auto"
+                href={`/music/${activeVideo.linkedSong.slug}`}
+                className="ml-auto flex items-center gap-1 rounded-md border border-border bg-popover/20 px-2 py-0.5 font-mono text-[10px] tracking-widest text-card-foreground/80 uppercase transition-colors hover:bg-popover hover:text-popover-foreground"
               >
                 <Music size={10} />
                 Linked: {activeVideo.linkedSong.title}
@@ -116,12 +115,12 @@ export const VisualLog = ({ videos }: VisualLogProps) => {
             )}
           </div>
 
-          <h2 className="text-2xl font-heading text-card-foreground uppercase tracking-wider mb-2">
+          <h2 className="mb-2 font-heading text-2xl tracking-wider text-card-foreground uppercase">
             {activeVideo.title}
           </h2>
           <p
             className={cn(
-              'text-sm text-card-foreground/80 max-w-2xl leading-relaxed whitespace-pre-wrap line-clamp-3 transition-all cursor-pointer',
+              'line-clamp-3 max-w-2xl cursor-pointer text-sm leading-relaxed whitespace-pre-wrap text-card-foreground/80 transition-all',
               isExpanded ? 'line-clamp-none' : '',
             )}
           >
@@ -129,8 +128,8 @@ export const VisualLog = ({ videos }: VisualLogProps) => {
           </p>
           <Button
             variant="ghost"
-            size="full"
-            className="uppercase text-xs tracking-widest py-3 mt-3"
+            size="icon-lg"
+            className="mt-3 py-3 text-xs tracking-widest uppercase"
             onClick={() => setIsExpanded(!isExpanded)}
           >
             {isExpanded ? 'Collapse' : 'Expand'}{' '}
@@ -139,21 +138,21 @@ export const VisualLog = ({ videos }: VisualLogProps) => {
         </div>
 
         {/* INTEGRATED COMMS */}
-        <div className="bg-card/20 border border-border/50 rounded-lg p-6">
+        <div className="rounded-lg border border-border/50 bg-card/20 p-6">
           <CommentsYT videoId={activeVideo.youtubeId} />
         </div>
       </div>
 
       {/* --- RIGHT: THE ARCHIVE --- */}
-      <div className="w-full xl:w-[35%] space-y-4">
-        <div className="flex items-center gap-2 mb-4 pb-4 border-b border-border/50">
+      <div className="w-full space-y-4 xl:w-[35%]">
+        <div className="mb-4 flex items-center gap-2 border-b border-border/50 pb-4">
           <MonitorPlay size={18} className="text-primary" />
-          <h3 className="font-heading text-foreground uppercase tracking-widest text-sm">
+          <h3 className="font-heading text-sm tracking-widest text-foreground uppercase">
             Visual Database ({videos.length})
           </h3>
         </div>
 
-        <div className="space-y-3 max-h-[875px] overflow-y-auto p-2 ">
+        <div className="max-h-[875px] space-y-3 overflow-y-auto p-2">
           {videos.map((video) => {
             const isActive = activeVideo.id === video.id
             return (
@@ -161,36 +160,38 @@ export const VisualLog = ({ videos }: VisualLogProps) => {
                 key={video.id}
                 onClick={() => setActiveVideo(video)}
                 className={cn(
-                  'w-full flex gap-4 p-3 rounded-lg border transition-all text-left group',
+                  'group flex w-full gap-4 rounded-lg border p-3 text-left transition-all',
                   isActive
-                    ? 'bg-card/50 border-primary/50 shadow-[0_0_15px_rgba(10,250,255,0.2)]'
-                    : 'bg-card/20 border-border/50 hover:bg-card/5 hover:border-primary/30',
+                    ? 'border-primary/50 bg-card/50 shadow-[0_0_15px_rgba(10,250,255,0.2)]'
+                    : 'border-border/50 bg-card/20 hover:border-primary/30 hover:bg-card/5',
                 )}
               >
                 {/* Thumbnail */}
-                <div className="relative w-32 aspect-video bg-background rounded-md overflow-hidden shrink-0 border border-border/50 group-hover:border-border transition-colors">
+                <div className="relative aspect-video w-32 shrink-0 overflow-hidden rounded-md border border-border/50 bg-background transition-colors group-hover:border-border">
                   <Image
                     src={`https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`}
                     alt={video.title}
                     fill
                     className={cn(
                       'object-cover transition-opacity',
-                      isActive ? 'opacity-100' : 'opacity-60 group-hover:opacity-100',
+                      isActive
+                        ? 'opacity-100'
+                        : 'opacity-60 group-hover:opacity-100',
                     )}
                   />
                   {/* Linked Indicator on Thumbnail */}
                   {video.linkedSong && (
-                    <div className="absolute top-1 right-1 bg-background/80 p-1 rounded-sm border border-border/50">
+                    <div className="absolute top-1 right-1 rounded-sm border border-border/50 bg-background/80 p-1">
                       <Music size={8} className="text-primary" />
                     </div>
                   )}
                 </div>
 
                 {/* Text Info */}
-                <div className="flex flex-col justify-center gap-1 min-w-0">
+                <div className="flex min-w-0 flex-col justify-center gap-1">
                   <h4
                     className={cn(
-                      'font-bold text-sm uppercase tracking-wide transition-colors',
+                      'text-sm font-bold tracking-wide uppercase transition-colors',
                       isActive
                         ? 'text-primary'
                         : 'text-card-foreground/80 group-hover:text-card-foreground',
@@ -198,9 +199,11 @@ export const VisualLog = ({ videos }: VisualLogProps) => {
                   >
                     {video.title}
                   </h4>
-                  <div className="flex items-center gap-2 text-[10px] font-mono text-card-foreground/80">
+                  <div className="flex items-center gap-2 font-mono text-[10px] text-card-foreground/80">
                     <span>{new Date(video.publishedDate).getFullYear()}</span>
-                    {video.linkedSong && <span className="text-primary/70"> • [SONG_LINKED]</span>}
+                    {video.linkedSong && (
+                      <span className="text-primary/70"> • [SONG_LINKED]</span>
+                    )}
                   </div>
                 </div>
               </button>

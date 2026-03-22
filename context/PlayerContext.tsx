@@ -4,12 +4,16 @@ import {
   createContext,
   useContext,
   useState,
+  useRef,
   ReactNode,
   useMemo,
   useCallback,
   useEffect,
 } from 'react'
 import { Song, Release } from '@/payload-types'
+
+export type ViewMode = 'audio' | 'medium' | 'fullscreen'
+export type VideoMode = 'theater' | 'mini'
 
 export type PlayableMedia =
   | (Song & { coverImage?: string; description?: string; artist?: string })
@@ -23,7 +27,7 @@ export type PlayableMedia =
       coverImage?: string
       description?: string
       slug?: string
-      [key: string]: any
+      [key: string]: unknown
     }
 
 interface PlayerState {
@@ -32,11 +36,30 @@ interface PlayerState {
   allSongs: PlayableMedia[]
   currentSongIndex: number
   isPlaying: boolean
+  /** Independent flag: is the video visually shown */
+  videoEnabled: boolean
+  /** Which visual mode the video is in when enabled */
+  videoMode: VideoMode
+  /** Backward-compat: derived from videoEnabled */
   isVideoEnabled: boolean
+  /** Backward-compat: derived from videoMode */
   miniMode: boolean
+  /** Backward-compat: derived from videoEnabled + videoMode */
+  viewMode: ViewMode
   controlsVisible: boolean
   volume: number
   isMuted: boolean
+  /** Drawer open states */
+  isLibraryDrawerOpen: boolean
+  isInfoDrawerOpen: boolean
+  /** Active tab states */
+  activeLibraryTab: 'playlists' | 'queue'
+  activeInfoTab: string
+  /** YouTube playback state (managed by VideoStage) */
+  currentTime: number
+  duration: number
+  played: number
+  isSeeking: boolean
 }
 
 interface PlayerActions {
@@ -45,44 +68,66 @@ interface PlayerActions {
   playNext: () => void
   playPrevious: () => void
   togglePlay: () => void
+  /** Independent video enabled toggle */
   toggleVideo: () => void
+  setVideoEnabled: (enabled: boolean) => void
+  setVideoMode: (mode: VideoMode) => void
+  toggleVideoMode: () => void
+  /** Backward-compat setters */
+  setViewMode: (mode: ViewMode) => void
   setMiniMode: (mode: boolean) => void
   setControlsVisible: (visible: boolean) => void
   toggleControls: () => void
   setVolume: (vol: number) => void
   toggleMute: () => void
   setIsMuted: (muted: boolean) => void
-  isVideoEnabled: boolean
   setIsPlaying: (playing: boolean) => void
   setIsVideoEnabled: (enabled: boolean) => void
+  /** Drawer actions */
+  setIsLibraryDrawerOpen: (open: boolean) => void
+  setIsInfoDrawerOpen: (open: boolean) => void
+  setActiveLibraryTab: (tab: 'playlists' | 'queue') => void
+  setActiveInfoTab: (tab: string) => void
+  /** YouTube playback state setters (called by VideoStage) */
+  setCurrentTime: (time: number) => void
+  setDuration: (duration: number) => void
+  setPlayed: (played: number) => void
+  setIsSeeking: (seeking: boolean) => void
+  /** Seek to a specific time — VideoStage registers its player via registerYouTubePlayer */
+  seekTo: (time: number) => void
+  registerYouTubePlayer: (player: any) => void
+  /** Close the player (standby mode): pause + hide all UI */
+  closePlayer: () => void
   updateSongMetadata: (id: string, metadata: Partial<PlayableMedia>) => void
 }
 
 type PlayerContextType = PlayerState & PlayerActions
 
-// Example helper to normalize incoming data
-const normalizeSongData = async (input: any, allCmsSongs: any[]) => {
-  // 1. If it's already a CMS Song (has a slug), use it directly.
-  if (input?.slug) return input
+const normalizeSongData = async (
+  input: PlayableMedia | string,
+  allCmsSongs: PlayableMedia[],
+): Promise<PlayableMedia> => {
+  if (typeof input !== 'string' && 'slug' in input && input.slug) return input
 
-  // 2. If it's a YouTube ID (string) or partial object, check the CMS cache.
   const youtubeId =
-    typeof input === 'string' ? input : input.youtubeId || input.id
+    typeof input === 'string'
+      ? input
+      : (input as { youtubeId?: string | null }).youtubeId ||
+        (input as { id?: string | number }).id
 
   const cmsMatch = allCmsSongs.find((s) => s.youtubeId === youtubeId)
-  if (cmsMatch) {
-    return cmsMatch // Found in CMS! Use this rich data (slug, official art, etc).
-  }
+  if (cmsMatch) return cmsMatch
 
-  // 3. Fallback: It's a raw YouTube video not in your CMS.
-  // You might want to fetch oEmbed/API data here, or use what was passed.
   return {
-    id: youtubeId,
-    youtubeId: youtubeId,
-    title: input.title || 'Unknown Title', // Ideally fetch this from YouTube API
-    artist: input.channelTitle || 'The Second Messenger', // Fallback artist
-    coverImage: input.thumbnail || undefined, // Map YouTube thumbnail to coverImage
-    // slug: undefined, // Important: This triggers the 'div' fallback in BottomBar
+    id: youtubeId as string,
+    youtubeId: youtubeId as string,
+    title:
+      (typeof input !== 'string' && (input as { title?: string }).title) || 'Unknown Title',
+    artist:
+      (typeof input !== 'string' && (input as { channelTitle?: string }).channelTitle) ||
+      'The Second Messenger',
+    coverImage:
+      (typeof input !== 'string' && (input as { thumbnail?: string }).thumbnail) || undefined,
   }
 }
 
@@ -94,13 +139,35 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [currentSong, setCurrentSong] = useState<PlayableMedia | null>(null)
   const [currentSongIndex, setCurrentSongIndex] = useState<number>(-1)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [isVideoEnabled, setIsVideoEnabled] = useState(false)
-  const [miniMode, setMiniMode] = useState(false)
   const [controlsVisible, setControlsVisible] = useState(false)
   const [volume, setVolume] = useState(0.67)
   const [isMuted, setIsMuted] = useState(false)
 
-  // Fetch "Everything" playlist on mount
+  // Independent video state
+  const [videoEnabled, setVideoEnabled] = useState(false)
+  const [videoMode, setVideoMode] = useState<VideoMode>('theater')
+
+  // Drawer & tab state
+  const [isLibraryDrawerOpen, setIsLibraryDrawerOpen] = useState(false)
+  const [isInfoDrawerOpen, setIsInfoDrawerOpen] = useState(false)
+  const [activeLibraryTab, setActiveLibraryTab] = useState<'playlists' | 'queue'>('queue')
+  const [activeInfoTab, setActiveInfoTab] = useState('about')
+
+  // Playback state (updated by VideoStage)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [played, setPlayed] = useState(0)
+  const [isSeeking, setIsSeeking] = useState(false)
+
+  // YouTube player ref — VideoStage registers its player instance here
+  const ytPlayerRef = useRef<any>(null)
+
+  // Derived backward-compat values
+  const isVideoEnabled = videoEnabled
+  const miniMode = videoMode === 'mini'
+  const viewMode: ViewMode = !videoEnabled ? 'audio' : videoMode === 'mini' ? 'medium' : 'fullscreen'
+
+  // Fetch all songs on mount
   useEffect(() => {
     const fetchAllSongs = async () => {
       try {
@@ -114,46 +181,79 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     fetchAllSongs()
   }, [])
 
+  // --- Actions ---
+
+  const registerYouTubePlayer = useCallback((player: any) => {
+    ytPlayerRef.current = player
+  }, [])
+
+  const seekTo = useCallback((time: number) => {
+    ytPlayerRef.current?.seekTo(time, true)
+  }, [])
+
   const togglePlay = useCallback(() => {
     setControlsVisible(true)
     setIsPlaying((prev) => !prev)
   }, [])
 
   const toggleMute = useCallback(() => setIsMuted((prev) => !prev), [])
-  const toggleVideo = useCallback(() => setIsVideoEnabled((prev) => !prev), [])
-  const toggleControls = useCallback(
-    () => setControlsVisible((prev) => !prev),
+
+  const toggleVideo = useCallback(() => setVideoEnabled((prev) => !prev), [])
+
+  const toggleVideoMode = useCallback(
+    () => setVideoMode((prev) => (prev === 'theater' ? 'mini' : 'theater')),
     [],
   )
 
+  const toggleControls = useCallback(() => setControlsVisible((prev) => !prev), [])
+
+  const closePlayer = useCallback(() => {
+    setIsPlaying(false)
+    setControlsVisible(false)
+    setVideoEnabled(false)
+  }, [])
+
+  // Backward-compat setters that map to the new independent state
+  const setIsVideoEnabled = useCallback((enabled: boolean) => {
+    setVideoEnabled(enabled)
+  }, [])
+
+  const setMiniMode = useCallback((mini: boolean) => {
+    setVideoMode(mini ? 'mini' : 'theater')
+  }, [])
+
+  const setViewMode = useCallback((mode: ViewMode) => {
+    if (mode === 'audio') {
+      setVideoEnabled(false)
+    } else if (mode === 'medium') {
+      setVideoEnabled(true)
+      setVideoMode('mini')
+    } else {
+      setVideoEnabled(true)
+      setVideoMode('theater')
+    }
+  }, [])
+
   const playMedia = useCallback(
     async (media: PlayableMedia | string) => {
-      // 1. Normalize the input data (CMS data takes precedence)
       const song = await normalizeSongData(media, allSongs)
 
       const isSame =
-        currentSong?.youtubeId &&
-        song.youtubeId &&
-        currentSong.youtubeId === song.youtubeId
+        currentSong?.youtubeId && song.youtubeId && currentSong.youtubeId === song.youtubeId
 
       if (isSame) {
         togglePlay()
         return
       }
 
-      // 2. Determine the Queue
-      // We want to play this song, but keep the "Radio" feel by having the rest of the catalog queued.
       let newQueue = allSongs
       let index = newQueue.findIndex((s) => s.youtubeId === song.youtubeId)
 
       if (index === -1) {
-        // Case: One-off YouTube video not in CMS.
-        // We prepend it to the "Everything" list so the radio continues after this song.
         newQueue = [song, ...allSongs]
         index = 0
       }
 
-      // 3. Update State
       setQueue(newQueue)
       setCurrentSongIndex(index)
       setCurrentSong(song)
@@ -176,18 +276,16 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
       const songToPlay = formattedQueue[startIndex]
 
-      // If it's the same playlist and same song, just toggle play
       const isSameSong = currentSong?.youtubeId === songToPlay.youtubeId
       const isSameQueue =
         queue.length === formattedQueue.length &&
-        queue.every((s, i) => s.youtubeId === formattedQueue[i].youtubeId)
+        queue.every((s, i) => s.youtubeId === formattedQueue[i]?.youtubeId)
 
       if (isSameSong && isSameQueue) {
         togglePlay()
         return
       }
 
-      // New playlist or song? Start fresh.
       setQueue(formattedQueue)
       setCurrentSongIndex(startIndex)
       setCurrentSong(songToPlay)
@@ -204,40 +302,29 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     }
     const nextIndex = currentSongIndex + 1
     setCurrentSongIndex(nextIndex)
-    setCurrentSong(queue[nextIndex])
+    setCurrentSong(queue[nextIndex] ?? null)
     setIsPlaying(true)
   }, [currentSongIndex, queue])
 
   const playPrevious = useCallback(() => {
-    if (queue.length === 0 || currentSongIndex <= 0) {
-      return
-    }
+    if (queue.length === 0 || currentSongIndex <= 0) return
     const prevIndex = currentSongIndex - 1
     setCurrentSongIndex(prevIndex)
-    setCurrentSong(queue[prevIndex])
+    setCurrentSong(queue[prevIndex] ?? null)
     setIsPlaying(true)
   }, [currentSongIndex, queue])
 
-  const updateSongMetadata = useCallback(
-    (id: string, metadata: Partial<PlayableMedia>) => {
-      setAllSongs((prev) =>
-        prev.map((s) =>
-          s.youtubeId === id ? ({ ...s, ...metadata } as PlayableMedia) : s,
-        ),
-      )
-      setQueue((prev) =>
-        prev.map((s) =>
-          s.youtubeId === id ? ({ ...s, ...metadata } as PlayableMedia) : s,
-        ),
-      )
-      setCurrentSong((prev) =>
-        prev?.youtubeId === id
-          ? ({ ...prev, ...metadata } as PlayableMedia)
-          : prev,
-      )
-    },
-    [],
-  )
+  const updateSongMetadata = useCallback((id: string, metadata: Partial<PlayableMedia>) => {
+    setAllSongs((prev) =>
+      prev.map((s) => (s.youtubeId === id ? ({ ...s, ...metadata } as PlayableMedia) : s)),
+    )
+    setQueue((prev) =>
+      prev.map((s) => (s.youtubeId === id ? ({ ...s, ...metadata } as PlayableMedia) : s)),
+    )
+    setCurrentSong((prev) =>
+      prev?.youtubeId === id ? ({ ...prev, ...metadata } as PlayableMedia) : prev,
+    )
+  }, [])
 
   const value = useMemo<PlayerContextType>(
     () => ({
@@ -246,25 +333,51 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       allSongs,
       currentSongIndex,
       isPlaying,
-      setIsPlaying,
+      videoEnabled,
+      videoMode,
       isVideoEnabled,
-      setIsVideoEnabled,
       miniMode,
+      viewMode,
       controlsVisible,
       volume,
       isMuted,
+      isLibraryDrawerOpen,
+      isInfoDrawerOpen,
+      activeLibraryTab,
+      activeInfoTab,
+      currentTime,
+      duration,
+      played,
+      isSeeking,
       playMedia,
       playPlaylist,
       playNext,
       playPrevious,
       togglePlay,
       toggleVideo,
+      setVideoEnabled,
+      setVideoMode,
+      toggleVideoMode,
+      setViewMode,
       setMiniMode,
       setControlsVisible,
       toggleControls,
       setVolume,
       toggleMute,
       setIsMuted,
+      setIsPlaying,
+      setIsVideoEnabled,
+      setIsLibraryDrawerOpen,
+      setIsInfoDrawerOpen,
+      setActiveLibraryTab,
+      setActiveInfoTab,
+      setCurrentTime,
+      setDuration,
+      setPlayed,
+      setIsSeeking,
+      seekTo,
+      registerYouTubePlayer,
+      closePlayer,
       updateSongMetadata,
     }),
     [
@@ -273,20 +386,45 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       allSongs,
       currentSongIndex,
       isPlaying,
-      setIsPlaying,
+      videoEnabled,
+      videoMode,
       isVideoEnabled,
-      setIsVideoEnabled,
       miniMode,
+      viewMode,
       controlsVisible,
       volume,
       isMuted,
+      isLibraryDrawerOpen,
+      isInfoDrawerOpen,
+      activeLibraryTab,
+      activeInfoTab,
+      currentTime,
+      duration,
+      played,
+      isSeeking,
+      playMedia,
+      playPlaylist,
+      playNext,
+      playPrevious,
+      togglePlay,
+      toggleVideo,
+      setVideoEnabled,
+      setVideoMode,
+      toggleVideoMode,
+      setViewMode,
+      setMiniMode,
+      setControlsVisible,
+      toggleControls,
+      toggleMute,
+      setIsVideoEnabled,
+      seekTo,
+      registerYouTubePlayer,
+      closePlayer,
       updateSongMetadata,
     ],
   )
 
-  return (
-    <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>
-  )
+  return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>
 }
 
 export const usePlayer = (): PlayerContextType => {

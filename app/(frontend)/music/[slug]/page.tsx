@@ -1,0 +1,494 @@
+import { cookies } from 'next/headers'
+import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
+import Link from 'next/link'
+import type { ReactNode } from 'react'
+import { SongCard } from '@/components/SongCard'
+import configPromise from '@payload-config'
+import { getPayload } from 'payload'
+import { SongHero } from '@/components/SongHero'
+import { Share } from '@/components/Share'
+import { LibrarySync } from '@/components/LibrarySync'
+import CommentsYT from '@/components/CommentsYT'
+import RichText from '@/components/RichText'
+import {
+  Layers,
+  Users,
+  Disc,
+  ExternalLink,
+  Download,
+  FileAudio,
+  Image as ImageIcon,
+} from 'lucide-react'
+import type { Media } from '@/payload-types'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
+
+import { MusicRecordingSchema } from '@/schema/MusicRecording'
+import { generateMeta } from '@/utilities/generateMeta'
+import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
+import { PayloadRedirects } from '@/components/PayloadRedirects'
+
+import { cache } from 'react'
+
+// --- Types ---
+type Args = {
+  params: Promise<{
+    slug: string
+  }>
+}
+
+type SongDoc = NonNullable<Awaited<ReturnType<typeof querySongBySlug>>>
+type TagLike = { name?: string } | string | number | null | undefined
+type IdLike = { id: number | string } | number | string
+type StreamingLink = { id: string | number; platform: string; url: string }
+type CreditRole = { role: string }
+type CreditItem = {
+  id: string | number
+  name: string
+  category: string
+  roles: CreditRole[]
+}
+type BonusItem = {
+  id: string | number
+  label: string
+  type: string
+  file?: Media | number | string | null
+}
+type PlaylistItem = { id: string | number; slug: string; title: string }
+
+// --- Data Fetching ---
+const querySongBySlug = cache(async (slug: string) => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'songs',
+    where: { slug: { equals: slug } },
+    depth: 2, // Vital: We need the Tag names, not just IDs
+  })
+  return result.docs[0] || null
+})
+
+// --- Metadata & SEO ---
+
+// --- HELPER 1: Smart List Formatting (Oxford Comma support) ---
+const formatList = (items: string[]) => {
+  if (!items || items.length === 0) return ''
+  // "Dark, Sad, and Cinematic"
+  const listFormatter = new Intl.ListFormat('en', {
+    style: 'long',
+    type: 'conjunction',
+  })
+  return listFormatter.format(items)
+}
+
+// --- HELPER 2: Safety Check for Relations ---
+const resolveTags = (field: TagLike[] | null | undefined): string[] => {
+  if (!field || !Array.isArray(field)) return []
+  return field
+    .map((tag) => (typeof tag === 'object' && tag?.name ? tag.name : null))
+    .filter((name): name is string => Boolean(name))
+}
+
+const resolveId = (item: IdLike): number | string => {
+  if (typeof item === 'object') return item.id
+  return item
+}
+
+function SidebarCard({
+  icon,
+  title,
+  description,
+  children,
+}: {
+  icon: ReactNode
+  title: string
+  description?: string
+  children: ReactNode
+}) {
+  return (
+    <Card className="border-border/70 bg-card/80 backdrop-blur-sm">
+      <CardHeader className="gap-2">
+        <CardTitle className="flex items-center gap-2 font-heading tracking-wider uppercase">
+          {icon}
+          {title}
+        </CardTitle>
+        {description && (
+          <CardDescription className="font-body">{description}</CardDescription>
+        )}
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
+  )
+}
+
+function StreamingLinksCard({ song }: { song: SongDoc }) {
+  if (!song.streamingLinks || song.streamingLinks.length === 0) return null
+
+  return (
+    <SidebarCard
+      icon={<Disc size={24} className="text-primary" />}
+      title="Stream Now"
+      description="Open official platform links."
+    >
+      <div className="space-y-2">
+        {(song.streamingLinks as StreamingLink[]).map((link) => (
+          <Button
+            key={link.id}
+            asChild
+            variant="secondary"
+            className="h-12 w-full justify-between px-4 text-left"
+          >
+            <a
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
+              <span className="truncate font-body text-sm">
+                {link.platform}
+              </span>
+              <ExternalLink size={14} aria-hidden />
+            </a>
+          </Button>
+        ))}
+      </div>
+    </SidebarCard>
+  )
+}
+
+function CrewCard({ song }: { song: SongDoc }) {
+  const credits = (song.credits as CreditItem[] | null | undefined) ?? []
+  if (credits.length === 0) return null
+
+  return (
+    <SidebarCard
+      icon={<Users size={16} className="text-primary" />}
+      title="Crew"
+      description="Primary contributors and role groups."
+    >
+      <ul className="space-y-4">
+        {credits.map((credit, index: number) => (
+          <li key={credit.id} className="space-y-2">
+            <div className="flex items-start justify-between gap-3">
+              <p className="font-body text-sm text-foreground">{credit.name}</p>
+              <Badge variant="outline" className="shrink-0">
+                {credit.category}
+              </Badge>
+            </div>
+            <p className="font-body text-xs text-muted-foreground">
+              {credit.roles.map((role) => role.role).join(', ')}
+            </p>
+            {index < credits.length - 1 && <Separator className="mt-3" />}
+          </li>
+        ))}
+      </ul>
+    </SidebarCard>
+  )
+}
+
+function DataCacheCard({ song }: { song: SongDoc }) {
+  const hasBonus = song.bonusContent && song.bonusContent.length > 0
+  if (!song.masterAudio && !hasBonus) return null
+
+  return (
+    <SidebarCard
+      icon={<Layers size={16} className="text-primary" />}
+      title="Data Cache"
+      description="Download high-fidelity and bonus assets."
+    >
+      <div className="space-y-2">
+        {song.masterAudio && (
+          <Button asChild className="h-12 w-full justify-between px-4">
+            <a href={(song.masterAudio as Media).url || '#'} download>
+              <span className="inline-flex items-center gap-2">
+                <FileAudio size={14} aria-hidden />
+                <span className="font-body text-sm">Master Audio</span>
+              </span>
+              <Download size={14} aria-hidden />
+            </a>
+          </Button>
+        )}
+
+        {(song.bonusContent as BonusItem[] | null | undefined)?.map((item) => {
+          const fileUrl = (item.file as Media)?.url
+          if (!fileUrl) return null
+
+          return (
+            <Button
+              key={item.id}
+              asChild
+              variant="secondary"
+              className="h-12 w-full justify-between px-4"
+            >
+              <a href={fileUrl} download>
+                <span className="inline-flex items-center gap-2">
+                  {item.type === 'Artwork' ? (
+                    <ImageIcon size={14} aria-hidden />
+                  ) : (
+                    <FileAudio size={14} aria-hidden />
+                  )}
+                  <span className="font-body text-sm">{item.label}</span>
+                </span>
+                <Download size={14} aria-hidden />
+              </a>
+            </Button>
+          )
+        })}
+      </div>
+    </SidebarCard>
+  )
+}
+
+function FeaturedInCard({ song }: { song: SongDoc }) {
+  if (!song.inPlaylists?.docs || song.inPlaylists.docs.length === 0) return null
+
+  return (
+    <SidebarCard
+      title="Featured In"
+      icon={<Disc size={16} className="text-primary" />}
+    >
+      <div className="flex flex-wrap gap-2">
+        {(song.inPlaylists.docs as PlaylistItem[]).map((playlist) => (
+          <Badge
+            key={playlist.id}
+            variant="outline"
+            asChild
+            className="h-7 px-3"
+          >
+            <Link href={`/playlists/${playlist.slug}`}>{playlist.title}</Link>
+          </Badge>
+        ))}
+      </div>
+    </SidebarCard>
+  )
+}
+
+export async function generateMetadata({
+  params: paramsPromise,
+}: Args): Promise<Metadata> {
+  const { slug = '' } = await paramsPromise
+  const song = await querySongBySlug(slug)
+
+  if (!song) return generateMeta({ doc: null })
+
+  // 1. EXTRACT & CURATE DATA
+  // We limit the number of tags used in the sentence to prevent "Keyword Stuffing"
+  const moods = resolveTags(song.moods)
+    .slice(0, 2)
+    .map((s) => s.toLowerCase())
+  const genres = resolveTags(song.genres).slice(0, 2)
+  const themes = resolveTags(song.themes)
+    .slice(0, 3)
+    .map((s) => s.toLowerCase())
+
+  // 2. CONSTRUCT "ROBOT CONTEXT" SENTENCE
+  // Pattern: "A [Mood] and [Mood] [Genre] track by The Second Messenger..."
+  let generatedContext = ''
+
+  const moodString = moods.length > 0 ? `${formatList(moods)} ` : ''
+  const genreString = genres.length > 0 ? formatList(genres) : 'Rock' // Default fallback
+
+  generatedContext = `A ${moodString}${genreString} track by The Second Messenger`
+
+  // "...exploring themes of [Theme], [Theme], and [Theme]."
+  if (themes.length > 0) {
+    generatedContext += `, exploring themes of ${formatList(themes)}`
+  }
+
+  generatedContext += '.'
+
+  // 3. HYBRID DESCRIPTION
+  let finalDescription = ''
+  if (song.tagline) {
+    // Option A: Human Hook + Robot Context
+    finalDescription = `${song.tagline} ${generatedContext}`
+  } else {
+    // Option B: Full Robot
+    finalDescription = `${song.title} is ${generatedContext.toLowerCase()}`
+  }
+
+  // 4. KEYWORDS META (Dump everything here for internal search/crawlers)
+  const allKeywords = [
+    song.title,
+    'The Second Messenger',
+    ...resolveTags(song.genres),
+    ...resolveTags(song.moods),
+    ...resolveTags(song.themes),
+    ...resolveTags(song.instruments),
+    ...resolveTags(song.styles),
+    ...resolveTags(song.production),
+    ...resolveTags((song as SongDoc & { artists?: TagLike[] | null }).artists),
+  ].join(', ')
+
+  const coverUrl = (song.coverArt as Media | null | undefined)?.url || undefined
+
+  return {
+    title: `${song.title} | The Second Messenger`,
+    description: finalDescription,
+    keywords: allKeywords,
+    openGraph: mergeOpenGraph({
+      title: `${song.title} | The Second Messenger`,
+      description: finalDescription,
+      url: `/songs/${slug}`,
+      images: coverUrl ? [{ url: coverUrl }] : undefined,
+      type: 'music.song',
+    }),
+  }
+}
+
+export default async function SongPage({ params }: Args) {
+  const { slug } = await params
+  const song = await querySongBySlug(slug)
+
+  if (!song) return notFound()
+
+  const payload = await getPayload({ config: configPromise })
+
+  // --- CHECK SAVED STATUS ---
+  let isSaved = false
+  const cookieStore = await cookies()
+  const userId = cookieStore.get('tsm_user_id')?.value
+
+  if (userId) {
+    try {
+      const userPresave = await payload.findByID({
+        collection: 'presaves',
+        id: userId,
+      })
+
+      // Check if THIS song ID exists in their campaigns array
+      if (userPresave && userPresave.campaigns) {
+        const savedIds = userPresave.campaigns.map((campaign) =>
+          resolveId(campaign as IdLike),
+        )
+        if (savedIds.includes(song.id)) {
+          isSaved = true
+        }
+      }
+    } catch {
+      // Cookie might be invalid or user deleted, fail gracefully
+    }
+  }
+
+  // Related Songs
+
+  const moodIds =
+    (song.moods as IdLike[] | null | undefined)?.map(resolveId) || []
+  const genreIds =
+    (song.genres as IdLike[] | null | undefined)?.map(resolveId) || []
+
+  const relatedSongs = await payload.find({
+    collection: 'songs',
+    limit: 3,
+    where: {
+      and: [
+        { id: { not_equals: song.id } }, // Exclude current song
+        {
+          or: [{ moods: { in: moodIds } }, { genres: { in: genreIds } }],
+        },
+      ],
+    },
+  })
+
+  return (
+    <article className="min-h-screen pb-12">
+      <MusicRecordingSchema song={song} />
+      <PayloadRedirects disableNotFound url={`/songs/${slug}`} />
+      <SongHero song={song} />
+
+      <div className="container py-10 md:py-16">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10">
+          <section className="space-y-10 lg:col-span-8">
+            {song.about && (
+              <main className="space-y-6 rounded-sm border border-border/60 bg-background/80 p-6 shadow-xs backdrop-blur-sm md:p-8">
+                <div className="space-y-3">
+                  <p className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">
+                    Story
+                  </p>
+                  <h2 className="font-heading text-2xl tracking-tight md:text-3xl">
+                    Transmission Log
+                  </h2>
+                </div>
+                <Separator />
+                <RichText data={song.about} />
+              </main>
+            )}
+
+            {song.lyrics && (
+              <section className="rounded-sm border border-border/60 bg-card/80 p-6 shadow-xs backdrop-blur-sm md:p-8">
+                <div className="space-y-3">
+                  <p className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">
+                    Lyrics
+                  </p>
+                  <h2 className="font-heading text-2xl tracking-tight md:text-3xl">
+                    Vocal Data
+                  </h2>
+                </div>
+                <Separator className="my-6" />
+                <pre className="font-body text-sm leading-relaxed whitespace-pre-wrap text-foreground/85">
+                  {song.lyrics}
+                </pre>
+              </section>
+            )}
+          </section>
+
+          <aside className="space-y-4 lg:sticky lg:top-24 lg:col-span-4 lg:self-start">
+            <Share
+              title={song.title}
+              url={`${process.env.NEXT_PUBLIC_SERVER_URL}/songs/${song.slug}`}
+            />
+
+            <LibrarySync
+              songId={String(song.id)}
+              youtubeId={song.youtubeId || undefined}
+              spotifyId={song.spotifyId || undefined}
+              isReleased={
+                song.relatedReleases?.docs?.some(
+                  (doc) =>
+                    typeof doc === 'object' &&
+                    doc.releaseDate &&
+                    new Date(doc.releaseDate) <= new Date(),
+                ) ?? false
+              }
+              initialIsSaved={isSaved}
+            />
+
+            <StreamingLinksCard song={song} />
+            <CrewCard song={song} />
+            <DataCacheCard song={song} />
+            <FeaturedInCard song={song} />
+          </aside>
+        </div>
+
+        {song.youtubeId && (
+          <section className="mt-12">
+            <Separator className="mb-8" />
+            <CommentsYT videoId={song.youtubeId} />
+          </section>
+        )}
+
+        {relatedSongs.docs.length > 0 && (
+          <aside className="mt-12">
+            <Separator className="mb-8" />
+            <h2 className="mb-8 font-heading text-2xl tracking-wider uppercase">
+              Convergent Signals
+            </h2>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              {relatedSongs.docs.map((s) => (
+                <SongCard key={s.id} song={s} />
+              ))}
+            </div>
+          </aside>
+        )}
+      </div>
+    </article>
+  )
+}

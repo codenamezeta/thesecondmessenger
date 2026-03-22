@@ -54,17 +54,25 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
         if (s.lyrics && s.lyrics.toLowerCase().includes(q)) return true
         if (
           s.moods &&
-          s.moods.some((m) => typeof m !== 'number' && m.name.toLowerCase().includes(q))
+          s.moods.some(
+            (m) => typeof m !== 'number' && m.name.toLowerCase().includes(q),
+          )
         )
           return true
         if (
           s.genres &&
-          s.genres.some((g) => typeof g !== 'number' && g.name.toLowerCase().includes(q))
+          s.genres.some(
+            (g) => typeof g !== 'number' && g.name.toLowerCase().includes(q),
+          )
         )
           return true
 
         // Credits (Array of objects)
-        if (s.credits && s.credits.some((c) => c.name.toLowerCase().includes(q))) return true
+        if (
+          s.credits &&
+          s.credits.some((c) => c.name.toLowerCase().includes(q))
+        )
+          return true
 
         return false
       })
@@ -82,24 +90,24 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
         // Tab 2 -> Collapsible "Classification" -> Row -> compositionType
         // Collapsible has NO name. Row has NO name.
         // So `compositionType` is a direct property of `s`.
-        return (s as any).compositionType === filters.composition
+        return s.compositionType === filters.composition
       })
     }
 
     // 3. Filter by Recording Type
     if (filters.recording !== 'all') {
-      data = data.filter((s) => (s as any).recordingType === filters.recording)
+      data = data.filter((s) => s.recordingType === filters.recording)
     }
 
     // 4. Filter by Explicit
     if (filters.explicit === 'hide') {
-      data = data.filter((s) => !(s as any).isExplicit)
+      data = data.filter((s) => !s.isExplicit)
     }
 
     // 5. Sort
     data.sort((a, b) => {
       // Helper for duration
-      const getDuration = (song: Song) => (song as any).duration || 0
+      const getDuration = (song: Song) => song.duration ?? 0
 
       switch (sort) {
         case 'az':
@@ -141,33 +149,33 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
     return (
       <li>
         <Link
-          href={`/songs/${song.slug}`}
-          className="group block bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all hover:bg-popover"
+          href={`/music/${song.slug}`}
+          className="group block overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-primary/50 hover:bg-popover"
         >
-          <div className="aspect-square relative bg-background">
+          <div className="relative aspect-square bg-background">
             {coverUrl ? (
               <Image
                 src={coverUrl}
                 fill
                 alt={song.title}
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+              <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                 <Disc size={64} />
               </div>
             )}
 
             {/* Overlay Date */}
-            <div className="absolute top-2 right-2 bg-background backdrop-blur border border-border/50 px-2 py-1 text-[10px] font-mono text-foreground/75 rounded-lg">
+            <div className="absolute top-2 right-2 rounded-lg border border-border/50 bg-background px-2 py-1 font-mono text-[10px] text-foreground/75 backdrop-blur">
               {getYear(song.releaseDate)}
             </div>
           </div>
           <div className="p-5">
-            <h3 className="text-lg font-heading text-foreground uppercase tracking-wider group-hover:text-primary transition-colors truncate">
+            <h3 className="truncate font-heading text-lg tracking-wider text-foreground uppercase transition-colors group-hover:text-primary">
               {song.title}
             </h3>
-            <p className="text-xs text-card-foreground/75 font-mono mt-1 truncate">
+            <p className="mt-1 truncate font-mono text-xs text-card-foreground/75">
               {song.tagline || 'Encrypted Audio File'}
             </p>
           </div>
@@ -180,10 +188,10 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
   const ListItem = ({ song }: { song: Song }) => (
     <li>
       <Link
-        href={`/songs/${song.slug}`}
-        className="group flex items-center gap-6 p-4 border-b border-border hover:bg-card transition-colors"
+        href={`/music/${song.slug}`}
+        className="group flex items-center gap-6 border-b border-border p-4 transition-colors hover:bg-card"
       >
-        <div className="w-16 h-16 bg-white/5 rounded-md shrink-0 flex items-center justify-center border border-border/50 text-muted-foreground overflow-hidden relative group-hover:scale-105 transition-transform duration-500">
+        <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/50 bg-white/5 text-muted-foreground transition-transform duration-500 group-hover:scale-105">
           {(song.coverArt as Media)?.url ? (
             <Image
               src={(song.coverArt as Media).url!}
@@ -195,19 +203,21 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
             <Disc size={24} />
           )}
         </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="text-base font-bold text-foreground group-hover:text-primary truncate">
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-base font-bold text-foreground group-hover:text-primary">
             {song.title}
           </h3>
-          <p className="text-xs text-muted-foreground group-hover:text-card-foreground font-mono truncate">
+          <p className="truncate font-mono text-xs text-muted-foreground group-hover:text-card-foreground">
             {song.tagline}
           </p>
         </div>
-        <div className="hidden md:block text-right">
-          <div className="text-xs font-mono text-muted-foreground group-hover:text-card-foreground">
-            {song.releaseDate ? new Date(song.releaseDate).toLocaleDateString() : 'Unreleased'}
+        <div className="hidden text-right md:block">
+          <div className="font-mono text-xs text-muted-foreground group-hover:text-card-foreground">
+            {song.releaseDate
+              ? new Date(song.releaseDate).toLocaleDateString()
+              : 'Unreleased'}
           </div>
-          <div className="text-[10px] text-primary/60 uppercase tracking-widest mt-1">
+          <div className="mt-1 text-[10px] tracking-widest text-primary/60 uppercase">
             {song.releaseDate && new Date(song.releaseDate) <= new Date()
               ? 'Released'
               : 'Scheduled'}
@@ -215,7 +225,7 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
         </div>
         <ArrowRight
           size={16}
-          className="text-muted-foreground group-hover:text-primary group-hover:animate-bounce transition-transform group-hover:translate-x-1"
+          className="text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:animate-bounce group-hover:text-primary"
         />
       </Link>
     </li>
@@ -227,28 +237,33 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
     return (
       <li className="relative pl-8 md:pl-0">
         {/* Center Line (Desktop) */}
-        <div className="left-[0.38rem] md:block absolute md:left-1/2 top-0 bottom-0 w-px bg-border/50 -ml-px"></div>
+        <div className="absolute top-0 bottom-0 left-[0.38rem] -ml-px w-px bg-border/50 md:left-1/2 md:block"></div>
 
         {/* Node Dot */}
         <div
           className={cn(
-            'absolute left-0 md:left-1/2 w-3 h-3 rounded-full border-2 border-secondary bg-background translate-y-6',
+            'absolute left-0 h-3 w-3 translate-y-6 rounded-full border-2 border-secondary bg-background md:left-1/2',
             'md:-ml-[6px]',
           )}
         ></div>
 
         <div
           className={cn(
-            'md:w-1/2 pb-12 pt-4 relative transform transition-all duration-500 hover:-translate-y-1',
-            isLeft ? 'md:pr-12 md:text-right md:ml-0' : 'md:pl-12 md:ml-auto md:text-left',
+            'relative transform pt-4 pb-12 transition-all duration-500 hover:-translate-y-1 md:w-1/2',
+            isLeft
+              ? 'md:ml-0 md:pr-12 md:text-right'
+              : 'md:ml-auto md:pl-12 md:text-left',
           )}
         >
-          <Link href={`/songs/${song.slug}`} className="group inline-block max-w-lg">
+          <Link
+            href={`/music/${song.slug}`}
+            className="group inline-block max-w-lg"
+          >
             {/* Artwork Thumbnail */}
             {song.coverArt && (
               <div
                 className={cn(
-                  'relative w-24 h-24 mb-6 bg-muted/10 border border-white/10 rounded-sm overflow-hidden shadow-2xl',
+                  'relative mb-6 h-24 w-24 overflow-hidden rounded-sm border border-white/10 bg-muted/10 shadow-2xl',
                   isLeft ? 'md:ml-auto' : 'md:mr-auto',
                 )}
               >
@@ -257,12 +272,12 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
                   fill
                   alt={song.title}
                   sizes="96px"
-                  className="object-cover saturate-[0.67] group-hover:saturate-100 transition-all duration-500 scale-105 group-hover:scale-110"
+                  className="scale-105 object-cover saturate-[0.67] transition-all duration-500 group-hover:scale-110 group-hover:saturate-100"
                 />
               </div>
             )}
 
-            <span className="font-mono text-xs text-primary mb-2 block tracking-widest uppercase">
+            <span className="mb-2 block font-mono text-xs tracking-widest text-primary uppercase">
               {song.releaseDate
                 ? new Date(song.releaseDate).toLocaleDateString(undefined, {
                     year: 'numeric',
@@ -272,18 +287,18 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
                 : 'Date Unknown'}
             </span>
 
-            <h3 className="text-3xl font-heading text-foreground uppercase tracking-widest group-hover:text-accent transition-colors leading-[0.9]">
+            <h3 className="font-heading text-3xl leading-[0.9] tracking-widest text-foreground uppercase transition-colors group-hover:text-accent">
               {song.title}
             </h3>
             {song.isExplicit && (
-              <span className="text-xs text-red-500/30 font-mono uppercase tracking-widest">
+              <span className="font-mono text-xs tracking-widest text-red-500/30 uppercase">
                 Explicit
               </span>
             )}
 
             <p
               className={cn(
-                'text-sm text-muted-foreground mt-3 font-mono leading-relaxed',
+                'mt-3 font-mono text-sm leading-relaxed text-muted-foreground',
                 isLeft ? 'ml-auto' : 'mr-auto',
               )}
             >
@@ -299,33 +314,33 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
   return (
     <section className="space-y-8">
       {/* CONTROLS TOOLBAR */}
-      <div className="bg-input p-4 rounded-lg border border-border/30 space-y-4">
+      <div className="space-y-4 rounded-lg border border-border/30 bg-input p-4">
         {/* Top Row: Search & View Toggles */}
-        <div className="flex flex-row gap-4 items-center justify-between flex-wrap">
+        <div className="flex flex-row flex-wrap items-center justify-between gap-4">
           {/* Search */}
-          <div className="relative min-w-64 flex-auto max-w-96">
+          <div className="relative max-w-96 min-w-64 flex-auto">
             <Search
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground"
+              className="absolute top-1/2 left-3 -translate-y-1/2 text-foreground"
             />
             <input
               type="text"
               placeholder="Search by title, lyrics, credits..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-input border border-border/30 rounded pl-9 pr-4 py-2 text-sm text-foreground focus:border-primary outline-none"
+              className="w-full rounded border border-border/30 bg-input py-2 pr-4 pl-9 text-sm text-foreground outline-none focus:border-primary"
             />
           </div>
 
           {/* View Toggles */}
-          <div className="flex items-center bg-input rounded-lg border border-border/30 gap-1 p-1">
+          <div className="flex items-center gap-1 rounded-lg border border-border/30 bg-input p-1">
             <button
               onClick={() => setView('timeline')}
               className={cn(
-                'p-2 rounded-md transition-all border border-transparent',
+                'rounded-md border border-transparent p-2 transition-all',
                 view === 'timeline'
                   ? 'bg-primary text-primary-foreground'
-                  : 'text-primary/75 hover:bg-primary/20 hover:text-primary hover:border-primary/50',
+                  : 'text-primary/75 hover:border-primary/50 hover:bg-primary/20 hover:text-primary',
               )}
               title="Timeline View"
             >
@@ -334,10 +349,10 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
             <button
               onClick={() => setView('grid')}
               className={cn(
-                'p-2 rounded-md transition-all border border-transparent',
+                'rounded-md border border-transparent p-2 transition-all',
                 view === 'grid'
                   ? 'bg-primary text-primary-foreground'
-                  : 'text-primary/75 hover:bg-primary/20 hover:text-primary hover:border-primary/50',
+                  : 'text-primary/75 hover:border-primary/50 hover:bg-primary/20 hover:text-primary',
               )}
               title="Grid View"
             >
@@ -346,10 +361,10 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
             <button
               onClick={() => setView('list')}
               className={cn(
-                'p-2 rounded-md transition-all border border-transparent',
+                'rounded-md border border-transparent p-2 transition-all',
                 view === 'list'
                   ? 'bg-primary text-primary-foreground'
-                  : 'text-primary/75 hover:bg-primary/20 hover:text-primary hover:border-primary/50',
+                  : 'text-primary/75 hover:border-primary/50 hover:bg-primary/20 hover:text-primary',
               )}
               title="List View"
             >
@@ -360,16 +375,21 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
 
         {/* Bottom Row: Filters & Sort */}
         <div className="flex flex-wrap items-center gap-4 border-t border-white/5 pt-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-mono text-muted-foreground uppercase">Filter:</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-mono text-xs text-muted-foreground uppercase">
+              Filter:
+            </span>
 
             {/* Composition Type */}
             <select
               value={filters.composition}
               onChange={(e) =>
-                setFilters((prev) => ({ ...prev, composition: e.target.value as any }))
+                setFilters((prev) => ({
+                  ...prev,
+                  composition: e.target.value as FilterState['composition'],
+                }))
               }
-              className="bg-input border border-border/50 rounded-md p-1 text-xs text-foreground/75 outline-none focus:border-primary"
+              className="rounded-md border border-border/50 bg-input p-1 text-xs text-foreground/75 outline-none focus:border-primary"
             >
               <option value="all">All Composition Types</option>
               <option value="Original">Originals</option>
@@ -381,9 +401,12 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
             <select
               value={filters.recording}
               onChange={(e) =>
-                setFilters((prev) => ({ ...prev, recording: e.target.value as any }))
+                setFilters((prev) => ({
+                  ...prev,
+                  recording: e.target.value as FilterState['recording'],
+                }))
               }
-              className="bg-input border border-border/50 rounded-md p-1 text-xs text-foreground/75 outline-none focus:border-primary"
+              className="rounded-md border border-border/50 bg-input p-1 text-xs text-foreground/75 outline-none focus:border-primary"
             >
               <option value="all">All Recording Types</option>
               <option value="Studio">Studio</option>
@@ -400,10 +423,10 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
                 }))
               }
               className={cn(
-                'p-1 rounded-md text-xs border transition-colors duration-500',
+                'rounded-md border p-1 text-xs transition-colors duration-500',
                 filters.explicit === 'hide'
-                  ? 'bg-input text-muted-foreground border-border/50 hover:bg-red-500/20 hover:text-red-200 hover:border-red-500/50'
-                  : 'bg-input text-muted-foreground border-border/50 hover:bg-blue-500/20 hover:text-blue-200 hover:border-blue-500/50',
+                  ? 'border-border/50 bg-input text-muted-foreground hover:border-red-500/50 hover:bg-red-500/20 hover:text-red-200'
+                  : 'border-border/50 bg-input text-muted-foreground hover:border-blue-500/50 hover:bg-blue-500/20 hover:text-blue-200',
               )}
             >
               {filters.explicit === 'hide' ? 'Show Explicit' : 'Hide Explicit'}
@@ -418,7 +441,7 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as SortMode)}
-              className="bg-transparent text-xs uppercase font-bold text-foreground/80 outline-none [&>option]:bg-input"
+              className="bg-transparent text-xs font-bold text-foreground/80 uppercase outline-none [&>option]:bg-input"
             >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
@@ -435,7 +458,8 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
       <ol
         className={cn(
           'min-h-[400px] transition-all duration-500',
-          view === 'grid' && 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6',
+          view === 'grid' &&
+            'grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3',
           view === 'list' && 'flex flex-col',
           view === 'timeline' && 'relative pb-8',
         )}
@@ -444,17 +468,18 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
           filteredSongs.map((song, i) => {
             if (view === 'grid') return <GridItem key={song.id} song={song} />
             if (view === 'list') return <ListItem key={song.id} song={song} />
-            if (view === 'timeline') return <TimelineItem key={song.id} song={song} index={i} />
+            if (view === 'timeline')
+              return <TimelineItem key={song.id} song={song} index={i} />
           })
         ) : (
-          <li className="col-span-full py-20 text-center border border-border rounded-lg border-dashed">
-            <div className="inline-block p-4 bg-primary rounded-full mb-4 text-primary-foreground">
+          <li className="col-span-full rounded-lg border border-dashed border-border py-20 text-center">
+            <div className="mb-4 inline-block rounded-full bg-primary p-4 text-primary-foreground">
               <Search size={32} />
             </div>
-            <h3 className="text-xl text-secondary font-heading uppercase tracking-widest">
+            <h3 className="font-heading text-xl tracking-widest text-secondary uppercase">
               No Data Found
             </h3>
-            <p className="text-foreground/75 text-sm mt-2">
+            <p className="mt-2 text-sm text-foreground/75">
               Adjust search parameters to retrieve logs.
             </p>
           </li>

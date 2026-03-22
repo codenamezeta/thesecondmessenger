@@ -7,10 +7,15 @@ import { usePlayer } from '@/context/PlayerContext'
 export default function HomePage() {
   const { playMedia } = usePlayer()
   return (
-    <main className="container">
+    <main className="container h-[600vh]">
       <h1>Hello World!</h1>
       <Link href="/theme-playground">Theme Playground</Link>
-      <Button variant="secondary" onClick={() => playMedia('dQw4w9WgXcQ')}>
+      <br />
+      <Button
+        variant="secondary"
+        className="my-4"
+        onClick={() => playMedia('KYf5cJJQxrE')}
+      >
         Play a song
       </Button>
     </main>

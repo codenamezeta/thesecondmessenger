@@ -28,7 +28,7 @@
   --chart-3: oklch(0.6 0.118 184.704);
   --chart-4: oklch(0.511 0.096 186.391);
   --chart-5: oklch(0.437 0.078 188.216);
-  --radius: 0.45rem;
+  --radius: 0.1rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.141 0.005 285.823);
   --sidebar-primary: oklch(0.6 0.118 184.704);
@@ -163,7 +163,7 @@
   }
 
   a {
-    @apply font-medium text-primary underline underline-offset-4 hover:text-primary/80;
+    @apply font-medium text-primary underline-offset-4 hover:text-primary/80;
   }
 }
 
@@ -186,7 +186,7 @@
     /* Optional: Add a tiny bit of padding so text never touches the *absolute* edge 
      if the clamp hits 100% on a weird device. 
   */
-    /* padding-left: 0.5rem; */
-    /* padding-right: 0.5rem; */
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
 }

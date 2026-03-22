@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import {
   Copy,
   Check,
@@ -11,6 +11,13 @@ import {
   Cloud,
   Smartphone, // Icon for "App" sharing
 } from 'lucide-react'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { cn } from '@/utilities/ui'
 
 interface ShareProps {
@@ -19,24 +26,27 @@ interface ShareProps {
   className?: string
 }
 
+const noopSubscribe = () => () => {}
+
+function getClientHref(): string {
+  return typeof window !== 'undefined' ? window.location.href : ''
+}
+
+function getClientCanWebShare(): boolean {
+  return typeof navigator !== 'undefined' && 'share' in navigator
+}
+
 export const Share = ({ url: propUrl, title, className }: ShareProps) => {
   const [copied, setCopied] = useState(false)
-  const [currentUrl, setCurrentUrl] = useState('')
-  const [canWebShare, setCanWebShare] = useState(false)
 
-  // Hydrate URL & Check Feature Support
-  useEffect(() => {
-    if (propUrl) {
-      setCurrentUrl(propUrl)
-    } else if (typeof window !== 'undefined') {
-      setCurrentUrl(window.location.href)
-    }
+  const clientHref = useSyncExternalStore(noopSubscribe, getClientHref, () => '')
+  const currentUrl = propUrl ?? clientHref
 
-    // Check if the browser supports the native "System Share" (Master Key)
-    if (typeof navigator !== 'undefined' && 'share' in navigator) {
-      setCanWebShare(true)
-    }
-  }, [propUrl])
+  const canWebShare = useSyncExternalStore(
+    noopSubscribe,
+    getClientCanWebShare,
+    () => false,
+  )
 
   const handleCopy = async () => {
     try {
@@ -57,7 +67,7 @@ export const Share = ({ url: propUrl, title, className }: ShareProps) => {
         url: currentUrl,
       })
     } catch (err) {
-      console.log('User cancelled share or failed')
+      console.log(err, 'User cancelled share or failed')
     }
   }
 
@@ -72,106 +82,140 @@ export const Share = ({ url: propUrl, title, className }: ShareProps) => {
   const shareLinks = [
     {
       name: 'Facebook',
-      icon: <Facebook size={18} />,
+      icon: <Facebook size={20} />,
       href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
       color: 'hover:text-blue-500 hover:border-blue-500/50',
     },
     {
       name: 'WhatsApp',
-      icon: <MessageCircle size={18} />,
+      icon: <MessageCircle size={20} />,
       href: `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
       color: 'hover:text-green-500 hover:border-green-500/50',
     },
     {
       name: 'Bluesky',
-      icon: <Cloud size={18} />,
+      icon: <Cloud size={20} />,
       href: `https://bsky.app/intent/compose?text=${encodedText}%20${encodedUrl}`,
       color: 'hover:text-sky-500 hover:border-sky-500/50',
     },
     {
       name: 'Direct',
-      icon: <Send size={18} />,
-      href: `mailto:?subject=${encodedTitle}&body=${encodeURIComponent(`Check out this track:\n\n`)}${encodedUrl}`,
+      icon: <Send size={20} />,
+      href: `mailto:?subject=${encodedTitle}&body=${encodeURIComponent(`Hey! I think you'll love this song by The Second Messenger!\n\n`)}${encodedUrl}`,
       color: 'hover:text-primary hover:border-primary/50',
     },
   ]
 
   return (
-    <div
+    <Card
       className={cn(
-        'bg-background border border-primary/20 rounded-lg p-6 relative overflow-hidden group',
+        'group relative border border-primary/50 bg-primary/5',
         className,
       )}
     >
       {/* Decorative "Scanner" Line */}
-      <div className="absolute inset-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+      <div className="absolute inset-0 h-[2px] w-full bg-linear-to-r from-transparent via-primary/50 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
 
       {/* Header */}
-      <div className="flex items-center gap-3 mb-3">
-        <div className="p-2 bg-primary/10 border border-primary/20 rounded-full text-primary animate-pulse">
+      <CardHeader className="flex items-center gap-3">
+        <div className="animate-pulse rounded-full border border-primary bg-primary/20 p-3 text-primary">
           <Share2 size={20} />
         </div>
         <div>
-          <h4 className="text-foreground font-heading font-bold uppercase tracking-widest text-sm">
-            Relay Signal
-          </h4>
-          <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wide">
-            Amplify the transmission
-          </p>
+          <CardTitle className="font-heading text-lg tracking-wider uppercase">
+            Share
+          </CardTitle>
+          <CardDescription className="font-mono text-sm tracking-wide text-muted-foreground uppercase">
+            Amplify this signal
+          </CardDescription>
         </div>
-      </div>
+      </CardHeader>
 
       {/* Copy Input Zone */}
-      <div className="relative flex items-center mb-6">
-        <div className="w-full bg-background border border-border/50 rounded-l-md py-3 px-4 text-xs font-mono text-muted-foreground truncate border-r-0">
+      <CardContent className="relative flex items-center">
+        <div className="w-full truncate rounded-l-xl border border-r-0 border-primary/50 bg-background px-4 py-3 font-mono text-xs text-muted-foreground">
           {currentUrl}
         </div>
         <button
           onClick={handleCopy}
-          className="bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-r-md px-4 py-3 transition-all flex items-center gap-2 min-w-[100px] justify-center group/btn"
+          className="group/btn flex min-w-[100px] items-center justify-center gap-2 rounded-r-xl border border-primary/30 bg-primary/10 px-4 py-3 text-primary transition-all hover:bg-primary/20"
         >
           {copied ? <Check size={16} /> : <Copy size={16} />}
-          <span className="text-xs font-bold uppercase tracking-wider">
+          <span className="text-xs font-bold tracking-wider uppercase">
             {copied ? 'Copied' : 'Copy'}
           </span>
         </button>
-      </div>
+      </CardContent>
 
-      {/* Social Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-        {/* 1. The "Native App" Share (For TikTok/Instagram/etc.) */}
-        {canWebShare && (
-          <button
-            onClick={handleSystemShare}
-            className="flex flex-col items-center justify-center gap-2 p-3 rounded bg-primary/20 border border-primary/50 hover:bg-primary/30 transition-all duration-300 col-span-2 sm:col-span-1"
-            title="Open Share Menu"
+      {/* Social actions: outer div is the query container only. Responsive @[…]: classes must
+          live on *descendants* — an element cannot match @container against itself, so putting
+          @container + @[30rem]:flex-row on the same node made the wide layout never apply. */}
+      <CardContent
+        className={
+          canWebShare ? undefined : 'grid w-full min-w-0 grid-cols-4 gap-2'
+        }
+      >
+        {canWebShare ? (
+          <div
+            className="@container w-full min-w-0"
+            style={{ containerType: 'inline-size' } as React.CSSProperties}
           >
-            <Smartphone size={20} className="text-primary" />
-            <span className="text-[10px] font-heading uppercase tracking-wider text-primary">
-              System Share
-            </span>
-          </button>
+            <div className="flex w-full min-w-0 flex-col gap-2 @[24rem]:flex-row @[24rem]:flex-nowrap">
+              <button
+                onClick={handleSystemShare}
+                className="flex min-h-[72px] w-full min-w-0 shrink-0 flex-col items-center justify-center gap-2 rounded border border-primary/50 bg-primary/20 p-3 transition-all duration-300 hover:bg-primary/30 @[24rem]:w-auto @[24rem]:flex-1 @[24rem]:shrink @[24rem]:basis-0"
+                title="Open Share Menu"
+              >
+                <Smartphone size={24} className="text-primary" />
+                <span className="font-mono text-[10px] tracking-wider text-primary uppercase">
+                  System
+                </span>
+              </button>
+              <div className="grid min-w-0 grid-cols-4 gap-2 @[24rem]:contents">
+                {shareLinks.map((link) => (
+                  <a
+                    key={link.name}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      'flex min-h-[72px] min-w-0 flex-col items-center justify-center gap-2 rounded border border-muted bg-background/50 p-3 transition-all duration-300 @[24rem]:flex-1 @[24rem]:basis-0',
+                      link.color,
+                      'hover:bg-muted/50',
+                    )}
+                    title={`Share on ${link.name}`}
+                  >
+                    {link.icon}
+                    <span className="font-mono text-[10px] tracking-wider uppercase">
+                      {link.name}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          shareLinks.map((link) => (
+            <a
+              key={link.name}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                'flex min-h-[72px] min-w-0 flex-col items-center justify-center gap-2 rounded border border-muted bg-background/50 p-3 transition-all duration-300',
+                link.color,
+                'hover:bg-muted/50',
+              )}
+              title={`Share on ${link.name}`}
+            >
+              {link.icon}
+              <span className="font-mono text-[10px] tracking-wider uppercase">
+                {link.name}
+              </span>
+            </a>
+          ))
         )}
-
-        {/* 2. Standard Web Links */}
-        {shareLinks.map((link) => (
-          <a
-            key={link.name}
-            href={link.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(
-              'flex flex-col items-center justify-center gap-2 p-3 rounded bg-muted border border-muted transition-all duration-300',
-              link.color,
-              'hover:bg-muted/50',
-            )}
-            title={`Share on ${link.name}`}
-          >
-            {link.icon}
-            <span className="text-[10px] font-heading uppercase tracking-wider">{link.name}</span>
-          </a>
-        ))}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }
