@@ -1,12 +1,26 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Check, Loader2, Save } from 'lucide-react'
-import { FaSpotify, FaYoutube } from 'react-icons/fa'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+} from '@/components/ui/card'
+import { Check, Disc3, Loader2, Save, Youtube } from 'lucide-react'
 import { cn } from '@/utilities/ui'
-import { getSpotifyAuthUrl, likeYouTubeVideo, subscribeToChannel } from '@/actions/library-sync'
+import {
+  getSpotifyAuthUrl,
+  likeYouTubeVideo,
+  subscribeToChannel,
+} from '@/actions/library-sync'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useYouTubeAuth } from '@/context/YouTubeAuthContext'
+import { Separator } from './ui/separator'
+import { Button } from './ui/button'
+import { ButtonGroup } from './ui/button-group'
 
 interface LibrarySyncProps {
   songId: string
@@ -27,14 +41,19 @@ export const LibrarySync = ({
   const searchParams = useSearchParams()
   const { user, login } = useYouTubeAuth()
 
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'connected'>(
-    initialIsSaved ? 'connected' : 'idle',
-  )
-  const [activePlatform, setActivePlatform] = useState<'spotify' | 'youtube' | null>(null)
+  const [status, setStatus] = useState<
+    'idle' | 'loading' | 'success' | 'connected'
+  >(initialIsSaved ? 'connected' : 'idle')
+  const [activePlatform, setActivePlatform] = useState<
+    'spotify' | 'youtube' | null
+  >(null)
 
   useEffect(() => {
     // 1. CHECK FOR IMMEDIATE SUCCESS (Redirected from API)
-    if (searchParams.get('success') === 'true' && searchParams.get('action') === 'spotify') {
+    if (
+      searchParams.get('success') === 'true' &&
+      searchParams.get('action') === 'spotify'
+    ) {
       setStatus('success')
     }
   }, [searchParams])
@@ -81,15 +100,15 @@ export const LibrarySync = ({
   // --- RENDER: SUCCESS FLASH ---
   if (status === 'success') {
     return (
-      <div className="w-full bg-green-500/10 border border-green-500/50 rounded-lg p-4 flex items-center justify-center gap-3 animate-in fade-in zoom-in duration-300">
-        <div className="p-2 bg-green-500 rounded-full text-black">
+      <div className="flex w-full animate-in items-center justify-center gap-3 rounded-lg border border-green-500/50 bg-green-500/10 p-4 duration-300 fade-in zoom-in">
+        <div className="rounded-full bg-green-500 p-2 text-black">
           <Check size={20} strokeWidth={3} />
         </div>
         <div>
-          <h4 className="font-heading font-bold text-green-500 uppercase tracking-widest text-sm">
+          <h4 className="font-heading text-sm font-bold tracking-widest text-green-500 uppercase">
             {activePlatform === 'youtube' ? 'Signal Verified' : 'Success!'}
           </h4>
-          <p className="text-[10px] font-mono text-green-400/80 text-wrap max-w-40">
+          <p className="max-w-40 font-mono text-[10px] text-wrap text-green-400/80">
             {
               activePlatform === 'youtube'
                 ? isReleased
@@ -108,13 +127,13 @@ export const LibrarySync = ({
   // --- RENDER: ALREADY CONNECTED ---
   if (status === 'connected') {
     return (
-      <div className="bg-muted/5 border border-primary/30 rounded-lg p-6 relative overflow-hidden">
-        <h4 className="text-white font-heading uppercase tracking-widest mb-2 flex items-center gap-2 text-xs">
+      <div className="relative overflow-hidden rounded-lg border border-primary/30 bg-muted/5 p-6">
+        <h4 className="mb-2 flex items-center gap-2 font-heading text-xs tracking-widest text-white uppercase">
           <Check size={16} className="text-primary" />
           Status: {isReleased ? 'Link Active' : 'Pre-Save Active'}
         </h4>
 
-        <p className="text-xs text-muted mb-4">
+        <p className="mb-4 text-xs text-muted">
           {isReleased
             ? 'Your secure link is established. Click below to add this specific frequency to your collection.'
             : 'Your connection is secure. This transmission will be captured automatically upon arrival.'}
@@ -122,7 +141,7 @@ export const LibrarySync = ({
 
         <button
           onClick={handleSpotify}
-          className="w-full py-2 px-4 rounded border border-white/10 hover:bg-white/5 text-white text-[10px] uppercase font-bold tracking-widest transition-colors flex items-center justify-center gap-2"
+          className="flex w-full items-center justify-center gap-2 rounded border border-white/10 px-4 py-2 text-[10px] font-bold tracking-widest text-white uppercase transition-colors hover:bg-white/5"
         >
           <Save size={14} className="text-primary" />
           {isReleased ? 'Save Song to Library' : 'Re-Confirm Pre-Save'}
@@ -133,54 +152,55 @@ export const LibrarySync = ({
 
   // --- RENDER: DEFAULT ---
   return (
-    <div className="bg-background border border-primary/20 rounded-lg p-6 relative overflow-hidden group space-y-3">
-      {/* Decorative "Scanner" Line */}
-      <div className="absolute inset-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-      <h4 className="text-white font-heading uppercase tracking-widest mb-2 flex items-center gap-2 text-xs">
-        <Save size={16} className="text-primary" />
-        {isReleased ? 'Library Sync' : 'Pre-Save Protocol'}
-      </h4>
-
-      {/* Spotify Button */}
-      <button
-        onClick={handleSpotify}
-        disabled={status === 'loading'}
-        className={cn(
-          'w-full py-3 px-4 rounded font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all',
-          // 'bg-[#1DB954aa] hover:bg-[#1ed760] text-black',
-          'text-foreground border border-primary/20 bg-background hover:bg-[#1ed760] hover:text-black',
-        )}
-      >
-        {status === 'loading' && activePlatform === 'spotify' ? (
-          <Loader2 size={16} className="animate-spin" />
-        ) : (
-          <FaSpotify size={20} />
-        )}
-        {isReleased ? 'Save on Spotify' : 'Pre-Save on Spotify'}
-      </button>
-
-      {/* YouTube Button */}
-      {youtubeId && (
-        <button
-          onClick={handleYouTube}
-          disabled={status === 'loading'}
-          className={cn(
-            'w-full py-3 px-4 rounded font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all',
-            'bg-background hover:bg-[#FF0000] text-foreground border border-primary/20 hover:text-white',
+    <Card className="group bg-background">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 font-heading text-lg tracking-wider uppercase">
+          <Save size={24} className="text-primary" />
+          {isReleased ? 'Library Sync' : 'Pre-Save Protocol'}
+        </CardTitle>
+        <CardDescription className="font-mono text-sm tracking-wide text-muted-foreground uppercase">
+          Save this release and connect your platforms.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ButtonGroup orientation="vertical" className="w-full">
+          <Button
+            onClick={handleSpotify}
+            disabled={status === 'loading'}
+            className={cn(
+              'flex w-full items-center justify-center gap-2 py-6',
+              'border border-primary/20 bg-background text-foreground hover:bg-[#1ed760] hover:text-black',
+            )}
+          >
+            {status === 'loading' && activePlatform === 'spotify' ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Disc3 size={20} />
+            )}
+            {isReleased ? 'Save on Spotify' : 'Pre-Save on Spotify'}
+          </Button>
+          {youtubeId && (
+            <Button
+              onClick={handleYouTube}
+              disabled={status === 'loading'}
+              className={cn(
+                'flex w-full items-center justify-center gap-2 py-6',
+                'border border-primary/20 bg-background text-foreground hover:bg-[#FF0000] hover:text-white',
+              )}
+            >
+              {status === 'loading' && activePlatform === 'youtube' ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Youtube size={20} />
+              )}
+              {isReleased ? 'Like on YouTube' : 'Subscribe on YouTube'}
+            </Button>
           )}
-        >
-          {status === 'loading' && activePlatform === 'youtube' ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : (
-            <FaYoutube size={20} />
-          )}
-          {isReleased ? 'Like on YouTube' : 'Subscribe on YouTube'}
-        </button>
-      )}
-
-      <p className="text-[9px] text-muted-foreground text-center uppercase tracking-widest">
+        </ButtonGroup>
+      </CardContent>
+      <CardFooter className="flex items-center justify-center text-center text-[9px] tracking-widest text-muted-foreground uppercase">
         - Neural Link Secured -
-      </p>
-    </div>
+      </CardFooter>
+    </Card>
   )
 }

@@ -18,19 +18,24 @@ export const SongHero = ({ song }: { song: Song }) => {
   const coverArtUrl = (song.coverArt as Media)?.url || ''
 
   return (
-    <section className="relative w-full border-b border-white/10 bg-muted/30 backdrop-blur-0 overflow-hidden">
+    <section className="backdrop-blur-0 relative w-full overflow-hidden border-b border-white/10 bg-muted/30">
       {/* Background Ambience */}
-      <div className="absolute inset-0 opacity-20 pointer-events-none">
+      <div className="pointer-events-none absolute inset-0 opacity-20">
         {coverArtUrl && (
-          <Image src={coverArtUrl} alt="bg" fill className="object-cover blur-[6px] scale-110" />
+          <Image
+            src={coverArtUrl}
+            alt="bg"
+            fill
+            className="scale-110 object-cover blur-[6px]"
+          />
         )}
         <div className="absolute inset-0 bg-gradient-to-br from-background to-background/20" />
       </div>
 
-      <div className="container relative z-10 py-12 md:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8 items-center">
+      <div className="relative z-10 container py-12 md:py-20">
+        <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-[300px_1fr]">
           {/* 1. ARTWORK */}
-          <div className="relative aspect-square w-full max-w-[300px] mx-auto md:mx-0 rounded-lg overflow-hidden border border-accent/25 shadow-[0_0_40px_rgba(var(--color-primary-rgb),0.2)] group">
+          <div className="group relative mx-auto aspect-square w-full max-w-[300px] overflow-hidden rounded-lg border border-accent/25 shadow-[0_0_40px_rgba(var(--color-primary-rgb),0.2)] md:mx-0">
             {coverArtUrl ? (
               <Image
                 src={coverArtUrl}
@@ -41,7 +46,7 @@ export const SongHero = ({ song }: { song: Song }) => {
                 sizes="(max-width: 768px) 100vw, 300px"
               />
             ) : (
-              <div className="w-full h-full bg-background/50 flex items-center justify-center text-muted-foreground">
+              <div className="flex h-full w-full items-center justify-center bg-background/50 text-muted-foreground">
                 Signal Interference... No Artwork Data Received.
               </div>
             )}
@@ -49,9 +54,9 @@ export const SongHero = ({ song }: { song: Song }) => {
             {/* Overlay Play Button */}
             <button
               onClick={() => (isCurrent ? togglePlay() : playMedia(song))}
-              className="absolute inset-0 flex items-center justify-center bg-background/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              className="absolute inset-0 flex items-center justify-center bg-background/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
             >
-              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-[0_0_20px_var(--color-primary)] hover:scale-110 transition-transform">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_20px_var(--color-primary)] transition-transform hover:scale-110">
                 {isActive ? (
                   <Pause size={32} fill="currentColor" />
                 ) : (
@@ -62,23 +67,23 @@ export const SongHero = ({ song }: { song: Song }) => {
           </div>
 
           {/* 2. METADATA */}
-          <div className="flex flex-col items-center md:items-start text-center md:text-left">
-            <h1 className="text-4xl md:text-6xl font-heading font-bold uppercase tracking-wide text-foreground drop-shadow-lg leading-[0.8]">
+          <div className="flex flex-col items-center text-center md:items-start md:text-left">
+            <h1 className="mb-6 font-heading text-4xl leading-0 font-bold tracking-wide text-foreground uppercase drop-shadow-lg md:text-6xl">
               {song.title}
             </h1>
-            <p className="text-xl md:text-2xl text-primary font-heading uppercase tracking-widest opacity-80">
+            <p className="mb-3 font-heading text-xl leading-0 tracking-widest text-primary uppercase opacity-80 md:text-2xl">
               The Second Messenger
             </p>
             {song.tagline && (
-              <p className="text-base text-muted-foreground italic font-mono max-w-4xl mt-2">
+              <p className="mt-2 max-w-4xl font-mono text-base text-muted-foreground italic">
                 &quot;{song.tagline}&quot;
               </p>
             )}
 
             {/* Stat Grid */}
-            <div className="flex flex-wrap justify-center md:justify-start gap-2 text-xs font-mono text-muted-foreground uppercase tracking-wider my-6">
+            <div className="my-6 flex flex-wrap justify-center gap-2 font-mono text-xs tracking-wider text-muted-foreground uppercase md:justify-start">
               {/* Genre */}
-              <div className="flex items-center gap-2 border border-border px-3 py-1.5 rounded bg-muted">
+              <div className="flex items-center gap-2 rounded border border-border bg-muted px-3 py-1.5">
                 <Music2 size={12} className="text-secondary/75" />
                 <span className="text-foreground/80">
                   {song.genres?.[0] && typeof song.genres[0] !== 'number'
@@ -89,15 +94,17 @@ export const SongHero = ({ song }: { song: Song }) => {
 
               {/* Duration */}
               {song.duration && (
-                <div className="flex items-center gap-2 border border-border px-3 py-1.5 rounded bg-muted">
+                <div className="flex items-center gap-2 rounded border border-border bg-muted px-3 py-1.5">
                   <Clock size={12} className="text-secondary/75" />
-                  <span className="text-foreground/80">{formatTime(song.duration as any)}</span>
+                  <span className="text-foreground/80">
+                    {formatTime(song.duration as any)}
+                  </span>
                 </div>
               )}
 
               {/* BPM */}
               {song.bpm && (
-                <div className="flex items-center gap-2 border border-border px-3 py-1.5 rounded bg-muted">
+                <div className="flex items-center gap-2 rounded border border-border bg-muted px-3 py-1.5">
                   <Activity size={12} className="text-secondary/75" />
                   <span className="text-foreground/80">{song.bpm} BPM</span>
                 </div>
@@ -105,7 +112,7 @@ export const SongHero = ({ song }: { song: Song }) => {
 
               {/* Key */}
               {song.key && (
-                <div className="flex items-center gap-2 border border-border px-3 py-1.5 rounded bg-muted">
+                <div className="flex items-center gap-2 rounded border border-border bg-muted px-3 py-1.5">
                   <ListMusic size={12} className="text-secondary/75" />
                   <span className="text-foreground/80">{song.key}</span>
                 </div>
@@ -119,15 +126,15 @@ export const SongHero = ({ song }: { song: Song }) => {
               variant={isActive ? 'default' : 'outline'}
               size="lg"
               className={cn(
-                'w-96 group border-primary hover:border-accent group-hover:text-accent font-bold uppercase tracking-widest shadow-[0_0_20px_hsla(--primary,0.4)] group-hover:shadow-[0_0_20px_rgba(var(--primary-rgb),0.6)] animate-in duration-300',
-                isActive && 'group-hover:text-primary-foreground animate-none',
+                'group w-96 animate-in border-primary font-bold tracking-widest uppercase shadow-[0_0_20px_hsla(--primary,0.4)] duration-300 group-hover:text-accent group-hover:shadow-[0_0_20px_rgba(var(--primary-rgb),0.6)] hover:border-accent',
+                isActive && 'animate-none group-hover:text-primary-foreground',
               )}
             >
               {isActive ? (
                 <>
                   <Pause
                     size={16}
-                    className="text-primary-foreground group-hover:fill-primary-foreground mr-2"
+                    className="mr-2 text-primary-foreground group-hover:fill-primary-foreground"
                   />{' '}
                   Pause
                 </>
@@ -135,7 +142,7 @@ export const SongHero = ({ song }: { song: Song }) => {
                 <>
                   <Play
                     size={16}
-                    className="text-primary group-hover:text-accent group-hover:fill-accent mr-2"
+                    className="mr-2 text-primary group-hover:fill-accent group-hover:text-accent"
                   />{' '}
                   Initialize Playback
                 </>

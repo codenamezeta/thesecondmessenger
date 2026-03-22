@@ -13,6 +13,13 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // Allow literal "// …" / "/* …" strings in JSX (HUD / code-aesthetic copy).
+  {
+    files: ["**/app/(frontend)/bio/page.tsx"],
+    rules: {
+      "react/jsx-no-comment-textnodes": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

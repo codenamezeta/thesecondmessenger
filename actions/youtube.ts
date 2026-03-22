@@ -2,7 +2,20 @@
 
 const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
 
-export async function getChannelVideos(maxResults = 20) {
+/** Normalized playlist item for the Visual Log / videos page. */
+export type YoutubeChannelVideo = {
+  id: string
+  youtubeId: string
+  title: string
+  publishedDate: string
+  description: string
+  category: string
+  linkedSong: null
+}
+
+export async function getChannelVideos(
+  maxResults = 20,
+): Promise<YoutubeChannelVideo[]> {
   const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
   const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID // Add this to your .env
 

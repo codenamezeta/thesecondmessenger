@@ -1,19 +1,49 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
-import { CMSLink } from '@/components/Link'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { SearchIcon, Menu, X, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react'
+import { SearchIcon, Menu, X, ChevronDown } from 'lucide-react'
 import { SearchModal } from './SearchModal' // Ensure this file exists in the same folder
 
-import type { Header as HeaderType } from '@/payload-types'
 import { cn } from '@/utilities/ui'
 
-export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
+type NavLinkItem = {
+  type: 'link'
+  label: string
+  href: string
+}
+
+type NavDropdownItem = {
+  type: 'dropdown'
+  label: string
+  items: NavLinkItem[]
+}
+
+type NavItem = NavLinkItem | NavDropdownItem
+
+const navItems: NavItem[] = [
+  { type: 'link', label: 'Home', href: '/' },
+  { type: 'link', label: 'Music', href: '/music' },
+  { type: 'link', label: 'Videos', href: '/videos' },
+  { type: 'link', label: 'Bio', href: '/bio' },
+  // {
+  //   type: 'dropdown',
+  //   label: 'Dropdown',
+  //   items: [
+  //     { type: 'link', label: 'Item 1', href: '/item1' },
+  //     { type: 'link', label: 'Item 2', href: '/item2' },
+  //     { type: 'link', label: 'Item 3', href: '/item3' },
+  //   ],
+  // },
+]
+
+export const Nav: React.FC = () => {
   const [navOpen, setNavOpen] = useState(false)
-  const [mobileActiveIndex, setMobileActiveIndex] = useState<number | null>(null)
+  const [mobileActiveIndex, setMobileActiveIndex] = useState<number | null>(
+    null,
+  )
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [logoError, setLogoError] = useState(false)
 
@@ -22,9 +52,6 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const pathname = usePathname()
-
-  // CMS Items (These come from the Admin Panel)
-  const navItems = data?.navItems || []
 
   // Scroll Lock
   useEffect(() => {
@@ -36,16 +63,23 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
 
   // Close everything on route change
   useEffect(() => {
-    setNavOpen(false)
-    setMobileActiveIndex(null)
-    setActiveDropdown(null)
-    setIsSearchOpen(false)
+    const timeoutId = window.setTimeout(() => {
+      setNavOpen(false)
+      setMobileActiveIndex(null)
+      setActiveDropdown(null)
+      setIsSearchOpen(false)
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
   }, [pathname])
 
   // --- THE LOGIC TO PUSH THE NAV DOWN ---
   useEffect(() => {
     const heightValue: number = 100 / 16 // 1/16th of the screen height
-    document.documentElement.style.setProperty('--main-nav-bar-height', `${heightValue}vh`)
+    document.documentElement.style.setProperty(
+      '--main-nav-bar-height',
+      `${heightValue}vh`,
+    )
   }, [])
 
   // Desktop Hover Handlers
@@ -64,7 +98,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
   }
 
   // --- REUSABLE LOGO COMPONENT ---
-  const NavLogo = () => (
+  const renderNavLogo = () => (
     <>
       {!logoError ? (
         <Image
@@ -73,12 +107,12 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
           sizes="(max-width: 768px) 100vw, 160px"
           width={200}
           height={50}
-          className="object-contain opacity-85 group-hover:opacity-100 transition-opacity light:invert"
+          className="light:invert object-contain opacity-85 transition-opacity group-hover:opacity-100"
           onError={() => setLogoError(true)}
           priority
         />
       ) : (
-        <div className="w-40 h-12 text-xl font-heading font-bold tracking-widest text-foreground group-hover:text-primary transition-colors leading-tight">
+        <div className="h-12 w-40 font-heading text-xl leading-tight font-bold tracking-widest text-foreground transition-colors group-hover:text-primary">
           THE 2ND
           <br />
           MESSENGER
@@ -90,38 +124,33 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
   return (
     <>
       {/* --- DESKTOP NAV --- */}
-      <nav className="fixed flex w-full h-[var(--main-nav-bar-height)] top-[var(--admin-bar-height,0px)] z-40 bg-background/50 backdrop-blur-3xl border-b border-border/50">
+      <nav className="sticky top-[var(--admin-bar-height,0px)] z-40 flex h-[var(--main-nav-bar-height)] w-full border-b border-border/50 bg-background/50 backdrop-blur-3xl">
         <div className="container flex justify-between">
           {/* Logo */}
-          <Link href="/" className="group flex flex-col justify-center z-40">
-            <NavLogo />
+          <Link href="/" className="group z-40 flex flex-col justify-center">
+            {renderNavLogo()}
           </Link>
 
           {/* Desktop Links */}
-          <ul className="portrait-hidden list-none flex items-center gap-8 font-heading text-sm uppercase tracking-widest relative z-40">
+          <ul className="relative z-40 hidden list-none items-center gap-8 font-heading text-sm tracking-widest uppercase md:flex">
             {/* 1. Render CMS Items */}
             {navItems.map((item, i) => {
-              // Cast to any to handle new fields before types are regenerated
-              const type = (item as any).type || 'link'
-              const isDropdown = type === 'dropdown'
+              const isDropdown = item.type === 'dropdown'
               const isOpen = activeDropdown === i
 
               if (isDropdown) {
-                const dropdownLabel = (item as any).dropdownLabel
-                const dropdownItems = (item as any).dropdownItems || []
-
                 return (
                   <li
                     key={i}
-                    className="relative group h-[var(--totalNavBarHeight),80px] flex items-center"
+                    className="group relative flex h-[var(--totalNavBarHeight),80px] items-center"
                     onMouseEnter={() => handleMouseEnter(i)}
                     onMouseLeave={handleMouseLeave}
                   >
-                    <div className="relative h-full flex items-center cursor-pointer">
+                    <div className="relative flex h-full cursor-pointer items-center">
                       <button
-                        className={`flex items-center gap-1 transition-colors uppercase ${isOpen ? 'text-secondary' : 'text-foreground/75 hover:text-secondary'}`}
+                        className={`flex items-center gap-1 uppercase transition-colors ${isOpen ? 'text-secondary' : 'text-foreground/75 hover:text-secondary'}`}
                       >
-                        {dropdownLabel}
+                        {item.label}
                         <ChevronDown
                           size={14}
                           className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
@@ -130,23 +159,20 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
 
                       {/* Dropdown Panel */}
                       <div
-                        className={`
-                      absolute top-full right-0 w-56 pt-4 transition-all duration-300 ease-out 
-                      before:absolute before:-top-4 before:left-0 before:w-full before:h-4 before:bg-transparent
-                      ${isOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'}
-                  `}
+                        className={`absolute top-full right-0 w-56 pt-4 transition-all duration-300 ease-out before:absolute before:-top-4 before:left-0 before:h-4 before:w-full before:bg-transparent ${isOpen ? 'pointer-events-auto translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'} `}
                       >
-                        <div className="bg-background/95 backdrop-blur-xl border border-border/10 shadow-[0_10px_40px_rgba(0,0,0,0.5)] rounded-sm overflow-hidden p-2 relative">
-                          <div className="absolute top-0 right-0 w-4 h-4 border-t border-r border-primary/50"></div>
-                          <div className="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-primary/50"></div>
-                          <div className="flex flex-col gap-1 relative z-40">
-                            {dropdownItems.map((subItem: any, j: number) => (
-                              <CMSLink
+                        <div className="relative overflow-hidden rounded-sm border border-border/10 bg-background/95 p-2 shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+                          <div className="absolute top-0 right-0 h-4 w-4 border-t border-r border-primary/50"></div>
+                          <div className="absolute bottom-0 left-0 h-4 w-4 border-b border-l border-primary/50"></div>
+                          <div className="relative z-40 flex flex-col gap-1">
+                            {item.items.map((subItem, j) => (
+                              <Link
                                 key={j}
-                                {...subItem.link}
-                                appearance="noStyle"
-                                className="px-4 py-3 text-sm text-foreground/75 hover:text-foreground hover:bg-border/5 transition-colors flex items-center justify-between group/sub"
-                              />
+                                href={subItem.href}
+                                className="group/sub flex items-center justify-between px-4 py-3 text-sm text-foreground/75 transition-colors hover:bg-border/5 hover:text-foreground"
+                              >
+                                {subItem.label}
+                              </Link>
                             ))}
                           </div>
                         </div>
@@ -158,12 +184,13 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
 
               // Standard Link
               return (
-                <li key={i} className="relative group h-20 flex items-center">
-                  <CMSLink
-                    {...item.link}
-                    appearance="noStyle"
-                    className="relative py-2 hover:text-primary transition-colors flex items-center gap-2 text-foreground/75"
-                  />
+                <li key={i} className="group relative flex h-20 items-center">
+                  <Link
+                    href={item.href}
+                    className="relative flex items-center gap-2 py-2 text-foreground/75 transition-colors hover:text-primary"
+                  >
+                    {item.label}
+                  </Link>
                 </li>
               )
             })}
@@ -172,7 +199,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
             <li>
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="text-foreground/50 hover:text-primary transition-colors p-2"
+                className="p-2 text-foreground/50 transition-colors hover:text-primary"
                 aria-label="Search Site"
               >
                 <SearchIcon size={20} />
@@ -183,7 +210,7 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
           {/* Mobile Trigger */}
           <button
             onClick={() => setNavOpen(true)}
-            className="landscape-hidden text-foreground hover:text-primary pl-2 transition-colors"
+            className="block pl-2 text-foreground transition-colors hover:text-primary md:hidden"
           >
             <Menu size={48} />
           </button>
@@ -191,26 +218,31 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
       </nav>
 
       {/* The Search Modal Overlay */}
-      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+      />
 
       {/* --- MOBILE SIDE SHEET --- */}
       <div
         className={cn(
-          'fixed inset-0 bg-sidebar/50 backdrop-blur-sm z-50 transition-opacity duration-300',
-          navOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
+          'fixed inset-0 z-50 bg-sidebar/50 backdrop-blur-sm transition-opacity duration-300',
+          navOpen
+            ? 'pointer-events-auto opacity-100'
+            : 'pointer-events-none opacity-0',
         )}
         onClick={() => setNavOpen(false)}
       />
 
       <aside
         className={cn(
-          'fixed top-[var(--admin-bar-height,0px)] right-0 h-full w-[85vw] max-w-sm bg-sidebar border-l border-sidebar-primary/50 z-50 transform transition-transform duration-300 ease-out shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col',
+          'fixed top-[var(--admin-bar-height,0px)] right-0 z-50 flex h-full w-[85vw] max-w-sm transform flex-col border-l border-sidebar-primary/50 bg-sidebar shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-out',
           navOpen ? 'translate-x-0' : 'translate-x-full',
         )}
       >
-        <div className="p-6 flex justify-between items-center border-b border-border/20">
+        <div className="flex items-center justify-between border-b border-border/20 p-6">
           <Link href="/" onClick={() => setNavOpen(false)} className="group">
-            <NavLogo />
+            {renderNavLogo()}
           </Link>
           <button
             onClick={() => setNavOpen(false)}
@@ -224,40 +256,37 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
           <ul className="flex flex-col gap-6">
             {/* 1. Mobile CMS Items */}
             {navItems.map((item, i) => {
-              const type = (item as any).type || 'link'
-              const isDropdown = type === 'dropdown'
+              const isDropdown = item.type === 'dropdown'
               const isOpen = mobileActiveIndex === i
 
               if (isDropdown) {
-                const dropdownLabel = (item as any).dropdownLabel
-                const dropdownItems = (item as any).dropdownItems || []
-
                 return (
                   <li key={i}>
                     <div>
                       <button
                         onClick={() => setMobileActiveIndex(isOpen ? null : i)}
-                        className="flex items-center justify-between w-full text-2xl font-heading uppercase text-sidebar-foreground hover:text-secondary transition-colors"
+                        className="flex w-full items-center justify-between font-heading text-2xl text-sidebar-foreground uppercase transition-colors hover:text-secondary"
                       >
-                        {dropdownLabel}
+                        {item.label}
                         <ChevronDown
                           size={24}
                           className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
                         />
                       </button>
                       <div
-                        className={`grid transition-[grid-template-rows] duration-300 ease-out ${isOpen ? 'grid-rows-[1fr] mt-4' : 'grid-rows-[0fr]'}`}
+                        className={`grid transition-[grid-template-rows] duration-300 ease-out ${isOpen ? 'mt-4 grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
                       >
                         <div className="overflow-hidden">
-                          <ul className="border-l-2 border-sidebar-primary pl-4 space-y-4 mb-2">
-                            {dropdownItems.map((subItem: any, j: number) => (
+                          <ul className="mb-2 space-y-4 border-l-2 border-sidebar-primary pl-4">
+                            {item.items.map((subItem, j) => (
                               <li key={j}>
-                                <CMSLink
-                                  {...subItem.link}
-                                  appearance="noStyle"
-                                  className="flex items-center gap-2 text-lg text-sidebar-foreground hover:text-primary uppercase font-heading tracking-wide"
+                                <Link
+                                  href={subItem.href}
+                                  className="flex items-center gap-2 font-heading text-lg tracking-wide text-sidebar-foreground uppercase hover:text-primary"
                                   onClick={() => setNavOpen(false)}
-                                />
+                                >
+                                  {subItem.label}
+                                </Link>
                               </li>
                             ))}
                           </ul>
@@ -270,19 +299,21 @@ export const Nav: React.FC<{ data: HeaderType }> = ({ data }) => {
 
               return (
                 <li key={i}>
-                  <CMSLink
-                    {...item.link}
-                    appearance="noStyle"
-                    className="block text-2xl font-heading uppercase text-sidebar-foreground hover:text-primary transition-colors"
-                  />
+                  <Link
+                    href={item.href}
+                    className="block font-heading text-2xl text-sidebar-foreground uppercase transition-colors hover:text-primary"
+                    onClick={() => setNavOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
                 </li>
               )
             })}
           </ul>
         </nav>
 
-        <div className="p-6 border-t border-muted text-center">
-          <div className="text-xs font-mono text-muted-foreground/50">
+        <div className="border-t border-muted p-6 text-center">
+          <div className="font-mono text-xs text-muted-foreground/50">
             SECURE CONNECTION ESTABLISHED
           </div>
         </div>
