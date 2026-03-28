@@ -1,10 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { ThumbsUp, Share2, Download, Bell, Check, Loader2 } from 'lucide-react'
+import {
+  ThumbsUp,
+  Share2,
+  Download,
+  Bell,
+  Check,
+  Loader2,
+  Info,
+} from 'lucide-react'
 import { usePlayer } from '@/context/PlayerContext'
-import { useYouTubeAuth } from '@/context/YouTubeAuthContext'
-import { likeYouTubeVideo, subscribeToChannel } from '@/actions/library-sync'
+import { likeYouTubeVideo, subscribeToChannel } from '@/actions/youtube'
 import { cn } from '@/utilities/ui'
 import type { Media } from '@/payload-types'
 
@@ -13,8 +20,7 @@ interface ActionButtonsProps {
 }
 
 export const ActionButtons = ({ className }: ActionButtonsProps) => {
-  const { currentSong } = usePlayer()
-  const { user, login } = useYouTubeAuth()
+  const { currentSong, isInfoDrawerOpen, setIsInfoDrawerOpen } = usePlayer()
 
   const [likeStatus, setLikeStatus] = useState<'idle' | 'loading' | 'success'>(
     'idle',
@@ -28,41 +34,36 @@ export const ActionButtons = ({ className }: ActionButtonsProps) => {
 
   const handleLike = async () => {
     if (!currentSong.youtubeId) return
-    if (!user) {
-      login()
-      return
-    }
     setLikeStatus('loading')
-    const res = await likeYouTubeVideo(
-      currentSong.youtubeId as string,
-      user.accessToken,
-    )
+    const res = await likeYouTubeVideo(currentSong.youtubeId as string)
     if (res.success) {
       setLikeStatus('success')
       setTimeout(() => setLikeStatus('idle'), 2000)
     } else {
       setLikeStatus('idle')
+      if (res.error === 'Not connected to YouTube') {
+        window.location.assign('/api/auth/youtube/connect')
+      }
     }
   }
 
   const handleSubscribe = async () => {
-    if (!user) {
-      login()
-      return
-    }
     setSubStatus('loading')
-    const res = await subscribeToChannel(undefined, user.accessToken)
+    const res = await subscribeToChannel()
     if (res.success) {
       setSubStatus('success')
       setTimeout(() => setSubStatus('idle'), 2000)
     } else {
       setSubStatus('idle')
+      if (res.error === 'Not connected to YouTube') {
+        window.location.assign('/api/auth/youtube/connect')
+      }
     }
   }
 
   const handleShare = async () => {
     const songUrl = currentSong.slug
-      ? `${window.location.origin}/songs/${currentSong.slug as string}`
+      ? `${window.location.origin}/music/${currentSong.slug as string}`
       : window.location.href
 
     if (navigator.share) {
@@ -98,22 +99,28 @@ export const ActionButtons = ({ className }: ActionButtonsProps) => {
   }
 
   const btnBase =
-    'flex min-h-12 min-w-12 flex-auto items-center justify-center p-2 transition-colors'
+    'flex min-w-8 flex-auto items-center justify-center transition-colors'
 
   return (
-    <div className={cn('flex items-center', className)}>
+    <div
+      className={cn(
+        'flex max-h-12 flex-auto items-center md:max-w-60',
+        className,
+      )}
+    >
       {/* Info Drawer toggle */}
-      {/* <button
+      <button
         onClick={() => setIsInfoDrawerOpen(!isInfoDrawerOpen)}
         className={cn(
           btnBase,
-          'border-r border-border/50',
-          isInfoDrawerOpen ? 'text-secondary' : 'text-foreground/50 hover:text-foreground',
+          isInfoDrawerOpen
+            ? 'text-primary'
+            : 'text-foreground/50 hover:text-foreground',
         )}
         title={isInfoDrawerOpen ? 'Close Info Drawer' : 'Open Info Drawer'}
       >
         <Info size={18} />
-      </button> */}
+      </button>
 
       {/* Like */}
       <button

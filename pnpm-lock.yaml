@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@payloadcms/admin-bar':
+        specifier: ^3.79.1
+        version: 3.79.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@payloadcms/db-vercel-postgres':
         specifier: ^3.79.1
         version: 3.79.1(@types/pg@8.11.6)(payload@3.79.1(bufferutil@4.1.0)(graphql@16.13.1)(typescript@5.9.3)(utf-8-validate@6.0.6))
@@ -1336,6 +1339,12 @@ packages:
 
   '@open-draft/until@2.1.0':
     resolution: {integrity: sha512-U69T3ItWHvLwGg5eJ0n3I62nWuE6ilHlmz7zM0npLBRvPRd7e6NYmg54vvRtP5mZG7kZqZCFVdsTWo7BPtBujg==}
+
+  '@payloadcms/admin-bar@3.79.1':
+    resolution: {integrity: sha512-pgCcgz2yzn0nHelDrOCoMrEo01JrpKYMswl9IeSU4k+wqwmvnqkWV10dPxfgezA9AVtKSw0TZu4SSDj8IGUiDw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.1 || ^19.1.2 || ^19.2.1
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.1 || ^19.1.2 || ^19.2.1
 
   '@payloadcms/db-vercel-postgres@3.79.1':
     resolution: {integrity: sha512-qBziD4NI/1yutHzTuK42pScNuVxUfrMGFRDDp13U6RrAwJwg7o4BJpkRBElvHsptEkhEqZnX6jDofxDFtRLyPA==}
@@ -6743,6 +6752,11 @@ snapshots:
       outvariant: 1.4.3
 
   '@open-draft/until@2.1.0': {}
+
+  '@payloadcms/admin-bar@3.79.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   '@payloadcms/db-vercel-postgres@3.79.1(@types/pg@8.11.6)(payload@3.79.1(bufferutil@4.1.0)(graphql@16.13.1)(typescript@5.9.3)(utf-8-validate@6.0.6))':
     dependencies:

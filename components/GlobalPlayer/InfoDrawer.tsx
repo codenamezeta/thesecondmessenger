@@ -15,7 +15,13 @@ import {
 
 /** Inner content shared between the desktop Sheet and mobile inline panel */
 const InfoContent = () => {
-  const { currentSong, activeInfoTab, setActiveInfoTab } = usePlayer()
+  const {
+    currentSong,
+    activeInfoTab,
+    setActiveInfoTab,
+    setIsInfoDrawerOpen,
+    setIsLibraryDrawerOpen,
+  } = usePlayer()
 
   const availableTabs = useMemo(() => {
     if (!currentSong) return ['about']
@@ -67,7 +73,11 @@ const InfoContent = () => {
         {availableTabs.map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveInfoTab(tab)}
+            onClick={() => {
+              setActiveInfoTab(tab)
+              setIsLibraryDrawerOpen(false)
+              setIsInfoDrawerOpen(true)
+            }}
             className={cn(
               'h-10 w-full cursor-pointer py-2 font-heading text-xs tracking-wider uppercase transition-colors',
               activeInfoTab === tab
@@ -169,7 +179,7 @@ export const InfoDrawerSheet = () => {
   return (
     <Sheet open={isInfoDrawerOpen} onOpenChange={setIsInfoDrawerOpen}>
       <SheetContent
-        side="right"
+        side="left"
         className={cn(
           'flex w-80 flex-col gap-0 border-l border-border/50 bg-background/90 p-0 backdrop-blur-lg',
           'top-[calc(var(--admin-bar-height,0px)+var(--main-nav-bar-height,0px))]',

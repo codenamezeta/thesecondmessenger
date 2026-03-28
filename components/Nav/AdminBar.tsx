@@ -8,15 +8,19 @@ import { useRouter } from 'next/navigation'
 import { cn } from '@/utilities/ui'
 import { getClientSideURL } from '@/utilities/getURL'
 
+// We don't need the SCSS import anymore if we use Tailwind
+// import './index.scss'
+
 const collectionLabels = {
-  songs: { plural: 'Songs', singular: 'Song' },
-  releases: { plural: 'Releases', singular: 'Release' },
-  projects: { plural: 'Playlists', singular: 'Playlist' },
+  pages: { plural: 'Pages', singular: 'Page' },
   posts: { plural: 'Posts', singular: 'Post' },
+  projects: { plural: 'Playlists', singular: 'Playlist' },
+  releases: { plural: 'Releases', singular: 'Release' },
+  songs: { plural: 'Songs', singular: 'Song' }, // Added your new collections
 }
 
 const Title: React.FC = () => (
-  <span className="font-bold text-white">Dashboard</span>
+  <span className="font-bold text-foreground">Dashboard</span>
 )
 
 export const AdminBar: React.FC<{
@@ -53,44 +57,36 @@ export const AdminBar: React.FC<{
   return (
     <div
       className={cn(
-        'fixed top-0 z-40 h-[var(--admin-bar-height,36px)] w-full items-center border-b border-white/10 bg-background/85 text-white backdrop-blur-3xl',
+        'h-(--admin-bar-height,36px) w-full items-center border-b border-white/10 bg-background/85 text-foreground backdrop-blur-3xl',
         {
           flex: show,
           hidden: !show,
         },
       )}
     >
-      <div className="container">
-        <PayloadAdminBar
-          {...adminBarProps}
-          className="py-2 text-white"
-          classNames={{
-            controls: 'font-medium text-white',
-            logo: 'text-white',
-            user: 'text-white',
-          }}
-          cmsURL={getClientSideURL()}
-          collectionSlug={collection}
-          collectionLabels={{
-            plural: collectionLabels[collection]?.plural || 'Pages',
-            singular: collectionLabels[collection]?.singular || 'Page',
-          }}
-          logo={<Title />}
-          onAuthChange={onAuthChange}
-          onPreviewExit={() => {
-            fetch('/next/exit-preview').then(() => {
-              router.push('/')
-              router.refresh()
-            })
-          }}
-          style={{
-            backgroundColor: 'transparent',
-            padding: 0,
-            position: 'relative',
-            zIndex: 'unset',
-          }}
-        />
-      </div>
+      <PayloadAdminBar
+        {...adminBarProps}
+        className="container text-foreground"
+        classNames={{
+          controls: 'font-medium text-foreground',
+          logo: 'text-foreground',
+          user: 'text-foreground',
+        }}
+        cmsURL={getClientSideURL()}
+        collectionSlug={collection}
+        collectionLabels={{
+          plural: collectionLabels[collection]?.plural || 'Pages',
+          singular: collectionLabels[collection]?.singular || 'Page',
+        }}
+        logo={<Title />}
+        onAuthChange={onAuthChange}
+        style={{
+          backgroundColor: 'transparent',
+          padding: 0,
+          position: 'relative',
+          zIndex: 'unset',
+        }}
+      />
     </div>
   )
 }

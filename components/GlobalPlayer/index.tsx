@@ -70,7 +70,8 @@ const useYouTubeMetadataSync = () => {
                 !(currentSong as { description?: string }).description &&
                 !(currentSong as { about?: unknown }).about
               ) {
-                ;(metadata as { description?: string }).description = snippet.description
+                ;(metadata as { description?: string }).description =
+                  snippet.description
               }
               if (Object.keys(metadata).length > 0) {
                 updateSongMetadata(currentSong.youtubeId as string, metadata)
@@ -96,7 +97,7 @@ export const GlobalPlayer = () => {
   const { currentSong, videoEnabled } = usePlayer()
 
   // Detect desktop breakpoint (md = 768px). Defaults to false (mobile-first).
-  const isDesktop = useMediaQuery('(min-width: 768px)')
+  const isDesktop = useMediaQuery('(min-width: 640px)')
 
   useYouTubeMetadataSync()
 
@@ -105,7 +106,7 @@ export const GlobalPlayer = () => {
   return (
     <aside
       id="media_player"
-      className="pointer-events-none fixed inset-x-0 bottom-0 top-[calc(var(--admin-bar-height,0px)+var(--main-nav-bar-height,0px))] z-20 flex flex-col justify-end"
+      className="pointer-events-none fixed inset-x-0 top-[calc(var(--admin-bar-height,0px)+var(--main-nav-bar-height,0px))] bottom-0 z-20 flex flex-col justify-end"
     >
       {/* ================================================================
           MOBILE LAYOUT (< md)
@@ -115,11 +116,11 @@ export const GlobalPlayer = () => {
       {!isDesktop && (
         <div
           className={cn(
-            'flex flex-col overflow-hidden transition-all duration-300 ease-in-out bg-background/95 backdrop-blur-lg',
+            'flex flex-col overflow-hidden bg-background/95 backdrop-blur-lg transition-all duration-300 ease-in-out',
             // Expand to fill remaining space above the BottomBar when video is enabled.
             // Collapse to zero height (audio-only) when video is disabled — VideoStage
             // stays mounted inside and handles its own off-screen positioning for audio.
-            videoEnabled ? 'flex-1 min-h-0' : 'h-0',
+            videoEnabled ? 'min-h-0 flex-1' : 'h-0',
           )}
         >
           {/* 1. Global Controls row */}
@@ -134,7 +135,10 @@ export const GlobalPlayer = () => {
           {/* 3. Video Stage — STABLE tree position; never conditionally unmounted.
                 When videoEnabled=false the container collapses to h-0 and VideoStage
                 internally positions itself off-screen via its `isHidden` logic. */}
-          <VideoStage isMobileExpanded={videoEnabled} className="pointer-events-auto" />
+          <VideoStage
+            isMobileExpanded={videoEnabled}
+            className="pointer-events-auto"
+          />
 
           {/* 4. Action Buttons */}
           <ActionButtons className="pointer-events-auto shrink-0 border-t border-border/50 bg-background/50 px-2" />
@@ -153,8 +157,8 @@ export const GlobalPlayer = () => {
           ================================================================ */}
       {isDesktop && (
         <>
-          <LibraryDrawerSheet />
           <InfoDrawerSheet />
+          <LibraryDrawerSheet />
           {/* VideoStage is always in this stable position on desktop */}
           <VideoStage isMobileExpanded={false} />
         </>

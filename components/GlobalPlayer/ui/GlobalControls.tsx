@@ -5,11 +5,11 @@ import {
   Volume1,
   Volume2,
   VolumeX,
-  X,
+  // X,
   Minimize2,
   Maximize2,
   Library,
-  Info,
+  // Info,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react'
@@ -37,9 +37,9 @@ export const GlobalControls = ({
     toggleVideoMode,
     isLibraryDrawerOpen,
     setIsLibraryDrawerOpen,
-    isInfoDrawerOpen,
+    // isInfoDrawerOpen,
     setIsInfoDrawerOpen,
-    closePlayer,
+    // closePlayer,
   } = usePlayer()
 
   const VolumeIcon =
@@ -52,10 +52,10 @@ export const GlobalControls = ({
           : Volume2
 
   return (
-    <div className={cn('flex items-center justify-between gap-6', className)}>
+    <div className={cn('flex items-center justify-between gap-3', className)}>
       {/* Volume Slider — hidden on mobile or when hideVolume is set */}
       {!hideVolume && (
-        <div className="group hidden items-center md:flex">
+        <div className="group hidden shrink items-center md:flex">
           <button
             onClick={toggleMute}
             className={cn(
@@ -77,7 +77,7 @@ export const GlobalControls = ({
             step={0.01}
             value={isMuted ? 0 : volume}
             onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="h-1 w-24 cursor-pointer rounded-lg accent-muted-foreground hover:accent-primary"
+            className="h-1 w-full cursor-pointer rounded-lg accent-muted-foreground hover:accent-primary"
             aria-label="Volume"
           />
         </div>
@@ -141,7 +141,7 @@ export const GlobalControls = ({
       <button
         onClick={toggleVideoMode}
         className={cn(
-          'flex items-center justify-center transition-colors',
+          'hidden items-center justify-center transition-colors md:flex',
           videoEnabled
             ? 'text-foreground/70 hover:text-foreground'
             : 'text-foreground/20',
@@ -162,7 +162,10 @@ export const GlobalControls = ({
 
       {/* Library Drawer button */}
       <button
-        onClick={() => setIsLibraryDrawerOpen(!isLibraryDrawerOpen)}
+        onClick={() => {
+          setIsLibraryDrawerOpen(!isLibraryDrawerOpen)
+          setIsInfoDrawerOpen(false)
+        }}
         className={cn(
           'flex items-center justify-center transition-colors',
           isLibraryDrawerOpen
@@ -176,7 +179,7 @@ export const GlobalControls = ({
       </button>
 
       {/* Info Drawer toggle */}
-      <button
+      {/* <button
         onClick={() => setIsInfoDrawerOpen(!isInfoDrawerOpen)}
         className={cn(
           'flex items-center justify-center transition-colors',
@@ -187,7 +190,7 @@ export const GlobalControls = ({
         title={isInfoDrawerOpen ? 'Close Info Drawer' : 'Open Info Drawer'}
       >
         <Info size={18} />
-      </button>
+      </button> */}
 
       {/* Library Drawer toggle — shown only on mobile in this row */}
       {/* <button
@@ -205,14 +208,14 @@ export const GlobalControls = ({
       </button> */}
 
       {/* Close Player */}
-      <button
+      {/* <button
         onClick={closePlayer}
         className="flex items-center justify-center text-foreground/50 transition-colors hover:text-secondary"
         title="Close Player (Standby)"
         aria-label="Close Player"
       >
         <X size={20} />
-      </button>
+      </button> */}
     </div>
   )
 }

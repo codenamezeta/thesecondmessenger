@@ -6,7 +6,6 @@ import {
   ThumbsUp,
   MessageSquare,
   Loader2,
-  LogIn,
   Send,
   Reply as ReplyIcon,
 } from 'lucide-react'
@@ -14,7 +13,6 @@ import { postCommentAction, replyToCommentAction } from '@/actions/youtube'
 import { cn } from '@/utilities/ui'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
-import { useYouTubeAuth } from '@/context/YouTubeAuthContext'
 
 interface CommentSnippet {
   textDisplay: string
@@ -48,7 +46,6 @@ interface CommentThread {
 const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
 
 export default function CommentsYT({ videoId }: { videoId: string }) {
-  const { user, login } = useYouTubeAuth()
   const [comments, setComments] = useState<CommentThread[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [nextPageToken, setNextPageToken] = useState<string | null>(null)
@@ -101,33 +98,31 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
   // --- 2. Posting ---
 
   const postComment = async () => {
-    if (!newComment.trim() || !user?.accessToken) return
+    if (!newComment.trim()) return
     setIsPosting(true)
 
     try {
-      const savedComment = await postCommentAction(
-        user.accessToken,
-        videoId,
-        newComment,
-      )
+      const savedComment = await postCommentAction(videoId, newComment)
       setNewComment('')
       setComments((prev) => [savedComment, ...prev])
-    } catch (e) {
-      console.error(e)
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to post comment'
+      if (message === 'Not connected to YouTube') {
+        window.location.assign('/api/auth/youtube/connect')
+        return
+      }
+      console.error(error)
     } finally {
       setIsPosting(false)
     }
   }
 
   const handleReplySubmit = async (parentId: string) => {
-    if (!replyText.trim() || !user?.accessToken) return
+    if (!replyText.trim()) return
 
     try {
-      const newReply = await replyToCommentAction(
-        user.accessToken,
-        parentId,
-        replyText,
-      )
+      const newReply = await replyToCommentAction(parentId, replyText)
       // Add to thread
       setComments((prev) =>
         prev.map((thread) => {
@@ -146,8 +141,14 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
       )
       setReplyingToId(null)
       setReplyText('')
-    } catch (e) {
-      console.error('Failed to post reply', e)
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to post reply'
+      if (message === 'Not connected to YouTube') {
+        window.location.assign('/api/auth/youtube/connect')
+        return
+      }
+      console.error('Failed to post reply', error)
     }
   }
 
@@ -199,10 +200,6 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
           {!isReply && (
             <Button
               onClick={() => {
-                if (!user) {
-                  login()
-                  return
-                }
                 setReplyingToId(replyingToId === commentId ? null : commentId)
                 setReplyText('')
               }}
@@ -246,46 +243,21 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
           <MessageSquare size={20} className="text-primary" />
           Comms Channel
         </h3>
-        {!commentsDisabled &&
-          (!user ? (
-            <Button
-              onClick={login}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2 border-secondary text-xs tracking-wider text-secondary hover:border-primary"
-            >
-              <LogIn size={14} /> Sign In to Transmit
-            </Button>
-          ) : (
-            <div className="flex items-center gap-2">
-              {user.profileImageUrl && (
-                <Image
-                  src={user.profileImageUrl}
-                  alt="Me"
-                  width={24}
-                  height={24}
-                  className="rounded-full"
-                />
-              )}
-              <span className="text-xs text-foreground">
-                {user.displayName}
-              </span>
-            </div>
-          ))}
+        {!commentsDisabled && (
+          <Button
+            onClick={() => window.location.assign('/api/auth/youtube/connect')}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 border-secondary text-xs tracking-wider text-secondary hover:border-primary"
+          >
+            Connect YouTube
+          </Button>
+        )}
       </div>
 
       {/* Post Box */}
-      {!commentsDisabled && user && (
+      {!commentsDisabled && (
         <div className="mb-8 flex gap-3">
-          {user.profileImageUrl && (
-            <Image
-              src={user.profileImageUrl}
-              alt="Me"
-              width={40}
-              height={40}
-              className="rounded-full"
-            />
-          )}
           <div className="flex flex-1 gap-2">
             <Input
               type="text"

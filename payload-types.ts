@@ -510,6 +510,22 @@ export interface Category {
 export interface User {
   id: number;
   name?: string | null;
+  role: 'admin' | 'user';
+  /**
+   * Indicates if the user has an active premium subscription.
+   */
+  isPremiumMember?: boolean | null;
+  /**
+   * Used to link this account to Stripe payments.
+   */
+  stripeCustomerId?: string | null;
+  /**
+   * Indicates if the user has linked their YouTube account.
+   */
+  youtubeConnected?: boolean | null;
+  googleAccessToken?: string | null;
+  googleRefreshToken?: string | null;
+  googleTokenExpiry?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -1267,6 +1283,13 @@ export interface TagsSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  role?: T;
+  isPremiumMember?: T;
+  stripeCustomerId?: T;
+  youtubeConnected?: T;
+  googleAccessToken?: T;
+  googleRefreshToken?: T;
+  googleTokenExpiry?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
