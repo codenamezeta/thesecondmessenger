@@ -5,13 +5,14 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(1 0 0);
+  --background: oklch(0.98 0 0);
   --foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.141 0.005 285.823);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.141 0.005 285.823);
   --primary: oklch(0.511 0.096 186.391);
+  --primary-sl: hsl(160, 100%, 75%);
   --primary-foreground: oklch(0.984 0.014 180.72);
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
@@ -28,7 +29,7 @@
   --chart-3: oklch(0.6 0.118 184.704);
   --chart-4: oklch(0.511 0.096 186.391);
   --chart-5: oklch(0.437 0.078 188.216);
-  --radius: 0.1rem;
+  --radius: 0.2rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.141 0.005 285.823);
   --sidebar-primary: oklch(0.6 0.118 184.704);
@@ -44,33 +45,55 @@
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.21 0.006 285.885);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
+  --popover: oklch(0.33 0.01 285);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.437 0.078 188.216);
+  --primary: oklch(77% 0.13 170);
   --primary-foreground: oklch(0.984 0.014 180.72);
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
+  --accent: oklch(67% 0.15 38);
+  --accent-foreground: oklch(0.984 0.014 180.72);
   --muted: oklch(0.274 0.006 286.033);
   --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.437 0.078 188.216);
-  --accent-foreground: oklch(0.984 0.014 180.72);
-  --destructive: oklch(0.704 0.191 22.216);
+  --special: oklch(40% 0.15 7);
+  --destructive: oklch(0.7 0.25 25);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.552 0.016 285.938);
-  --chart-1: oklch(0.855 0.138 181.071);
-  --chart-2: oklch(0.704 0.14 182.503);
-  --chart-3: oklch(0.6 0.118 184.704);
-  --chart-4: oklch(0.511 0.096 186.391);
-  --chart-5: oklch(0.437 0.078 188.216);
+
   --sidebar: oklch(0.21 0.006 285.885);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.704 0.14 182.503);
-  --sidebar-primary-foreground: oklch(0.277 0.046 192.524);
   --sidebar-accent: oklch(0.274 0.006 286.033);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+  /* Programmatically related colors */
+
+  /* Chart 5 uses your primary as the baseline */
+  --chart-5: var(--primary);
+
+  --chart-4: oklch(
+    from var(--chart-5) calc(l - 0.1) calc(c + 0.01) calc(h + 3)
+  );
+
+  --chart-3: oklch(
+    from var(--chart-4) calc(l - 0.1) calc(c + 0.01) calc(h + 3)
+  );
+
+  --chart-2: oklch(
+    from var(--chart-3) calc(l - 0.1) calc(c + 0.01) calc(h + 3)
+  );
+
+  --chart-1: oklch(
+    from var(--chart-2) calc(l - 0.1) calc(c + 0.01) calc(h + 3)
+  );
+
+  /* Sidebar primary gets mapped to a beautiful mid-tone (Chart 2) */
+  --sidebar-primary: var(--chart-2);
+
+  /* Because the sidebar background is bright, the foreground text needs to be 
+     drastically darker to be readable. We subtract 0.67 from the lightness. */
+  --sidebar-primary-foreground: oklch(from var(--primary) calc(l - 0.67) c h);
 }
 
 @theme inline {
@@ -104,6 +127,7 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-special: var(--special);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -121,7 +145,7 @@
 
 @layer base {
   body {
-    @apply bg-background font-body text-foreground;
+    @apply bg-background pb-[bottom-bar-height] font-body text-foreground;
   }
   html {
     @apply font-body;
@@ -134,28 +158,34 @@
   h4,
   h5,
   h6 {
-    @apply font-heading;
+    @apply mb-0 font-heading;
   }
 
-  /* 3. Your Scalable Typography Rules */
+  /* 3. Scalable Typography Rules */
   h1 {
     @apply text-4xl leading-[1.1] font-extrabold tracking-tight md:text-5xl lg:text-6xl;
   }
 
   h2 {
-    @apply mt-10 mb-4 text-3xl leading-[1.2] font-bold tracking-tight first:mt-0 md:text-4xl lg:text-5xl;
+    @apply mt-6 text-3xl leading-[1.2] font-bold tracking-tight first:mt-0 md:text-4xl lg:text-5xl;
   }
 
   h3 {
-    @apply mt-8 mb-4 text-2xl leading-[1.3] font-semibold tracking-tight md:text-3xl;
+    @apply mt-6 text-2xl leading-[1.3] font-semibold tracking-tight md:text-3xl;
   }
 
   h4 {
-    @apply mt-6 mb-2 text-xl font-semibold tracking-tight md:text-2xl;
+    @apply mt-4 text-xl font-semibold tracking-tight md:text-2xl;
   }
 
-  p {
-    @apply font-body text-base leading-relaxed not-first:mt-6 md:text-lg;
+  p,
+  ul,
+  ol {
+    @apply mt-1 font-body text-base leading-relaxed md:text-lg;
+  }
+
+  li {
+    @apply my-1;
   }
 
   blockquote {

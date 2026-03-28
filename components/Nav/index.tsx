@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { AdminBar } from './AdminBar'
 import { SearchIcon, Menu, X, ChevronDown } from 'lucide-react'
 import { SearchModal } from './SearchModal' // Ensure this file exists in the same folder
-
 import { cn } from '@/utilities/ui'
 
 type NavLinkItem = {
@@ -124,7 +124,8 @@ export const Nav: React.FC = () => {
   return (
     <>
       {/* --- DESKTOP NAV --- */}
-      <nav className="sticky top-[var(--admin-bar-height,0px)] z-40 flex h-[var(--main-nav-bar-height)] w-full border-b border-border/50 bg-background/50 backdrop-blur-3xl">
+      <AdminBar />
+      <nav className="sticky top-(--admin-bar-height,0px) z-40 flex h-(--main-nav-bar-height) w-full border-b border-border/50 bg-background/50 backdrop-blur-3xl">
         <div className="container flex justify-between">
           {/* Logo */}
           <Link href="/" className="group z-40 flex flex-col justify-center">

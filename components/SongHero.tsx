@@ -29,7 +29,7 @@ export const SongHero = ({ song }: { song: Song }) => {
             className="scale-110 object-cover blur-[6px]"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-br from-background to-background/20" />
+        <div className="absolute inset-0 bg-linear-to-br from-background to-background/20" />
       </div>
 
       <div className="relative z-10 container py-12 md:py-20">
@@ -67,25 +67,25 @@ export const SongHero = ({ song }: { song: Song }) => {
           </div>
 
           {/* 2. METADATA */}
-          <div className="flex flex-col items-center text-center md:items-start md:text-left">
-            <h1 className="mb-6 font-heading text-4xl leading-0 font-bold tracking-wide text-foreground uppercase drop-shadow-lg md:text-6xl">
+          <div className="flex h-full flex-col items-center justify-around text-center md:items-start md:text-left">
+            <h1 className="font-heading text-4xl font-bold tracking-wide text-foreground uppercase drop-shadow-lg md:text-6xl">
               {song.title}
             </h1>
-            <p className="mb-3 font-heading text-xl leading-0 tracking-widest text-primary uppercase opacity-80 md:text-2xl">
+            <span className="-my-6 font-heading text-xl tracking-widest text-primary uppercase opacity-80 md:text-2xl">
               The Second Messenger
-            </p>
+            </span>
             {song.tagline && (
-              <p className="mt-2 max-w-4xl font-mono text-base text-muted-foreground italic">
+              <p className="max-w-4xl font-mono text-base text-muted-foreground italic">
                 &quot;{song.tagline}&quot;
               </p>
             )}
 
             {/* Stat Grid */}
-            <div className="my-6 flex flex-wrap justify-center gap-2 font-mono text-xs tracking-wider text-muted-foreground uppercase md:justify-start">
+            <div className="flex flex-wrap justify-center gap-2 font-mono text-xs tracking-wider text-muted-foreground uppercase md:justify-start">
               {/* Genre */}
               <div className="flex items-center gap-2 rounded border border-border bg-muted px-3 py-1.5">
-                <Music2 size={12} className="text-secondary/75" />
-                <span className="text-foreground/80">
+                <Music2 size={12} className="text-accent" />
+                <span className="text-foreground">
                   {song.genres?.[0] && typeof song.genres[0] !== 'number'
                     ? song.genres[0].name
                     : 'Song'}
@@ -95,9 +95,9 @@ export const SongHero = ({ song }: { song: Song }) => {
               {/* Duration */}
               {song.duration && (
                 <div className="flex items-center gap-2 rounded border border-border bg-muted px-3 py-1.5">
-                  <Clock size={12} className="text-secondary/75" />
-                  <span className="text-foreground/80">
-                    {formatTime(song.duration as any)}
+                  <Clock size={12} className="text-accent" />
+                  <span className="text-foreground">
+                    {formatTime(song.duration)}
                   </span>
                 </div>
               )}
@@ -105,16 +105,16 @@ export const SongHero = ({ song }: { song: Song }) => {
               {/* BPM */}
               {song.bpm && (
                 <div className="flex items-center gap-2 rounded border border-border bg-muted px-3 py-1.5">
-                  <Activity size={12} className="text-secondary/75" />
-                  <span className="text-foreground/80">{song.bpm} BPM</span>
+                  <Activity size={12} className="text-accent" />
+                  <span className="text-foreground">{song.bpm} BPM</span>
                 </div>
               )}
 
               {/* Key */}
               {song.key && (
                 <div className="flex items-center gap-2 rounded border border-border bg-muted px-3 py-1.5">
-                  <ListMusic size={12} className="text-secondary/75" />
-                  <span className="text-foreground/80">{song.key}</span>
+                  <ListMusic size={12} className="text-accent" />
+                  <span className="text-foreground">{song.key}</span>
                 </div>
               )}
             </div>

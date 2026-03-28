@@ -19,24 +19,29 @@ export const NewsletterSignup = () => {
       setStatus('success')
     } catch (err) {
       setStatus('idle')
-      alert('Transmission failed.')
+      alert(err instanceof Error ? err.message : 'Transmission failed.')
+      console.error(err)
     }
   }
 
   if (status === 'success') {
     return (
-      <div className="bg-green-500/10 border border-green-500/30 p-4 rounded-lg flex items-center gap-3">
+      <div className="flex items-center gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4">
         <Check size={16} className="text-green-500" />
-        <p className="text-green-500 font-mono text-xs uppercase tracking-widest">Signal Locked.</p>
+        <p className="font-mono text-xs tracking-widest text-green-500 uppercase">
+          Signal Locked.
+        </p>
       </div>
     )
   }
 
   return (
-    <div className="bg-muted border border-primary/20 p-6 rounded-lg">
-      <div className="flex items-center gap-3 mb-2 text-primary">
+    <div className="rounded-lg border border-primary/20 bg-muted p-6">
+      <div className="mb-2 flex items-center gap-3 text-primary">
         <Mail size={18} />
-        <h4 className="font-heading uppercase tracking-widest text-sm">Join the Network</h4>
+        <h4 className="font-heading text-sm tracking-widest uppercase">
+          Join the Network
+        </h4>
       </div>
       <form onSubmit={handleSubmit} className="flex gap-2">
         <input
@@ -45,11 +50,11 @@ export const NewsletterSignup = () => {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="flex-1 bg-input border border-border/50 rounded px-3 py-2 text-sm text-foreground focus:border-primary outline-none font-mono placeholder:text-gray-600"
+          className="flex-1 rounded border border-border/50 bg-input px-3 py-2 font-mono text-sm text-foreground outline-none placeholder:text-gray-600 focus:border-primary"
         />
         <button
           disabled={status === 'loading'}
-          className="bg-white/10 hover:bg-border/50 border border-border/50 text-foreground p-2 rounded"
+          className="rounded border border-border/50 bg-white/10 p-2 text-foreground hover:bg-border/50"
         >
           {status === 'loading' ? (
             <Loader2 size={18} className="animate-spin" />

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Card,
   CardContent,
@@ -11,14 +11,11 @@ import {
 } from '@/components/ui/card'
 import { Check, Disc3, Loader2, Save, Youtube } from 'lucide-react'
 import { cn } from '@/utilities/ui'
-import {
-  getSpotifyAuthUrl,
-  likeYouTubeVideo,
-  subscribeToChannel,
-} from '@/actions/library-sync'
+import { likeYouTubeVideo, subscribeToChannel } from '@/actions/youtube'
+import { getSpotifyAuthUrl } from '@/actions/library-sync'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useYouTubeAuth } from '@/context/YouTubeAuthContext'
-import { Separator } from './ui/separator'
+
+// import { Separator } from './ui/separator'
 import { Button } from './ui/button'
 import { ButtonGroup } from './ui/button-group'
 
@@ -33,30 +30,27 @@ interface LibrarySyncProps {
 export const LibrarySync = ({
   songId,
   youtubeId,
-  spotifyId,
+  // spotifyId,
   isReleased,
   initialIsSaved = false,
 }: LibrarySyncProps) => {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user, login } = useYouTubeAuth()
 
   const [status, setStatus] = useState<
     'idle' | 'loading' | 'success' | 'connected'
-  >(initialIsSaved ? 'connected' : 'idle')
-  const [activePlatform, setActivePlatform] = useState<
-    'spotify' | 'youtube' | null
-  >(null)
-
-  useEffect(() => {
-    // 1. CHECK FOR IMMEDIATE SUCCESS (Redirected from API)
+  >(() => {
+    if (initialIsSaved) return 'connected'
     if (
       searchParams.get('success') === 'true' &&
       searchParams.get('action') === 'spotify'
-    ) {
-      setStatus('success')
-    }
-  }, [searchParams])
+    )
+      return 'success'
+    return 'idle'
+  })
+  const [activePlatform, setActivePlatform] = useState<
+    'spotify' | 'youtube' | null
+  >(null)
 
   // --- SPOTIFY HANDLER ---
   const handleSpotify = async () => {
@@ -68,11 +62,6 @@ export const LibrarySync = ({
 
   // --- YOUTUBE HANDLER ---
   const handleYouTube = async () => {
-    if (!user?.accessToken) {
-      login()
-      return
-    }
-
     // If we have no youtube ID, we can't do anything (unless we just want to sub, which is fallback)
     // But usually this button appears only if youtubeId is present.
     if (!youtubeId && isReleased) return
@@ -82,10 +71,10 @@ export const LibrarySync = ({
 
     let result
     if (isReleased && youtubeId) {
-      result = await likeYouTubeVideo(youtubeId, user.accessToken)
+      result = await likeYouTubeVideo(youtubeId)
     } else {
       // Setup your channel ID here or pull from config
-      result = await subscribeToChannel(undefined, user.accessToken)
+      result = await subscribeToChannel()
     }
 
     if (result.success) {
@@ -93,7 +82,11 @@ export const LibrarySync = ({
       setTimeout(() => setStatus('idle'), 3000)
     } else {
       setStatus('idle')
-      alert('Failed to connect to YouTube.')
+      if (result.error === 'Not connected to YouTube') {
+        router.push('/api/auth/youtube/connect')
+        return
+      }
+      alert(result.error || 'Failed to connect to YouTube.')
     }
   }
 

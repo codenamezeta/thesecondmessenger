@@ -3,6 +3,7 @@ import { X, Search } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useDebounce } from '@/utilities/useDebounce'
 import { useRouter } from 'next/navigation'
+import { Media } from '@/payload-types'
 
 type SearchResult = {
   id: string
@@ -11,7 +12,7 @@ type SearchResult = {
   meta: {
     title?: string
     description?: string
-    image?: any
+    image?: (number | null) | Media
   }
   doc: {
     relationTo: string
@@ -19,7 +20,13 @@ type SearchResult = {
   }
 }
 
-export const SearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+export const SearchModal = ({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean
+  onClose: () => void
+}) => {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -55,7 +62,9 @@ export const SearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         if (res.ok) {
           const data = await res.json()
           setResults(
-            (data.docs || []).filter((r: SearchResult) => r.doc && r.doc.relationTo !== 'releases'),
+            (data.docs || []).filter(
+              (r: SearchResult) => r.doc && r.doc.relationTo !== 'releases',
+            ),
           )
         }
       } catch (e) {
@@ -80,7 +89,7 @@ export const SearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     } else if (relationTo === 'posts') {
       router.push(`/posts/${slug}`)
     } else if (relationTo === 'songs') {
-      router.push(`/songs/${slug}`)
+      router.push(`/music/${slug}`)
     } else {
       router.push(`/${slug}`)
     }
@@ -89,49 +98,55 @@ export const SearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-start justify-center pt-32 px-4">
-      <div className="w-full max-w-2xl bg-card border border-primary/30 rounded-lg shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-100 flex items-start justify-center bg-black/80 px-4 pt-32 backdrop-blur-sm">
+      <div className="relative w-full max-w-2xl animate-in rounded-lg border border-primary/30 bg-card shadow-2xl duration-200 zoom-in-95 fade-in">
         {/* Header */}
         <div className="flex items-center border-b border-white/10 p-4">
-          <Search className="text-primary w-6 h-6 mr-4" />
+          <Search className="mr-4 h-6 w-6 text-primary" />
           <input
             name="search"
             id="search"
             type="text"
             placeholder="SEARCH DATABASE..."
-            className="flex-1 bg-transparent border-none outline-none text-xl font-heading text-white placeholder:text-gray-600 uppercase tracking-widest"
+            className="flex-1 border-none bg-transparent font-heading text-xl tracking-widest text-white uppercase outline-none placeholder:text-gray-600"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
             autoComplete="off"
           />
-          <button onClick={onClose} className="text-muted hover:text-white ml-4">
+          <button
+            onClick={onClose}
+            className="ml-4 text-muted hover:text-white"
+          >
             <X size={24} />
           </button>
         </div>
 
         {/* Results Area */}
-        <div className="p-4 min-h-[200px] max-h-[60vh] overflow-y-auto">
+        <div className="max-h-[60vh] min-h-[200px] overflow-y-auto p-4">
           {isLoading ? (
-            <p className="text-gray-600 font-mono text-sm text-center mt-10">SEARCHING...</p>
+            <p className="mt-10 text-center font-mono text-sm text-gray-600">
+              SEARCHING...
+            </p>
           ) : results.length > 0 ? (
             <div className="space-y-2">
               {results.map((result) => (
                 <div
                   key={result.id}
                   onClick={() => handleSelect(result)}
-                  className="p-3 hover:bg-white/5 cursor-pointer rounded border border-transparent hover:border-primary/20 transition group"
+                  className="group cursor-pointer rounded border border-transparent p-3 transition hover:border-primary/20 hover:bg-white/5"
                 >
-                  <div className="flex justify-between items-center mb-1">
-                    <p className="text-primary font-bold text-xs uppercase tracking-wider">
-                      {result.doc?.relationTo?.slice(0, -1) || 'UNKNOWN'} {/* Remove 's' roughly */}
+                  <div className="mb-1 flex items-center justify-between">
+                    <p className="text-xs font-bold tracking-wider text-primary uppercase">
+                      {result.doc?.relationTo?.slice(0, -1) || 'UNKNOWN'}{' '}
+                      {/* Remove 's' roughly */}
                     </p>
                   </div>
-                  <p className="text-white text-lg font-heading uppercase tracking-wide group-hover:text-primary transition-colors">
+                  <p className="font-heading text-lg tracking-wide text-white uppercase transition-colors group-hover:text-primary">
                     {result.meta?.title || result.title || result.slug}
                   </p>
                   {result.meta?.description && (
-                    <p className="text-muted-foreground text-sm line-clamp-1">
+                    <p className="line-clamp-1 text-sm text-muted-foreground">
                       {result.meta.description}
                     </p>
                   )}
@@ -139,9 +154,11 @@ export const SearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
               ))}
             </div>
           ) : query.length > 0 ? (
-            <p className="text-gray-600 font-mono text-sm text-center mt-10">NO RESULTS FOUND</p>
+            <p className="mt-10 text-center font-mono text-sm text-gray-600">
+              NO RESULTS FOUND
+            </p>
           ) : (
-            <p className="text-gray-600 font-mono text-sm text-center mt-10">
+            <p className="mt-10 text-center font-mono text-sm text-gray-600">
               WAITING FOR INPUT...
             </p>
           )}
@@ -149,7 +166,9 @@ export const SearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 
         {/* Footer */}
         <div className="bg-black/30 p-2 px-4 text-right">
-          <span className="text-[10px] font-mono text-gray-500">ESC TO CLOSE</span>
+          <span className="font-mono text-[10px] text-gray-500">
+            ESC TO CLOSE
+          </span>
         </div>
       </div>
     </div>

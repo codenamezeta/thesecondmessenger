@@ -108,11 +108,11 @@ export const BottomBar = () => {
         className="container hidden items-center md:flex"
       >
         {/* Left: Song Info + Action Buttons */}
-        <div className="flex w-2/5 items-center gap-0">
+        <div className="flex w-2/5 items-center gap-2">
           <SongInfo className="min-w-0 shrink" />
-          <div className="ml-4 flex items-center">
-            <ActionButtons />
-          </div>
+          {/* <div className="ml-4 flex items-center"> */}
+          <ActionButtons />
+          {/* </div> */}
         </div>
 
         {/* Center: Queue Controls */}

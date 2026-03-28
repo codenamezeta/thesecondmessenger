@@ -39,16 +39,16 @@ const LibraryContent = () => {
   }, [])
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex h-full min-h-0 flex-col">
       {/* Tab Bar */}
       <div className="flex shrink-0 items-center border-b border-border/50">
         <button
           onClick={() => setActiveLibraryTab('playlists')}
           className={cn(
-            'h-10 w-full text-xs font-heading uppercase tracking-wider transition-colors duration-300',
+            'h-10 w-full font-heading text-xs tracking-wider uppercase transition-colors duration-300',
             activeLibraryTab === 'playlists'
-              ? 'text-primary bg-primary/20 border-b-2 border-primary'
-              : 'text-foreground/75 hover:text-foreground hover:bg-primary/10',
+              ? 'border-b-2 border-primary bg-primary/20 text-primary'
+              : 'text-foreground/75 hover:bg-primary/10 hover:text-foreground',
           )}
         >
           Playlists
@@ -56,10 +56,10 @@ const LibraryContent = () => {
         <button
           onClick={() => setActiveLibraryTab('queue')}
           className={cn(
-            'h-10 w-full text-xs font-heading uppercase tracking-wider transition-colors duration-300',
+            'h-10 w-full font-heading text-xs tracking-wider uppercase transition-colors duration-300',
             activeLibraryTab === 'queue'
-              ? 'text-primary bg-primary/20 border-b-2 border-primary'
-              : 'text-foreground/75 hover:text-foreground hover:bg-primary/10',
+              ? 'border-b-2 border-primary bg-primary/20 text-primary'
+              : 'text-foreground/75 hover:bg-primary/10 hover:text-foreground',
           )}
         >
           Queue
@@ -67,12 +67,13 @@ const LibraryContent = () => {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 overflow-x-hidden overflow-y-auto">
         {activeLibraryTab === 'queue' ? (
           <ol className="space-y-2 p-2">
             {queue.map((song, index) => {
               const isNowPlaying = index === currentSongIndex
-              const displaySong = isNowPlaying && currentSong ? currentSong : song
+              const displaySong =
+                isNowPlaying && currentSong ? currentSong : song
               const coverArtUrl =
                 displaySong?.coverImage ||
                 (typeof displaySong?.coverArt === 'object'
@@ -111,7 +112,9 @@ const LibraryContent = () => {
                         Now Playing
                       </p>
                     )}
-                    <p className="font-heading font-bold text-foreground">{displaySong?.title}</p>
+                    <p className="font-heading font-bold text-foreground">
+                      {displaySong?.title}
+                    </p>
                     <p className="truncate text-xs text-foreground/75">
                       {(song as { artist?: string }).artist ||
                         (displaySong as { artist?: string })?.artist ||
@@ -146,7 +149,9 @@ const LibraryContent = () => {
                   )}
                 </div>
                 <div>
-                  <p className="font-heading text-sm font-bold text-foreground">{playlist.title}</p>
+                  <p className="font-heading text-sm font-bold text-foreground">
+                    {playlist.title}
+                  </p>
                   <p className="text-xs text-foreground/75">
                     {playlist.tracks?.length || 0} Tracks
                   </p>
@@ -170,20 +175,20 @@ export const LibraryDrawerSheet = () => {
   return (
     <Sheet open={isLibraryDrawerOpen} onOpenChange={setIsLibraryDrawerOpen}>
       <SheetContent
-        side="left"
+        side="right"
         className={cn(
-          'w-80 border-r border-border/50 bg-background/90 backdrop-blur-lg p-0 flex flex-col gap-0',
+          'flex w-80 flex-col gap-0 border-r border-border/50 bg-background/90 p-0 backdrop-blur-lg',
           'top-[calc(var(--admin-bar-height,0px)+var(--main-nav-bar-height,0px))]',
           'h-[calc(100svh-var(--admin-bar-height,0px)-var(--main-nav-bar-height,0px))]',
         )}
         showCloseButton={false}
       >
-        <SheetHeader className="shrink-0 px-4 py-3 border-b border-border/50">
-          <SheetTitle className="font-heading text-sm uppercase tracking-widest text-primary">
+        <SheetHeader className="shrink-0 border-b border-border/50 px-4 py-3">
+          <SheetTitle className="font-heading text-sm tracking-widest text-primary uppercase">
             Library
           </SheetTitle>
         </SheetHeader>
-        <div className="flex-1 min-h-0">
+        <div className="min-h-0 flex-1">
           <LibraryContent />
         </div>
       </SheetContent>
@@ -199,7 +204,9 @@ interface LibraryDrawerInlineProps {
   className?: string
 }
 
-export const LibraryDrawerInline = ({ className }: LibraryDrawerInlineProps) => {
+export const LibraryDrawerInline = ({
+  className,
+}: LibraryDrawerInlineProps) => {
   const { isLibraryDrawerOpen } = usePlayer()
 
   return (

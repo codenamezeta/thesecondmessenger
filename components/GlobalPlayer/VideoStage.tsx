@@ -6,6 +6,19 @@ import { Minimize2, Maximize2 } from 'lucide-react'
 import { usePlayer } from '@/context/PlayerContext'
 import { cn } from '@/utilities/ui'
 
+/** Subset of the YouTube IFrame Player API surface that this component uses. */
+interface YouTubePlayerRef {
+  getIframe: () => HTMLIFrameElement | null
+  playVideo: () => void
+  pauseVideo: () => void
+  seekTo: (seconds: number, allowSeekAhead: boolean) => void
+  setVolume: (volume: number) => void
+  mute: () => void
+  unMute: () => void
+  getCurrentTime: () => number
+  getDuration: () => number
+}
+
 /**
  * VideoStage owns the YouTube player lifecycle.
  *
@@ -27,7 +40,10 @@ interface VideoStageProps {
   className?: string
 }
 
-export const VideoStage = ({ isMobileExpanded, className }: VideoStageProps) => {
+export const VideoStage = ({
+  isMobileExpanded,
+  className,
+}: VideoStageProps) => {
   const {
     currentSong,
     isPlaying,
@@ -43,15 +59,13 @@ export const VideoStage = ({ isMobileExpanded, className }: VideoStageProps) => 
   } = usePlayer()
 
   const [isReady, setIsReady] = useState(false)
-  const [origin, setOrigin] = useState('')
-  const internalPlayerRef = useRef<any>(null)
+  // Lazy initializer runs once on the client; safe during SSR (returns '').
+  const [origin] = useState(() =>
+    typeof window !== 'undefined' ? window.location.origin : '',
+  )
+  const internalPlayerRef = useRef<YouTubePlayerRef | null>(null)
   const progressInterval = useRef<NodeJS.Timeout | null>(null)
   const isSeeking = useRef(false)
-
-  // Origin is needed for YouTube embed security
-  useEffect(() => {
-    if (typeof window !== 'undefined') setOrigin(window.location.origin)
-  }, [])
 
   // Scroll lock: prevent page scroll when theater mode is active on desktop
   useEffect(() => {
@@ -66,18 +80,21 @@ export const VideoStage = ({ isMobileExpanded, className }: VideoStageProps) => 
   }, [isMobileExpanded, videoEnabled, videoMode])
 
   // --- Safe player call helper ---
-  const safePlayerCall = useCallback((callback: (player: any) => void) => {
-    const player = internalPlayerRef.current
-    if (player && typeof player.getIframe === 'function') {
-      const iframe = player.getIframe()
-      if (!iframe || !iframe.isConnected) return
-      try {
-        callback(player)
-      } catch {
-        // silence YouTube internal errors
+  const safePlayerCall = useCallback(
+    (callback: (player: YouTubePlayerRef) => void) => {
+      const player = internalPlayerRef.current
+      if (player && typeof player.getIframe === 'function') {
+        const iframe = player.getIframe()
+        if (!iframe || !iframe.isConnected) return
+        try {
+          callback(player)
+        } catch {
+          // silence YouTube internal errors
+        }
       }
-    }
-  }, [])
+    },
+    [],
+  )
 
   // --- Bridge: isPlaying → YouTube player ---
   useEffect(() => {
@@ -121,7 +138,15 @@ export const VideoStage = ({ isMobileExpanded, className }: VideoStageProps) => 
     return () => {
       if (progressInterval.current) clearInterval(progressInterval.current)
     }
-  }, [isPlaying, isReady, currentSong, safePlayerCall, setCurrentTime, setDuration, setPlayed])
+  }, [
+    isPlaying,
+    isReady,
+    currentSong,
+    safePlayerCall,
+    setCurrentTime,
+    setDuration,
+    setPlayed,
+  ])
 
   // --- YouTube event handlers ---
   const onPlayerReady: YouTubeProps['onReady'] = useCallback(
@@ -168,8 +193,10 @@ export const VideoStage = ({ isMobileExpanded, className }: VideoStageProps) => 
   // Mobile expanded:  relative flex-1 min-h-0 (parent is a flex column)
   // Audio only:       absolute 1×1px off-screen (keeps iframe alive for audio)
 
-  const isDesktopTheater = !isMobileExpanded && videoEnabled && videoMode === 'theater'
-  const isDesktopMini = !isMobileExpanded && videoEnabled && videoMode === 'mini'
+  const isDesktopTheater =
+    !isMobileExpanded && videoEnabled && videoMode === 'theater'
+  const isDesktopMini =
+    !isMobileExpanded && videoEnabled && videoMode === 'mini'
   const isMobileVideo = isMobileExpanded && videoEnabled
   const isHidden = !isDesktopTheater && !isDesktopMini && !isMobileVideo
 
@@ -182,7 +209,8 @@ export const VideoStage = ({ isMobileExpanded, className }: VideoStageProps) => 
         // would make the video invisible if both groups were applied.
 
         // Audio-only: off-screen 1×1px to keep iframe alive without showing it
-        isHidden && 'absolute left-[-9999px] top-[-9999px] h-px w-px overflow-hidden',
+        isHidden &&
+          'absolute top-[-9999px] left-[-9999px] h-px w-px overflow-hidden',
 
         // Desktop theater: full viewport width, between nav and bottom bar
         // `fixed` creates a containing block so the YouTube child can use `absolute inset-0`.
@@ -191,11 +219,11 @@ export const VideoStage = ({ isMobileExpanded, className }: VideoStageProps) => 
 
         // Desktop mini: 300px floating above the bottom bar, bottom-right corner
         isDesktopMini &&
-          'pointer-events-auto fixed right-4 bottom-[calc(var(--bottom-bar-height,5rem)+1rem)] z-30 w-[300px] aspect-video overflow-hidden rounded-xl border border-primary/20 shadow-2xl',
+          'pointer-events-auto fixed right-4 bottom-[calc(var(--bottom-bar-height,5rem)+1rem)] z-30 aspect-video w-[300px] overflow-hidden rounded-xl border border-primary/20 shadow-2xl',
 
         // Mobile expanded: flex item inside the vertical stack
         isMobileVideo &&
-          'pointer-events-auto relative flex-1 min-h-0 min-w-0 w-full overflow-hidden bg-background',
+          'pointer-events-auto relative min-h-0 w-full min-w-0 flex-1 overflow-hidden bg-background',
 
         className,
       )}
@@ -212,7 +240,7 @@ export const VideoStage = ({ isMobileExpanded, className }: VideoStageProps) => 
           opts={opts}
           // `absolute inset-0` fills whatever size the container is —
           // works for theater (fixed top/bottom), mini (aspect-video), and mobile (flex-1).
-          className={isHidden ? 'w-full h-full' : 'absolute inset-0'}
+          className={isHidden ? 'h-full w-full' : 'absolute inset-0'}
           iframeClassName="w-full h-full"
         />
       )}
@@ -237,13 +265,25 @@ const VideoModeToggle = ({ isDesktopMini }: VideoModeToggleProps) => {
     <button
       onClick={toggleVideoMode}
       className={cn(
-        'absolute z-10 flex min-h-10 min-w-10 items-center justify-center rounded-md bg-background/50 text-foreground/70 backdrop-blur-sm transition-all hover:bg-background/80 hover:text-foreground',
-        isDesktopMini ? 'bottom-2 right-2' : 'top-2 right-2',
+        'absolute z-10 hidden min-h-10 min-w-10 items-center justify-center rounded-md bg-background/50 text-foreground/70 backdrop-blur-sm transition-all hover:bg-background/80 hover:text-foreground md:flex',
+        isDesktopMini ? 'right-2 bottom-2' : 'top-2 right-2',
       )}
-      title={videoMode === 'theater' ? 'Switch to Mini Player' : 'Switch to Theater Mode'}
-      aria-label={videoMode === 'theater' ? 'Switch to Mini Player' : 'Switch to Theater Mode'}
+      title={
+        videoMode === 'theater'
+          ? 'Switch to Mini Player'
+          : 'Switch to Theater Mode'
+      }
+      aria-label={
+        videoMode === 'theater'
+          ? 'Switch to Mini Player'
+          : 'Switch to Theater Mode'
+      }
     >
-      {videoMode === 'theater' ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+      {videoMode === 'theater' ? (
+        <Minimize2 size={16} />
+      ) : (
+        <Maximize2 size={16} />
+      )}
     </button>
   )
 }
