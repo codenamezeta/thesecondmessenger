@@ -181,14 +181,14 @@ export const InfoDrawerSheet = () => {
       <SheetContent
         side="left"
         className={cn(
-          'flex w-80 flex-col gap-0 border-l border-border/50 bg-background/90 p-0 backdrop-blur-lg',
+          'flex flex-col gap-0 border-l border-border/50 bg-background/90 p-0 backdrop-blur-lg',
           'top-[calc(var(--admin-bar-height,0px)+var(--main-nav-bar-height,0px))]',
           'h-[calc(100svh-var(--admin-bar-height,0px)-var(--main-nav-bar-height,0px))]',
         )}
-        showCloseButton={false}
+        showCloseButton={true}
       >
         <SheetHeader className="shrink-0 border-b border-border/50 px-4 py-3">
-          <SheetTitle className="font-heading text-sm tracking-widest text-secondary uppercase">
+          <SheetTitle className="py-3 font-heading text-sm tracking-widest text-muted-foreground uppercase">
             Info
           </SheetTitle>
         </SheetHeader>

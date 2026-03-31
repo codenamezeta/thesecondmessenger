@@ -6,6 +6,15 @@ import { Minimize2, Maximize2 } from 'lucide-react'
 import { usePlayer } from '@/context/PlayerContext'
 import { cn } from '@/utilities/ui'
 
+/** https://developers.google.com/youtube/iframe_api_reference#onStateChange */
+const YT_PLAYER_STATE = {
+  ENDED: 0,
+  PLAYING: 1,
+  PAUSED: 2,
+  BUFFERING: 3,
+  CUED: 5,
+} as const
+
 /** Subset of the YouTube IFrame Player API surface that this component uses. */
 interface YouTubePlayerRef {
   getIframe: () => HTMLIFrameElement | null
@@ -54,6 +63,7 @@ export const VideoStage = ({
     setCurrentTime,
     setDuration,
     setPlayed,
+    setIsPlaying,
     playNext,
     registerYouTubePlayer,
   } = usePlayer()
@@ -164,9 +174,37 @@ export const VideoStage = ({
 
   const onPlayerStateChange: YouTubeProps['onStateChange'] = useCallback(
     (event: YouTubeEvent) => {
-      if (event.data === 0) playNext()
+      const state = event.data
+      if (state === YT_PLAYER_STATE.ENDED) {
+        playNext()
+        return
+      }
+      // Keep React state in sync when the user uses native iframe controls
+      // (or any other path that changes playback outside BottomBar).
+      if (state === YT_PLAYER_STATE.PLAYING || state === YT_PLAYER_STATE.BUFFERING) {
+        setIsPlaying(true)
+        return
+      }
+      if (state === YT_PLAYER_STATE.PAUSED) {
+        setIsPlaying(false)
+        try {
+          const time = event.target.getCurrentTime()
+          const total = event.target.getDuration()
+          if (typeof time === 'number' && typeof total === 'number' && total > 0) {
+            setCurrentTime(time)
+            setPlayed(time / total)
+          }
+        } catch {
+          /* ignore */
+        }
+      }
     },
-    [playNext],
+    [
+      playNext,
+      setIsPlaying,
+      setCurrentTime,
+      setPlayed,
+    ],
   )
 
   const opts: YouTubeProps['opts'] = useMemo(

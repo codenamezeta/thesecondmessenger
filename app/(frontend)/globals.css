@@ -197,6 +197,103 @@
   }
 }
 
+/* ============================================================
+   Glitch text — "bad side" split terminal heading.
+
+   Design intent:
+   - Text is fully readable ~92% of the time (clip-path: none)
+   - Two short violent "burst" windows per cycle where the signal
+     breaks: horizontal jitter + chromatic split + torn slice
+   - Each burst frame is held for ~75ms then snaps (steps(1,end))
+   - 6s total cycle so both bursts feel unpredictable, not looping
+   ============================================================ */
+
+@keyframes glitch-flicker {
+  /* ─── CALM: full readable text ─── */
+  0%,
+  100% {
+    clip-path: none;
+    transform: none;
+    text-shadow: none;
+    opacity: 1;
+  }
+
+  /* ─── BURST 1 — three frames × 75ms at ~20% (≈1.2 s into loop) ─── */
+  20% {
+    clip-path: inset(28% 0 52% 0);
+    transform: translateX(-6px) skewX(-3deg);
+    text-shadow:
+      4px 0 rgba(0, 255, 180, 0.75),
+      -4px 0 rgba(255, 40, 40, 0.6);
+    opacity: 0.65;
+  }
+  21.25% {
+    clip-path: inset(70% 0 12% 0);
+    transform: translateX(5px);
+    text-shadow: -3px 0 rgba(0, 255, 180, 0.65);
+    opacity: 0.8;
+  }
+  22.5% {
+    clip-path: inset(8% 0 78% 0);
+    transform: translateX(-3px) skewX(2deg);
+    text-shadow:
+      3px 0 rgba(255, 40, 40, 0.7),
+      -3px 0 rgba(0, 255, 180, 0.4);
+    opacity: 0.7;
+  }
+  /* Snap back to normal */
+  23.75% {
+    clip-path: none;
+    transform: none;
+    text-shadow: none;
+    opacity: 1;
+  }
+
+  /* ─── BURST 2 — four frames × 75ms at ~70% (≈4.2 s into loop) ─── */
+  70% {
+    clip-path: inset(55% 0 28% 0);
+    transform: translateX(7px) skewX(2.5deg);
+    text-shadow:
+      -5px 0 rgba(0, 255, 180, 0.8),
+      5px 0 rgba(255, 40, 40, 0.65);
+    opacity: 0.55;
+  }
+  71.25% {
+    clip-path: inset(12% 0 74% 0);
+    transform: translateX(-6px) skewX(-2deg);
+    text-shadow: 4px 0 rgba(0, 255, 180, 0.7);
+    opacity: 0.75;
+  }
+  72.5% {
+    clip-path: inset(44% 0 42% 0);
+    transform: translateX(4px);
+    text-shadow:
+      -6px 0 rgba(255, 40, 40, 0.75),
+      6px 0 rgba(0, 255, 180, 0.5);
+    opacity: 0.65;
+  }
+  73.75% {
+    clip-path: inset(82% 0 6% 0);
+    transform: translateX(-4px) skewX(3deg);
+    text-shadow: 2px 0 rgba(255, 40, 40, 0.55);
+    opacity: 0.85;
+  }
+  /* Snap back to normal */
+  75% {
+    clip-path: none;
+    transform: none;
+    text-shadow: none;
+    opacity: 1;
+  }
+}
+
+.glitch-text {
+  position: relative;
+  display: inline-block;
+  color: rgb(248 113 113 / 0.85);
+  animation: glitch-flicker 6s steps(1, end) infinite;
+}
+
 @layer components {
   .container {
     margin-left: auto;
