@@ -96,8 +96,8 @@ const useYouTubeMetadataSync = () => {
 export const GlobalPlayer = () => {
   const { currentSong, videoEnabled } = usePlayer()
 
-  // Detect desktop breakpoint (md = 768px). Defaults to false (mobile-first).
-  const isDesktop = useMediaQuery('(min-width: 640px)')
+  // Match Tailwind `md` (768px) so layout + `md:*` utilities stay in sync.
+  const isDesktop = useMediaQuery('(min-width: 768px)')
 
   useYouTubeMetadataSync()
 
@@ -109,58 +109,50 @@ export const GlobalPlayer = () => {
       className="pointer-events-none fixed inset-x-0 top-[calc(var(--admin-bar-height,0px)+var(--main-nav-bar-height,0px))] bottom-0 z-20 flex flex-col justify-end"
     >
       {/* ================================================================
-          MOBILE LAYOUT (< md)
-          Always mounted so VideoStage never unmounts (avoids playback restart).
-          CSS height controls whether the expanded UI is visible.
+          Single flex column + one VideoStage instance.
+          - Below md: wrapper is a real flex column (video grows with flex-1).
+          - md+: wrapper uses `display:contents` so its children slot into <aside>
+            without duplicating VideoStage — crossing the breakpoint only flips
+            props/CSS, so the YouTube iframe is never torn down.
           ================================================================ */}
-      {!isDesktop && (
-        <div
-          className={cn(
-            'flex flex-col overflow-hidden bg-background/95 backdrop-blur-lg transition-all duration-300 ease-in-out',
-            // Expand to fill remaining space above the BottomBar when video is enabled.
-            // Collapse to zero height (audio-only) when video is disabled — VideoStage
-            // stays mounted inside and handles its own off-screen positioning for audio.
-            videoEnabled ? 'min-h-0 flex-1' : 'h-0',
-          )}
-        >
-          {/* 1. Global Controls row */}
-          <GlobalControls
-            hideVolume
-            className="pointer-events-auto shrink-0 border-b border-border/50 bg-background/50 px-3 py-1"
-          />
+      <div
+        className={cn(
+          'flex flex-col overflow-hidden bg-background/95 backdrop-blur-lg transition-all duration-300 ease-in-out',
+          'max-md:min-h-0',
+          videoEnabled ? 'max-md:flex-1' : 'max-md:h-0',
+          'md:contents',
+        )}
+      >
+        {/* 1. Global Controls row (mobile only in flow) */}
+        <GlobalControls
+          hideVolume
+          className="pointer-events-auto shrink-0 border-b border-border/50 bg-background/50 px-3 py-1 md:hidden"
+        />
 
-          {/* 2. Library Drawer (inline, height-expandable) */}
-          <LibraryDrawerInline className="pointer-events-auto shrink-0" />
+        {/* 2. Library Drawer — inline on mobile */}
+        <LibraryDrawerInline className="pointer-events-auto shrink-0 md:hidden" />
 
-          {/* 3. Video Stage — STABLE tree position; never conditionally unmounted.
-                When videoEnabled=false the container collapses to h-0 and VideoStage
-                internally positions itself off-screen via its `isHidden` logic. */}
-          <VideoStage
-            isMobileExpanded={videoEnabled}
-            className="pointer-events-auto"
-          />
+        {/* 3. Video Stage — exactly one instance for all breakpoints */}
+        <VideoStage
+          isMobileExpanded={!isDesktop && videoEnabled}
+          className="pointer-events-auto"
+        />
 
-          {/* 4. Action Buttons */}
-          <ActionButtons className="pointer-events-auto shrink-0 border-t border-border/50 bg-background/50 px-2" />
+        {/* 4. Action Buttons */}
+        <ActionButtons className="pointer-events-auto shrink-0 border-t border-border/50 bg-background/50 px-2 md:hidden" />
 
-          {/* 5. Queue Controls */}
-          <QueueControls className="pointer-events-auto shrink-0 border-t border-border/50 bg-background/50 px-2 py-1" />
+        {/* 5. Queue Controls */}
+        <QueueControls className="pointer-events-auto shrink-0 border-t border-border/50 bg-background/50 px-2 py-1 md:hidden" />
 
-          {/* 6. Info Drawer (inline, height-expandable, tab bar always visible) */}
-          <InfoDrawerInline className="pointer-events-auto shrink-0" />
-        </div>
-      )}
+        {/* 6. Info Drawer — inline on mobile */}
+        <InfoDrawerInline className="pointer-events-auto shrink-0 md:hidden" />
+      </div>
 
-      {/* ================================================================
-          DESKTOP LAYOUT (md+)
-          VideoStage uses fixed positioning internally; Sheets portal to root.
-          ================================================================ */}
+      {/* Desktop: sheet variants (VideoStage stays in the column above). */}
       {isDesktop && (
         <>
           <InfoDrawerSheet />
           <LibraryDrawerSheet />
-          {/* VideoStage is always in this stable position on desktop */}
-          <VideoStage isMobileExpanded={false} />
         </>
       )}
 

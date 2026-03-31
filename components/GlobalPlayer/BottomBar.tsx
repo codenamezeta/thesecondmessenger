@@ -105,7 +105,7 @@ export const BottomBar = () => {
       {/* ---- Desktop layout (md+) ---- */}
       <div
         id="global_player_bottom_bar_container"
-        className="container hidden items-center md:flex"
+        className="hidden px-4 md:flex 2xl:container 2xl:mx-auto 2xl:px-0"
       >
         {/* Left: Song Info + Action Buttons */}
         <div className="flex w-2/5 items-center gap-2">
