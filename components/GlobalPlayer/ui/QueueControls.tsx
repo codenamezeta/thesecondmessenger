@@ -11,15 +11,25 @@ interface QueueControlsProps {
   playOnly?: boolean
 }
 
-export const QueueControls = ({ className, playOnly = false }: QueueControlsProps) => {
-  const { isPlaying, togglePlay, playNext, playPrevious, currentTime, duration } = usePlayer()
+export const QueueControls = ({
+  className,
+  playOnly = false,
+}: QueueControlsProps) => {
+  const {
+    isPlaying,
+    togglePlay,
+    playNext,
+    playPrevious,
+    currentTime,
+    duration,
+  } = usePlayer()
 
   if (playOnly) {
     return (
       <button
         onClick={togglePlay}
         className={cn(
-          'flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_20px_hsl(var(--primary))] transition-all hover:bg-foreground hover:text-background',
+          'flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_20px_var(--primary)] transition-all hover:bg-foreground hover:text-background',
           className,
         )}
         aria-label={isPlaying ? 'Pause' : 'Play'}
@@ -38,14 +48,14 @@ export const QueueControls = ({ className, playOnly = false }: QueueControlsProp
       <div className="flex items-center justify-center gap-1 sm:gap-2 xl:gap-3">
         <button
           onClick={playPrevious}
-          className="min-h-12 min-w-12 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          className="flex min-h-12 min-w-12 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
           aria-label="Previous track"
         >
           <SkipBack size={32} />
         </button>
         <button
           onClick={togglePlay}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_20px_hsl(var(--primary))] transition-all hover:bg-foreground hover:text-background"
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_20px_var(--primary)] transition-all hover:bg-foreground hover:text-background"
           aria-label={isPlaying ? 'Pause' : 'Play'}
         >
           {isPlaying ? (
@@ -56,7 +66,7 @@ export const QueueControls = ({ className, playOnly = false }: QueueControlsProp
         </button>
         <button
           onClick={playNext}
-          className="min-h-12 min-w-12 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          className="flex min-h-12 min-w-12 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
           aria-label="Next track"
         >
           <SkipForward size={32} />
