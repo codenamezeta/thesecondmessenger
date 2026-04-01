@@ -1,62 +1,110 @@
 import type { Metadata } from 'next/types'
-
-import { CollectionArchive } from '@/components/CollectionArchive'
-import { PageRange } from '@/components/PageRange'
-import { Pagination } from '@/components/Pagination'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
-import PageClient from './page.client'
+import { BlogArchive } from '@/components/BlogArchive'
+import type { Category } from '@/payload-types'
+// import PageClient from './page.client'
 
 export const dynamic = 'force-static'
-export const revalidate = 0
+export const revalidate = 600
 
-export default async function Page() {
+export default async function PostsPage() {
   const payload = await getPayload({ config: configPromise })
 
   const posts = await payload.find({
     collection: 'posts',
-    depth: 1,
-    limit: 12,
+    depth: 2,
+    limit: 100,
     overrideAccess: false,
-    select: {
-      title: true,
-      slug: true,
-      categories: true,
-      meta: true,
+    sort: '-publishedAt',
+    where: {
+      _status: { equals: 'published' },
     },
   })
 
+  const categoriesResult = await payload.find({
+    collection: 'categories',
+    limit: 100,
+    overrideAccess: false,
+  })
+
+  const categories = (categoriesResult.docs as Category[]).map((cat) => ({
+    id: cat.id,
+    title: cat.title,
+    slug: cat.slug,
+  }))
+
   return (
-    <div className="pt-24 pb-24">
-      <PageClient />
-      <div className="container mb-16">
-        <div className="prose dark:prose-invert max-w-none">
-          <h1 className="text-4xl font-bold">Posts</h1>
-        </div>
-      </div>
+    <main className="min-h-screen">
+      {/* <PageClient /> */}
 
-      <div className="container mb-8">
-        <PageRange
-          collection="posts"
-          currentPage={posts.page}
-          limit={12}
-          totalDocs={posts.totalDocs}
+      {/* Page Header */}
+      <div className="relative overflow-hidden border-b border-border/50 bg-background">
+        {/* Corner brackets */}
+        <div
+          className="pointer-events-none absolute top-6 left-6 h-8 w-8 border-t-2 border-l-2 border-primary/30"
+          aria-hidden
         />
+        <div
+          className="pointer-events-none absolute top-6 right-6 h-8 w-8 border-t-2 border-r-2 border-primary/30"
+          aria-hidden
+        />
+
+        {/* Ambient glow */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-20"
+          style={{
+            background:
+              'radial-gradient(ellipse at 50% 0%, hsl(var(--primary) / 0.2) 0%, transparent 70%)',
+          }}
+          aria-hidden
+        />
+
+        <div className="relative z-10 container pt-32 pb-12">
+          <div className="mb-4 flex items-center gap-2">
+            <div className="h-px w-8 bg-primary/60" />
+            <span className="font-mono text-[11px] tracking-[0.25em] text-primary uppercase">
+              {'// ACCESSING TRANSMISSION ARCHIVE'}
+            </span>
+          </div>
+          <h1 className="mb-4 font-heading text-5xl font-bold tracking-tight text-foreground uppercase md:text-7xl">
+            Transmissions
+          </h1>
+          <p className="max-w-xl font-mono text-sm text-muted-foreground">
+            Field reports, production logs, and dispatches from deep inside The
+            Second Messenger universe.
+          </p>
+
+          {posts.totalDocs > 0 && (
+            <div className="mt-6 flex items-center gap-4 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+              <div className="flex items-center gap-2">
+                <span className="text-primary">{posts.totalDocs}</span>
+                <span>total entries</span>
+              </div>
+              <div className="h-4 w-px bg-border/50" />
+              <div className="flex items-center gap-2">
+                <span className="text-primary">{categories.length}</span>
+                <span>categories</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom glow line */}
+        <div className="absolute right-0 bottom-0 left-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent" />
       </div>
 
-      <CollectionArchive posts={posts.docs} />
-
-      <div className="container">
-        {posts.totalPages > 1 && posts.page && (
-          <Pagination page={posts.page} totalPages={posts.totalPages} />
-        )}
+      <div className="container py-12">
+        <BlogArchive initialPosts={posts.docs} categories={categories} />
       </div>
-    </div>
+    </main>
   )
 }
 
 export function generateMetadata(): Metadata {
   return {
-    title: `Posts - The Second Messenger`,
+    title: 'Transmissions | The Second Messenger',
+    description:
+      'Field reports, production logs, and dispatches from deep inside The Second Messenger universe.',
   }
 }

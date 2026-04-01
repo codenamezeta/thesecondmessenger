@@ -106,7 +106,7 @@ export const GlobalPlayer = () => {
   return (
     <aside
       id="media_player"
-      className="pointer-events-none fixed inset-x-0 top-[calc(var(--admin-bar-height,0px)+var(--main-nav-bar-height,0px))] bottom-0 z-20 flex flex-col justify-end"
+      className="pointer-events-none fixed inset-x-0 top-[calc(var(--admin-bar-height,0px)+var(--main-nav-bar-height,0px))] bottom-0 z-20 flex flex-col justify-end md:sticky"
     >
       {/* ================================================================
           Single flex column + one VideoStage instance.

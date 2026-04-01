@@ -3,8 +3,8 @@
 import type { PayloadAdminBarProps, PayloadMeUser } from '@payloadcms/admin-bar'
 import { PayloadAdminBar } from '@payloadcms/admin-bar'
 import { useSelectedLayoutSegments } from 'next/navigation'
-import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useCallback } from 'react'
 import { cn } from '@/utilities/ui'
 import { getClientSideURL } from '@/utilities/getURL'
 
@@ -37,9 +37,9 @@ export const AdminBar: React.FC<{
       : 'posts'
   ) as keyof typeof collectionLabels
 
-  const router = useRouter()
+  // const router = useRouter()
 
-  const onAuthChange = React.useCallback((user: PayloadMeUser) => {
+  const onAuthChange = useCallback((user: PayloadMeUser) => {
     setShow(Boolean(user?.id))
   }, [])
 
@@ -57,7 +57,7 @@ export const AdminBar: React.FC<{
   return (
     <div
       className={cn(
-        'h-(--admin-bar-height,36px) w-full items-center border-b border-white/10 bg-background/85 text-foreground backdrop-blur-3xl',
+        'min-h-(--admin-bar-height,36px) min-w-full items-center border-b border-white/10 bg-background/85 text-foreground backdrop-blur-3xl',
         {
           flex: show,
           hidden: !show,

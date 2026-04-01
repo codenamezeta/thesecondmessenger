@@ -77,7 +77,7 @@ export const GlobalControls = ({
             step={0.01}
             value={isMuted ? 0 : volume}
             onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="h-1 w-full cursor-pointer rounded-lg accent-muted-foreground hover:accent-primary"
+            className="h-1 w-full cursor-pointer rounded-lg accent-muted-foreground transition-colors duration-200 ease-in-out hover:accent-primary"
             aria-label="Volume"
           />
         </div>

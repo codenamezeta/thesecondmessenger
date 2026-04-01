@@ -27,7 +27,9 @@ const navItems: NavItem[] = [
   { type: 'link', label: 'Home', href: '/' },
   { type: 'link', label: 'Music', href: '/music' },
   { type: 'link', label: 'Videos', href: '/videos' },
-  { type: 'link', label: 'Bio', href: '/bio' },
+  { type: 'link', label: 'Personal File', href: '/bio' },
+  { type: 'link', label: "Admiral's Log", href: '/posts' },
+  { type: 'link', label: 'Members', href: '/login' },
   // {
   //   type: 'dropdown',
   //   label: 'Dropdown',
@@ -124,8 +126,8 @@ export const Nav: React.FC = () => {
   return (
     <>
       {/* --- DESKTOP NAV --- */}
-      <AdminBar />
-      <nav className="sticky top-(--admin-bar-height,0px) z-40 flex h-(--main-nav-bar-height) w-full border-b border-border/50 bg-background/50 backdrop-blur-3xl">
+      <nav className="h-(calc(var(--admin-bar-height,0px)+var(--main-nav-bar-height,0px))) fixed top-0 z-40 flex w-full flex-col border-b border-border bg-transparent backdrop-blur-3xl">
+        <AdminBar />
         <div className="container flex justify-between">
           {/* Logo */}
           <Link href="/" className="group z-40 flex flex-col justify-center">

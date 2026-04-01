@@ -9,7 +9,7 @@ import {
   ArrowRight,
   Database,
   Radio,
-  Lock,
+  Unlock,
   ChevronDown,
   Check,
   X,
@@ -20,6 +20,7 @@ import {
 import { cn } from '@/utilities/ui'
 import SpotlightCard from '@/components/SpotlightCard'
 import DecryptedText from '@/components/DecryptedText'
+import SplitText from '@/components/SplitText'
 import {
   Accordion,
   AccordionContent,
@@ -76,13 +77,15 @@ const stagger: Variants = {
 function HudLabel({
   icon: Icon,
   text,
+  color = 'primary',
 }: {
   icon: React.ElementType
   text: string
+  color?: string
 }) {
   return (
     <div className="mb-6 flex items-center gap-2">
-      <Icon className="h-3 w-3 text-primary" />
+      <Icon className={cn('size-3', `text-${color}`)} />
       <DecryptedText
         text={text}
         animateOn="view"
@@ -90,8 +93,14 @@ function HudLabel({
         revealDirection="start"
         speed={30}
         characters="XYZ1234!@#$%^&*()"
-        className="font-mono text-[10px] tracking-[0.3em] text-primary uppercase"
-        encryptedClassName="font-mono text-[10px] tracking-[0.3em] text-primary/40 uppercase"
+        className={cn(
+          'font-mono text-[10px] tracking-[0.3em] uppercase',
+          `text-${color}`,
+        )}
+        encryptedClassName={cn(
+          'font-mono text-[10px] tracking-[0.3em] uppercase',
+          `text-${color}/40`,
+        )}
       />
     </div>
   )
@@ -103,11 +112,13 @@ function HudLabel({
 
 function MagneticCta({
   href,
+  onClick,
   children,
   variant = 'primary',
   className,
 }: {
-  href: string
+  href?: string
+  onClick?: VoidFunction
   children: React.ReactNode
   variant?: 'primary' | 'ghost'
   className?: string
@@ -141,28 +152,44 @@ function MagneticCta({
       className="inline-block p-6"
     >
       <motion.div style={{ x: springX, y: springY }}>
-        <Link
-          href={href}
-          className={cn(
-            'group relative inline-flex items-center gap-3 border px-8 py-4 font-mono text-xs tracking-[0.3em] uppercase transition-all duration-300',
-            variant === 'primary'
-              ? 'border-primary bg-primary/10 text-primary hover:bg-primary hover:text-background'
-              : 'border-border/50 bg-card/10 text-foreground backdrop-blur-sm hover:border-primary/50 hover:text-primary',
-            className,
-          )}
-          style={
-            variant === 'primary'
-              ? {
-                  boxShadow:
-                    '0 0 40px color-mix(in oklch, var(--primary) 22%, transparent)',
-                  transition:
-                    'background-color 0.3s, color 0.3s, box-shadow 0.3s',
-                }
-              : undefined
-          }
-        >
-          {children}
-        </Link>
+        {href ? (
+          <Link
+            href={href ?? ''}
+            onClick={onClick}
+            className={cn(
+              'group relative inline-flex items-center gap-3 border px-8 py-4 font-mono text-xs tracking-[0.3em] uppercase transition-all duration-300',
+              variant === 'primary'
+                ? 'border-primary bg-primary/10 text-primary hover:bg-primary hover:text-background'
+                : 'border-border/50 bg-card/10 text-foreground backdrop-blur-sm hover:border-primary/50 hover:text-primary',
+              className,
+            )}
+            style={
+              variant === 'primary'
+                ? {
+                    boxShadow:
+                      '0 0 40px color-mix(in oklch, var(--primary) 22%, transparent)',
+                    transition:
+                      'background-color 0.3s, color 0.3s, box-shadow 0.3s',
+                  }
+                : undefined
+            }
+          >
+            {children}
+          </Link>
+        ) : (
+          <button
+            onClick={onClick}
+            className={cn(
+              'group relative inline-flex items-center gap-3 border px-8 py-4 font-mono text-xs tracking-[0.3em] uppercase transition-all duration-300',
+              variant === 'primary'
+                ? 'border-primary bg-primary/10 text-primary hover:bg-primary hover:text-background'
+                : 'border-border/50 bg-card/10 text-foreground backdrop-blur-sm hover:border-primary/50 hover:text-primary',
+              className,
+            )}
+          >
+            {children}
+          </button>
+        )}
       </motion.div>
     </div>
   )
@@ -172,7 +199,9 @@ function MagneticCta({
 // Section 1 — THE TEASER TRAILER (Hero)
 // ---------------------------------------------------------------------------
 
-function HeroSection() {
+function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
+  const { playMedia } = usePlayer()
+
   return (
     <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
       {/* Background void */}
@@ -255,14 +284,16 @@ function HeroSection() {
         {/* Main title — monolithic */}
         <motion.h1
           variants={fadeUp}
-          className="font-heading leading-[0.88] font-black tracking-[-0.02em] text-foreground uppercase select-none"
+          className="flex flex-col font-heading leading-[0.75] font-black tracking-tighter text-foreground uppercase select-none"
           style={{ fontSize: 'clamp(3.5rem, 14vw, 11rem)' }}
         >
-          THE
-          <br />
-          SECOND
-          <br />
-          <span className="text-primary">MESSENGER</span>
+          <SplitText text="The Second" tag="span" className="" />
+          <SplitText
+            text="Messenger"
+            tag="span"
+            delay={0.75}
+            className="glitch-text"
+          />
         </motion.h1>
 
         {/* Tagline */}
@@ -270,9 +301,9 @@ function HeroSection() {
           variants={fadeUp}
           className="mt-10 border-l-2 border-primary/40 pl-4 text-left font-mono text-[11px] tracking-[0.35em] text-muted-foreground uppercase"
         >
-          Foreground Music. 100% Independent.
+          Every track is written, performed, and produced independently.
           <br />
-          Built from scratch with real instruments.
+          No factory lines, just raw pop-rock built from the ground up.
         </motion.p>
 
         {/* Primary CTA */}
@@ -280,10 +311,22 @@ function HeroSection() {
           variants={fadeUp}
           className="mt-10 flex flex-col items-center sm:flex-row"
         >
-          <MagneticCta href="/music" variant="primary">
-            <Play className="h-3 w-3" />
-            Initiate Playback Sequence
-          </MagneticCta>
+          {featuredSong?.youtubeId ? (
+            <MagneticCta
+              variant="primary"
+              onClick={() =>
+                playMedia(featuredSong as Parameters<typeof playMedia>[0])
+              }
+            >
+              <Play className="h-3 w-3" />
+              Initiate Playback Sequence
+            </MagneticCta>
+          ) : (
+            <MagneticCta href="/music" variant="primary">
+              <Play className="h-3 w-3" />
+              Initiate Playback Sequence
+            </MagneticCta>
+          )}
           <MagneticCta href="/music" variant="ghost">
             Enter the Archive
             <ArrowRight className="h-3 w-3" />
@@ -682,7 +725,7 @@ const STEPS = [
   },
   {
     num: '03',
-    icon: Lock,
+    icon: Unlock,
     title: 'Access the Archive',
     subtitle: 'Unlock the stems.',
     body: 'Inner-circle collaborators get access to the raw materials — stems, demos, and behind-the-scenes logs. This is the deepest level of the archive.',
@@ -712,7 +755,7 @@ function BackstageSection() {
           className="mb-16"
         >
           <motion.div variants={fadeUp}>
-            <HudLabel icon={Lock} text="// CLEARANCE PROTOCOL — 3 STEPS" />
+            <HudLabel icon={Unlock} text="// CLEARANCE PROTOCOL — 3 STEPS" />
           </motion.div>
           <motion.h2
             variants={fadeUp}
@@ -729,7 +772,7 @@ function BackstageSection() {
           className="grid grid-cols-1 gap-6 bg-transparent md:grid-cols-3"
         >
           {STEPS.map((step, i) => (
-            <motion.div key={i} variants={fadeUp} className="bg-transparent">
+            <motion.div key={i} variants={fadeUp}>
               <SpotlightCard
                 className="flex h-full flex-col rounded-none border-border/25 bg-card/5 p-8 backdrop-blur-sm transition-all duration-300 hover:border-primary/30"
                 spotlightColor="color-mix(in oklch, var(--primary) 10%, transparent)"
@@ -811,6 +854,7 @@ function AlternativeSection() {
             <HudLabel
               icon={ShieldAlert}
               text="// THREAT ASSESSMENT — CHOOSE YOUR SIDE"
+              color="muted-foreground"
             />
           </motion.div>
           <motion.h2
@@ -825,7 +869,7 @@ function AlternativeSection() {
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
           variants={stagger}
-          className="grid grid-cols-1 gap-px bg-border/15 md:grid-cols-2"
+          className="grid grid-cols-1 gap-24 md:grid-cols-2"
         >
           {/* The Bad: The Algorithm */}
           <motion.div variants={fadeLeft}>
@@ -833,11 +877,11 @@ function AlternativeSection() {
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,hsl(0_60%_20%/0.1),transparent)]" />
               <div className="relative z-10">
                 <div className="mb-4 flex items-center gap-2 font-mono text-[9px] tracking-[0.3em] text-red-500/60 uppercase">
-                  <span className="h-1.5 w-1.5 rounded-full bg-red-500/60" />
+                  <span className="size-1.5 rounded-full bg-red-500/60" />
                   SYSTEM: THE_ALGORITHM
                 </div>
                 <h3 className="mb-8 font-heading text-2xl font-bold tracking-tight text-red-400/80 uppercase">
-                  <span className="glitch-text">The Mainstream</span>
+                  <span className="">The Mainstream</span>
                 </h3>
                 <ul className="space-y-4">
                   {THEM_ITEMS.map((item, i) => (
@@ -918,7 +962,7 @@ function DebriefSection() {
   const inView = useInView(ref, { once: true, margin: '-10%' })
 
   return (
-    <section ref={ref} className="relative overflow-hidden px-4 py-28">
+    <section ref={ref} className="relative overflow-hidden pt-24">
       <div
         className="absolute inset-0"
         style={{
@@ -927,116 +971,105 @@ function DebriefSection() {
         }}
       />
 
-      <div className="container">
-        {/* FAQ */}
-        <motion.div
-          initial="hidden"
-          animate={inView ? 'visible' : 'hidden'}
-          variants={stagger}
-          className="mb-24"
-        >
-          <motion.div variants={fadeUp}>
-            <HudLabel icon={Database} text="// SYSTEM QUERY — FAQ'S" />
-          </motion.div>
-          <motion.h2
-            variants={fadeUp}
-            className="mb-12 font-heading text-4xl font-bold tracking-tight text-foreground uppercase md:text-5xl"
-          >
-            The Debrief
-          </motion.h2>
-
-          <motion.div variants={fadeUp}>
-            <Accordion type="single" collapsible className="space-y-px">
-              {FAQ_ITEMS.map((item, i) => (
-                <AccordionItem
-                  key={i}
-                  value={`item-${i}`}
-                  className="border border-border/25 bg-card/5 backdrop-blur-sm transition-all duration-300 data-[state=open]:border-primary/30 data-[state=open]:bg-primary/5"
-                >
-                  <AccordionTrigger className="px-6 py-5 font-mono text-xs tracking-[0.15em] text-foreground/80 uppercase hover:text-foreground hover:no-underline data-[state=open]:text-primary [&>svg]:text-primary/50">
-                    <span className="mr-3 text-primary/40">
-                      QUERY_{String(i + 1).padStart(2, '0')}
-                    </span>
-                    {item.q}
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-6">
-                    <div className="border-l border-primary/30 pt-1 pl-4">
-                      <p className="font-body text-sm leading-relaxed text-muted-foreground">
-                        {item.a}
-                      </p>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </motion.div>
+      {/* FAQ */}
+      <motion.div
+        initial="hidden"
+        animate={inView ? 'visible' : 'hidden'}
+        variants={stagger}
+        className="container mb-24"
+      >
+        <motion.div variants={fadeUp}>
+          <HudLabel icon={Database} text="// SYSTEM QUERY — FAQ'S" />
         </motion.div>
-
-        {/* Final CTA */}
-        <motion.div
-          initial="hidden"
-          animate={inView ? 'visible' : 'hidden'}
-          variants={stagger}
-          className="relative text-center"
+        <motion.h2
+          variants={fadeUp}
+          className="mb-12 font-heading text-4xl font-bold tracking-tight text-foreground uppercase md:text-5xl"
         >
-          {/* Ambient glow */}
-          <div
-            className="pointer-events-none absolute inset-0 -inset-x-20"
-            style={{
-              background:
-                'radial-gradient(ellipse 70% 60% at 50% 50%, color-mix(in oklch, var(--primary) 14%, transparent), transparent)',
-            }}
+          The Debrief
+        </motion.h2>
+
+        <motion.div variants={fadeUp}>
+          <Accordion type="single" collapsible className="space-y-px">
+            {FAQ_ITEMS.map((item, i) => (
+              <AccordionItem
+                key={i}
+                value={`item-${i}`}
+                className="border border-border/25 bg-card/5 backdrop-blur-sm transition-all duration-300 data-[state=open]:border-primary/30 data-[state=open]:bg-primary/5"
+              >
+                <AccordionTrigger className="px-6 py-5 font-mono text-xs tracking-[0.15em] text-foreground/80 uppercase hover:text-foreground hover:no-underline data-[state=open]:text-primary [&>svg]:text-primary/50">
+                  <span className="mr-3 text-primary/40">
+                    QUERY_{String(i + 1).padStart(2, '0')}
+                  </span>
+                  {item.q}
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6">
+                  <div className="border-l border-primary/30 pt-1 pl-4">
+                    <p className="font-body text-sm leading-relaxed text-muted-foreground">
+                      {item.a}
+                    </p>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </motion.div>
+      </motion.div>
+
+      {/* Final CTA */}
+      <motion.div
+        initial="hidden"
+        animate={inView ? 'visible' : 'hidden'}
+        variants={stagger}
+        className="relative py-12 text-center"
+      >
+        {/* Ambient glow */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse 70% 60% at 50% 50%, color-mix(in oklch, var(--primary) 14%, transparent), transparent)',
+          }}
+        />
+
+        <motion.div variants={fadeUp} className="container">
+          <HudLabel
+            icon={Zap}
+            text="// FINAL TRANSMISSION — AWAITING YOUR RESPONSE"
           />
-
-          <motion.div variants={fadeUp}>
-            <HudLabel
-              icon={Zap}
-              text="// FINAL TRANSMISSION — AWAITING YOUR RESPONSE"
-            />
-          </motion.div>
-
-          <motion.h2
-            variants={fadeUp}
-            className="font-heading text-4xl leading-tight font-black tracking-tight text-foreground uppercase md:text-6xl lg:text-7xl"
-          >
-            Ready to hear something you{' '}
-            <span className="text-primary">can&apos;t shake?</span>
-          </motion.h2>
-
-          <motion.p
-            variants={fadeUp}
-            className="mt-6 font-mono text-xs tracking-[0.25em] text-muted-foreground uppercase"
-          >
-            No algorithm. No filter. Just music with something to say.
-          </motion.p>
-
-          <motion.div
-            variants={fadeUp}
-            className="mt-10 flex flex-col items-center justify-center sm:flex-row"
-          >
-            <MagneticCta href="/music" variant="primary">
-              <Play className="h-3 w-3" />
-              Play Now
-            </MagneticCta>
-            <MagneticCta
-              href="https://youtube.com/@thesecondmessenger"
-              variant="ghost"
-            >
-              <Radio className="h-3 w-3" />
-              Join the Crew
-            </MagneticCta>
-          </motion.div>
-
-          {/* Footer micro-copy */}
-          <motion.p
-            variants={fadeUp}
-            className="mt-16 font-mono text-[9px] tracking-[0.3em] text-muted-foreground/30 uppercase"
-          >
-            THE SECOND MESSENGER — INDEPENDENT · {new Date().getFullYear()} ·
-            TRANSMISSION_COMPLETE
-          </motion.p>
         </motion.div>
-      </div>
+
+        <motion.h2
+          variants={fadeUp}
+          className="font-heading text-4xl leading-tight font-black tracking-tight text-foreground uppercase md:text-6xl lg:text-7xl"
+        >
+          Ready to hear something you{' '}
+          <span className="text-primary">can&apos;t shake?</span>
+        </motion.h2>
+
+        <motion.p
+          variants={fadeUp}
+          className="mt-6 font-mono text-xs tracking-[0.25em] text-muted-foreground uppercase"
+        >
+          No algorithm. No filter. Just music with something to say.
+        </motion.p>
+
+        <motion.div
+          variants={fadeUp}
+          className="mt-10 flex flex-col items-center justify-center sm:flex-row"
+        >
+          <MagneticCta href="/music" variant="primary">
+            <Play className="h-3 w-3" />
+            Play Now
+          </MagneticCta>
+          <MagneticCta
+            href="https://youtube.com/@thesecondmessenger"
+            variant="ghost"
+          >
+            <Radio className="h-3 w-3" />
+            Join the Crew
+          </MagneticCta>
+        </motion.div>
+      </motion.div>
     </section>
   )
 }
@@ -1048,7 +1081,7 @@ function DebriefSection() {
 export function HomeSections({ songs }: HomeProps) {
   return (
     <main className="relative bg-background">
-      <HeroSection />
+      <HeroSection featuredSong={songs[0]} />
       <div className="border-t border-border/20" />
       <ArchiveSection songs={songs} />
       <div className="border-t border-border/20" />
