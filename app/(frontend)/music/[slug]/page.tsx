@@ -401,7 +401,7 @@ export default async function SongPage({ params }: Args) {
   return (
     <article className="min-h-screen pb-12">
       <MusicRecordingSchema song={song} />
-      <PayloadRedirects disableNotFound url={`/songs/${slug}`} />
+      <PayloadRedirects disableNotFound url={`/music/${slug}`} />
       <SongHero song={song} />
 
       <div className="container py-10 md:py-16">
@@ -443,7 +443,7 @@ export default async function SongPage({ params }: Args) {
           <aside className="space-y-4 lg:sticky lg:top-24 lg:col-span-4 lg:self-start">
             <Share
               title={song.title}
-              url={`${process.env.NEXT_PUBLIC_SERVER_URL}/songs/${song.slug}`}
+              url={`${process.env.NEXT_PUBLIC_SERVER_URL}/music/${song.slug}`}
             />
 
             <LibrarySync

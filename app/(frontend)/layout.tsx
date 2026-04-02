@@ -4,6 +4,7 @@ import { GlobalPlayer } from '@/components/GlobalPlayer'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { Nav } from '@/components/Nav'
 import { Space_Grotesk, Fraunces, JetBrains_Mono } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 const spaceGrotesk = Space_Grotesk({
