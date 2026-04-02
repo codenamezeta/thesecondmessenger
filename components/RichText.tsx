@@ -51,9 +51,8 @@ const jsxConverters: JSXConvertersFunction<NodeTypes> = ({
         className="col-span-3 col-start-1"
         imgClassName="m-0"
         {...node.fields}
-        captionClassName="mx-auto max-w-[48rem]"
-        enableGutter={false}
-        disableInnerContainer={true}
+        // captionClassName="mx-auto max-w-[48rem]"
+        // disableInnerContainer={true}
       />
     ),
     code: ({ node }) => <CodeBlock className="col-start-2" {...node.fields} />,
