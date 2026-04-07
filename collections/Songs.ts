@@ -1,5 +1,6 @@
 //* src/collections/Songs.ts
 import { CollectionConfig } from 'payload'
+import { isCommanderOrHigher } from '@/access/crewRanks'
 import { formatSlug } from './utils/formatSlug'
 import { parseStream } from 'music-metadata'
 import { getServerSideURL } from '../utilities/getURL'
@@ -29,7 +30,6 @@ export const Songs: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'coverArt', 'releaseDate', 'status'],
   },
-  folders: true,
   versions: {
     drafts: true,
   },
@@ -37,7 +37,10 @@ export const Songs: CollectionConfig = {
     beforeValidate: [
       // Uses the master recording's MP3 ID3 tags to prepopulate CMS fields.
       async ({ data, req, operation }) => {
-        console.log('🎵 [Songs Hook] beforeValidate triggered for operation:', operation)
+        console.log(
+          '🎵 [Songs Hook] beforeValidate triggered for operation:',
+          operation,
+        )
 
         // Only run if masterAudio is present and we are creating or updating
         if (!data?.masterAudio) {
@@ -60,7 +63,9 @@ export const Songs: CollectionConfig = {
           // 1. Get the File Object from Payload
           // Handle case where masterAudio might be an object (populated) or string (ID)
           const audioId =
-            typeof data.masterAudio === 'object' ? data.masterAudio.id : data.masterAudio
+            typeof data.masterAudio === 'object'
+              ? data.masterAudio.id
+              : data.masterAudio
 
           const mediaFile = await req.payload.findByID({
             collection: 'media',
@@ -121,7 +126,11 @@ export const Songs: CollectionConfig = {
             data.title = metadata.common.title
           }
 
-          if (metadata.common.composer && metadata.common.composer.length > 0 && needsCredits) {
+          if (
+            metadata.common.composer &&
+            metadata.common.composer.length > 0 &&
+            needsCredits
+          ) {
             const newCredits = metadata.common.composer.map((name) => ({
               name,
               category: 'Songwriter',
@@ -130,7 +139,11 @@ export const Songs: CollectionConfig = {
             data.credits = [...(data.credits || []), ...newCredits]
           }
 
-          if (metadata.common.genre && metadata.common.genre.length > 0 && needsGenres) {
+          if (
+            metadata.common.genre &&
+            metadata.common.genre.length > 0 &&
+            needsGenres
+          ) {
             data.genres = metadata.common.genre.join(', ')
           }
 
@@ -151,7 +164,8 @@ export const Songs: CollectionConfig = {
         try {
           // We can only look up parents for existing songs (need an ID)
           const songId =
-            originalDoc?.id || ((req as any).params ? (req as any).params.id : undefined)
+            originalDoc?.id ||
+            ((req as any).params ? (req as any).params.id : undefined)
 
           if (!songId) return data
 
@@ -180,14 +194,20 @@ export const Songs: CollectionConfig = {
 
               if (!data.coverArt && release.coverArt) {
                 const artId =
-                  typeof release.coverArt === 'object' ? release.coverArt.id : release.coverArt
+                  typeof release.coverArt === 'object'
+                    ? release.coverArt.id
+                    : release.coverArt
                 data.coverArt = artId
-                req.payload.logger.info(`🎵 [Songs Hook] Pulled cover art from "${release.title}"`)
+                req.payload.logger.info(
+                  `🎵 [Songs Hook] Pulled cover art from "${release.title}"`,
+                )
               }
             }
           }
         } catch (error) {
-          req.payload.logger.error(`🎵 [Songs Hook] Failed to pull parent release data: ${error}`)
+          req.payload.logger.error(
+            `🎵 [Songs Hook] Failed to pull parent release data: ${error}`,
+          )
         }
 
         return data
@@ -332,7 +352,8 @@ export const Songs: CollectionConfig = {
                   type: 'text',
                   label: 'Tooltip / Note',
                   admin: {
-                    description: 'Optional text for hover states or extra context.',
+                    description:
+                      'Optional text for hover states or extra context.',
                   },
                 },
               ],
@@ -341,13 +362,28 @@ export const Songs: CollectionConfig = {
               name: 'stems',
               type: 'array',
               label: 'Interactive Stems',
+              access: {
+                read: isCommanderOrHigher, // Blocks unauthorized users from even seeing the URL via the API
+              },
               admin: {
-                description: 'Upload synchronized files for the deep-dive player.',
+                description:
+                  'Upload synchronized files for the deep-dive player.',
               },
               fields: [
                 { name: 'stemName', type: 'text', required: true }, // e.g. "Drums"
-                { name: 'audioFile', type: 'upload', relationTo: 'media', required: true },
-                { name: 'volume', type: 'number', defaultValue: 0.667, min: 0, max: 1 },
+                {
+                  name: 'audioFile',
+                  type: 'upload',
+                  relationTo: 'media',
+                  required: true,
+                },
+                {
+                  name: 'volume',
+                  type: 'number',
+                  defaultValue: 0.667,
+                  min: 0,
+                  max: 1,
+                },
               ],
             },
           ],
@@ -407,7 +443,9 @@ export const Songs: CollectionConfig = {
                         beforeValidate: [
                           ({ value }) => {
                             if (typeof value === 'string') {
-                              return value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+                              return value
+                                .replace(/[^a-zA-Z0-9]/g, '')
+                                .toUpperCase()
                             }
                             return value
                           },
@@ -481,13 +519,19 @@ export const Songs: CollectionConfig = {
                 {
                   type: 'row',
                   fields: [
-                    { name: 'bpm', type: 'number', label: 'BPM', required: false },
+                    {
+                      name: 'bpm',
+                      type: 'number',
+                      label: 'BPM',
+                      required: false,
+                    },
                     {
                       name: 'bpmEnd',
                       type: 'number',
                       label: 'BPM (End)',
                       admin: {
-                        condition: (data, siblingData) => siblingData.changesTempo,
+                        condition: (data, siblingData) =>
+                          siblingData.changesTempo,
                       },
                     },
                   ],
@@ -501,7 +545,8 @@ export const Songs: CollectionConfig = {
                       type: 'text',
                       label: 'Key (End)',
                       admin: {
-                        condition: (data, siblingData) => siblingData.changesKey,
+                        condition: (data, siblingData) =>
+                          siblingData.changesKey,
                       },
                     },
                   ],
@@ -528,14 +573,16 @@ export const Songs: CollectionConfig = {
               min: 0,
               max: 1000,
               admin: {
-                description: 'Used for sorting "Popular" lists. 1000 = Biggest Hit.',
+                description:
+                  'Used for sorting "Popular" lists. 1000 = Biggest Hit.',
               },
             },
             {
               type: 'group',
               label: 'Tags',
               admin: {
-                description: 'Define the DNA of the song for search and filtering.',
+                description:
+                  'Define the DNA of the song for search and filtering.',
               },
               fields: [
                 {
@@ -665,7 +712,8 @@ export const Songs: CollectionConfig = {
                     },
                   ],
                   admin: {
-                    description: 'Add multiple roles (e.g. "Guitar", "Backing Vocals")',
+                    description:
+                      'Add multiple roles (e.g. "Guitar", "Backing Vocals")',
                   },
                 },
               ],
@@ -702,10 +750,20 @@ export const Songs: CollectionConfig = {
                   return [
                     ...defaultFeatures,
                     ...rootFeatures,
-                    HeadingFeature({ enabledHeadingSizes: ['h2', 'h3', 'h4', 'h5', 'h6'] }),
+                    HeadingFeature({
+                      enabledHeadingSizes: ['h2', 'h3', 'h4', 'h5', 'h6'],
+                    }),
                     FixedToolbarFeature(),
                     BlocksFeature({
-                      blocks: [Banner, Code, MediaBlock, Archive, CallToAction, Content, FormBlock],
+                      blocks: [
+                        Banner,
+                        Code,
+                        MediaBlock,
+                        Archive,
+                        CallToAction,
+                        Content,
+                        FormBlock,
+                      ],
                     }),
                     // TreeViewFeature(),
                     EXPERIMENTAL_TableFeature(),
@@ -723,7 +781,10 @@ export const Songs: CollectionConfig = {
               name: 'lyrics',
               type: 'textarea',
               label: 'Lyrics',
-              admin: { description: 'Plain text version for search indexing and quick view.' },
+              admin: {
+                description:
+                  'Plain text version for search indexing and quick view.',
+              },
             },
           ],
         },
@@ -765,7 +826,13 @@ export const Songs: CollectionConfig = {
                 {
                   name: 'type',
                   type: 'select',
-                  options: ['Alternate Audio', 'Video', 'Artwork', 'Sheet Music', 'Other'],
+                  options: [
+                    'Alternate Audio',
+                    'Video',
+                    'Artwork',
+                    'Sheet Music',
+                    'Other',
+                  ],
                 },
                 { name: 'label', type: 'text', required: true },
                 { name: 'file', type: 'upload', relationTo: 'media' }, // Allows any file type supported by Media collection

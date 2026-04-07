@@ -1,21 +1,167 @@
 import type { CollectionConfig } from 'payload'
+import { anyone } from '@/access/anyone'
+
+const RANK_LABELS: Record<string, string> = {
+  ensign: 'Ensign',
+  lieutenant: 'Lieutenant',
+  commander: 'Commander',
+  captain: 'Captain',
+  admiral: 'Admiral',
+}
 
 export const Users: CollectionConfig = {
   slug: 'users',
   admin: {
-    defaultColumns: ['name', 'email', 'role', 'isPremiumMember'],
-    useAsTitle: 'name',
+    defaultColumns: ['displayName', 'email', 'role', 'crewRank'],
+    useAsTitle: 'displayName',
   },
   auth: true,
-  // SECURITY: Only let users with the 'admin' role log into the Payload CMS dashboard
   access: {
+    create: anyone,
+    // Public profiles: anyone can read user docs; sensitive fields restrict themselves
+    read: anyone,
+    // Users can update their own document; admins can update any
+    update: ({ req: { user }, id }) => {
+      if (!user) return false
+      if (user.role === 'admin') return true
+      return user.id === id
+    },
     admin: ({ req: { user } }) => user?.role === 'admin',
   },
+  hooks: {
+    beforeChange: [
+      ({ data, originalDoc }) => {
+        // Merge incoming data with the existing document so partial updates
+        // (e.g. only changing displayNameFormat) still resolve the full name.
+        const resolve = <T>(key: string, fallback: T): T =>
+          (data[key] ?? originalDoc?.[key] ?? fallback) as T
+
+        const format = resolve<string>('displayNameFormat', 'username')
+        const firstName = resolve<string>('firstName', '')
+        const lastName = resolve<string>('lastName', '')
+        const username = resolve<string>('username', '')
+        const crewRank = resolve<string>('crewRank', 'ensign')
+        const rankLabel = RANK_LABELS[crewRank] ?? 'Ensign'
+
+        const formats: Record<string, string> = {
+          firstName,
+          lastName,
+          fullName: [firstName, lastName].filter(Boolean).join(' '),
+          username,
+          rank_firstName: `${rankLabel} ${firstName}`.trim(),
+          rank_lastName: `${rankLabel} ${lastName}`.trim(),
+          rank_fullName: `${rankLabel} ${firstName} ${lastName}`.trim(),
+          rank_username: `${rankLabel} ${username}`.trim(),
+        }
+
+        data.displayName = formats[format] ?? username
+        return data
+      },
+    ],
+  },
   fields: [
+    // --- PROFILE IDENTITY ---
     {
-      name: 'name',
+      name: 'firstName',
       type: 'text',
+      required: true,
     },
+    {
+      name: 'lastName',
+      type: 'text',
+      required: true,
+    },
+    {
+      name: 'username',
+      type: 'text',
+      required: true,
+      unique: true,
+    },
+    // --- DISPLAY NAME ---
+    {
+      name: 'displayNameFormat',
+      type: 'select',
+      defaultValue: 'rank_lastName',
+      required: true,
+      options: [
+        { label: 'First name  (e.g. "Alex")', value: 'firstName' },
+        { label: 'Last name  (e.g. "Carter")', value: 'lastName' },
+        { label: 'Full name  (e.g. "Alex Carter")', value: 'fullName' },
+        { label: 'Username  (e.g. "spacedrifter")', value: 'username' },
+        {
+          label: 'Rank + First name  (e.g. "Commander Alex")',
+          value: 'rank_firstName',
+        },
+        {
+          label: 'Rank + Last name  (e.g. "Commander Carter")',
+          value: 'rank_lastName',
+        },
+        {
+          label: 'Rank + Full name  (e.g. "Commander Alex Carter")',
+          value: 'rank_fullName',
+        },
+        {
+          label: 'Rank + Username  (e.g. "Commander spacedrifter")',
+          value: 'rank_username',
+        },
+      ],
+      admin: {
+        description:
+          'Controls how your name appears to others on the site, in the forum, and in email communications.',
+      },
+    },
+    {
+      // Auto-computed by the beforeChange hook from displayNameFormat + other fields.
+      // The select-based format options mean users can never inject arbitrary text.
+      name: 'displayName',
+      type: 'text',
+      admin: {
+        readOnly: true,
+        description:
+          'Auto-computed from your display name format preference above.',
+      },
+    },
+    // --- PROFILE CUSTOMIZATION ---
+    {
+      name: 'avatar',
+      type: 'upload',
+      relationTo: 'media',
+      required: false,
+    },
+    {
+      name: 'bio',
+      type: 'textarea',
+      required: false,
+    },
+    {
+      name: 'zipCode',
+      type: 'number',
+      required: false,
+      // Only visible to the user themselves and admins
+      access: {
+        read: ({ req: { user }, doc }) => {
+          if (!user) return false
+          if (user.role === 'admin') return true
+          return user.id === doc?.id
+        },
+      },
+    },
+    // --- AUTH ---
+    {
+      name: 'email',
+      type: 'email',
+      required: true,
+      unique: true,
+      // Email is private; only the account owner and admins can read it
+      access: {
+        read: ({ req: { user }, doc }) => {
+          if (!user) return false
+          if (user.role === 'admin') return true
+          return user.id === doc?.id
+        },
+      },
+    },
+    // --- CMS ACCESS ---
     {
       name: 'role',
       type: 'select',
@@ -25,29 +171,39 @@ export const Users: CollectionConfig = {
       ],
       defaultValue: 'user',
       required: true,
-      // SECURITY: Only admins can change a user's role
       access: {
         update: ({ req: { user } }) => user?.role === 'admin',
       },
     },
+    // --- CREW RANK (membership tier) ---
     {
-      name: 'isPremiumMember',
-      type: 'checkbox',
-      defaultValue: false,
-      admin: {
-        description:
-          'Indicates if the user has an active premium subscription.',
-      },
-      // SECURITY: Users cannot update their own premium status via API
+      name: 'crewRank',
+      type: 'select',
+      defaultValue: 'ensign',
+      required: true,
+      options: [
+        { label: 'Ensign (Free)', value: 'ensign' },
+        { label: 'Lieutenant (Tier 1)', value: 'lieutenant' },
+        { label: 'Commander (Tier 2)', value: 'commander' },
+        { label: 'Captain (Tier 3)', value: 'captain' },
+        { label: 'Admiral', value: 'admiral' },
+      ],
+      // Only admins can promote/demote ranks; Stripe webhook also updates via
+      // a server-side Payload local API call which bypasses field access.
       access: {
         update: ({ req: { user } }) => user?.role === 'admin',
       },
     },
+    // --- STRIPE ---
     {
       name: 'stripeCustomerId',
       type: 'text',
+      access: {
+        read: ({ req: { user } }) => user?.role === 'admin',
+        update: ({ req: { user } }) => user?.role === 'admin',
+      },
       admin: {
-        readOnly: true, // This will eventually be filled automatically by Stripe
+        readOnly: true,
         position: 'sidebar',
         description: 'Used to link this account to Stripe payments.',
       },
@@ -65,26 +221,20 @@ export const Users: CollectionConfig = {
     {
       name: 'googleAccessToken',
       type: 'text',
-      // SECURITY: Never send this token to the frontend!
       access: {
         read: () => false,
         update: () => false,
       },
-      admin: {
-        disabled: true, // Hides the actual token string from the Admin UI
-      },
+      admin: { disabled: true },
     },
     {
       name: 'googleRefreshToken',
       type: 'text',
-      // SECURITY: The refresh token is highly sensitive. Keep it locked down.
       access: {
         read: () => false,
         update: () => false,
       },
-      admin: {
-        disabled: true,
-      },
+      admin: { disabled: true },
     },
     {
       name: 'googleTokenExpiry',
@@ -93,9 +243,7 @@ export const Users: CollectionConfig = {
         read: () => false,
         update: () => false,
       },
-      admin: {
-        disabled: true,
-      },
+      admin: { disabled: true },
     },
   ],
 }

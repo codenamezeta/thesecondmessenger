@@ -109,7 +109,7 @@ export const Nav: React.FC = () => {
           sizes="(max-width: 768px) 100vw, 160px"
           width={200}
           height={50}
-          className="light:invert object-contain opacity-85 transition-opacity group-hover:opacity-100"
+          className="object-contain opacity-85 transition-opacity group-hover:opacity-100"
           onError={() => setLogoError(true)}
           priority
         />
@@ -126,7 +126,7 @@ export const Nav: React.FC = () => {
   return (
     <>
       {/* --- DESKTOP NAV --- */}
-      <nav className="h-(calc(var(--admin-bar-height,0px)+var(--main-nav-bar-height,0px))) fixed top-0 z-40 flex w-full flex-col border-b border-border bg-transparent backdrop-blur-3xl">
+      <nav className="h-(calc(var(--admin-bar-height,0px)+var(--main-nav-bar-height,0px))) sticky top-0 z-40 flex w-full flex-col border-b border-border bg-transparent backdrop-blur-3xl">
         <AdminBar />
         <div className="container flex justify-between">
           {/* Logo */}

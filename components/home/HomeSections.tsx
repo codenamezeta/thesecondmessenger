@@ -504,7 +504,7 @@ function ArchiveSection({ songs }: { songs: SongPreview[] }) {
             variants={fadeUp}
             className="font-heading text-4xl font-bold tracking-tight text-foreground uppercase md:text-6xl"
           >
-            The Universe
+            The Music
           </motion.h2>
           <motion.p
             variants={fadeUp}
