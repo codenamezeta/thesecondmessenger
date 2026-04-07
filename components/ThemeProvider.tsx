@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 
-type ThemeSetting = 'light' | 'dark' | 'system'
+export type ThemeSetting = 'light' | 'dark' | 'system'
 
 const STORAGE_KEY = 'theme'
 const MEDIA_QUERY_DARK = '(prefers-color-scheme: dark)'
@@ -12,7 +12,6 @@ function isValidThemeSetting(value: string | null): value is ThemeSetting {
 }
 
 function readInitialThemeSetting(): ThemeSetting {
-  // Avoid localStorage access during SSR.
   if (typeof window === 'undefined') return 'system'
 
   try {
@@ -32,7 +31,6 @@ function resolveTheme(
 }
 
 function disableTransitionsTemporarily() {
-  // Matches next-themes' intent: prevent a flash of transitions when toggling.
   if (typeof document === 'undefined') return
 
   const style = document.createElement('style')
@@ -49,11 +47,35 @@ function disableTransitionsTemporarily() {
   }, 1)
 }
 
+type ThemeContextValue = {
+  themeSetting: ThemeSetting
+  resolvedTheme: 'light' | 'dark'
+  setTheme: (next: ThemeSetting) => void
+}
+
+const ThemeContext = React.createContext<ThemeContextValue | null>(null)
+
+export function useTheme() {
+  const ctx = React.useContext(ThemeContext)
+  if (!ctx) {
+    throw new Error('useTheme must be used within ThemeProvider')
+  }
+  return ctx
+}
+
 function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [themeSetting, setThemeSetting] = React.useState<ThemeSetting>('system')
   const [systemPrefersDark, setSystemPrefersDark] = React.useState(false)
 
-  // Initialize from localStorage + system preference.
+  const setTheme = React.useCallback((next: ThemeSetting) => {
+    setThemeSetting(next)
+    try {
+      window.localStorage.setItem(STORAGE_KEY, next)
+    } catch {
+      // No-op (private mode / disabled storage)
+    }
+  }, [])
+
   React.useEffect(() => {
     setThemeSetting(readInitialThemeSetting())
 
@@ -61,7 +83,6 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
     setSystemPrefersDark(mql.matches)
 
     const onChange = () => setSystemPrefersDark(mql.matches)
-    // Older Safari uses addListener/removeListener.
     if (typeof mql.addEventListener === 'function') {
       mql.addEventListener('change', onChange)
       return () => mql.removeEventListener('change', onChange)
@@ -73,7 +94,6 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const resolvedTheme = resolveTheme(themeSetting, systemPrefersDark)
 
-  // Apply theme to <html>.
   React.useEffect(() => {
     document.documentElement.classList.toggle('dark', resolvedTheme === 'dark')
     document.documentElement.style.colorScheme = resolvedTheme
@@ -81,7 +101,6 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
     disableTransitionsTemporarily()
   }, [resolvedTheme])
 
-  // Keep theme in sync across tabs.
   React.useEffect(() => {
     function onStorage(e: StorageEvent) {
       if (e.key !== STORAGE_KEY) return
@@ -93,7 +112,6 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('storage', onStorage)
   }, [])
 
-  // Theme hotkey: press `D` to toggle dark/light (ignores typing targets).
   React.useEffect(() => {
     function isTypingTarget(target: EventTarget | null) {
       if (!(target instanceof HTMLElement)) return false
@@ -103,15 +121,6 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
         target.tagName === 'TEXTAREA' ||
         target.tagName === 'SELECT'
       )
-    }
-
-    function setTheme(next: 'light' | 'dark') {
-      setThemeSetting(next)
-      try {
-        window.localStorage.setItem(STORAGE_KEY, next)
-      } catch {
-        // No-op (private mode / disabled storage)
-      }
     }
 
     function onKeyDown(event: KeyboardEvent) {
@@ -125,9 +134,16 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [resolvedTheme])
+  }, [resolvedTheme, setTheme])
 
-  return <>{children}</>
+  const value = React.useMemo(
+    () => ({ themeSetting, resolvedTheme, setTheme }),
+    [themeSetting, resolvedTheme, setTheme],
+  )
+
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  )
 }
 
 export { ThemeProvider }

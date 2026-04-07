@@ -116,6 +116,7 @@ export default function AuthPage() {
                     id="login-email"
                     type="email"
                     value={email}
+                    placeholder="your@email.com"
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
@@ -126,13 +127,18 @@ export default function AuthPage() {
                     id="login-password"
                     type="password"
                     value={password}
+                    placeholder="********"
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
                 </div>
               </CardContent>
               <CardFooter>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="mt-6 w-full"
+                  disabled={isLoading}
+                >
                   {isLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
@@ -166,6 +172,7 @@ export default function AuthPage() {
                     id="reg-name"
                     type="text"
                     value={name}
+                    placeholder="John Doe"
                     onChange={(e) => setName(e.target.value)}
                     required
                   />
@@ -176,6 +183,7 @@ export default function AuthPage() {
                     id="reg-email"
                     type="email"
                     value={email}
+                    placeholder="your@email.com"
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
@@ -186,6 +194,7 @@ export default function AuthPage() {
                     id="reg-password"
                     type="password"
                     value={password}
+                    placeholder="********"
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={8}
@@ -193,7 +202,11 @@ export default function AuthPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="mt-6 w-full"
+                  disabled={isLoading}
+                >
                   {isLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (

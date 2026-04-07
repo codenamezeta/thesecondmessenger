@@ -7,6 +7,7 @@ import { Space_Grotesk, Fraunces, JetBrains_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
+import { Footer } from '@/components/Footer'
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -34,14 +35,15 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
       className={`${spaceGrotesk.variable} ${fraunces.variable} ${jetBrainsMono.variable}`}
       suppressHydrationWarning
     >
-      <body className="font-body antialiased">
+      <body className="flex min-h-screen flex-col font-body antialiased">
         <Analytics />
         <SpeedInsights />
         <ThemeProvider>
-          <Nav />
           <YouTubeAuthProvider>
             <PlayerProvider>
-              {children}
+              <Nav />
+              <main className="flex flex-1 flex-col">{children}</main>
+              <Footer />
               <GlobalPlayer />
             </PlayerProvider>
           </YouTubeAuthProvider>

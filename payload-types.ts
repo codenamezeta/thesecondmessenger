@@ -94,7 +94,7 @@ export interface Config {
       inPlaylists: 'playlists';
     };
     'payload-folders': {
-      documentsAndFolders: 'payload-folders' | 'media' | 'songs';
+      documentsAndFolders: 'payload-folders' | 'media';
     };
   };
   collectionsSelect: {
@@ -247,15 +247,125 @@ export interface FolderInterface {
           relationTo?: 'media';
           value: number | Media;
         }
-      | {
-          relationTo?: 'songs';
-          value: number | Song;
-        }
     )[];
     hasNextPage?: boolean;
     totalDocs?: number;
   };
-  folderType?: ('media' | 'songs')[] | null;
+  folderType?: 'media'[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: number;
+  title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  parent?: (number | null) | Category;
+  breadcrumbs?:
+    | {
+        doc?: (number | null) | Category;
+        url?: string | null;
+        label?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: number;
+  firstName: string;
+  lastName: string;
+  username: string;
+  /**
+   * Controls how your name appears to others on the site, in the forum, and in email communications.
+   */
+  displayNameFormat:
+    | 'firstName'
+    | 'lastName'
+    | 'fullName'
+    | 'username'
+    | 'rank_firstName'
+    | 'rank_lastName'
+    | 'rank_fullName'
+    | 'rank_username';
+  /**
+   * Auto-computed from your display name format preference above.
+   */
+  displayName?: string | null;
+  avatar?: (number | null) | Media;
+  bio?: string | null;
+  zipCode?: number | null;
+  role: 'admin' | 'user';
+  crewRank: 'ensign' | 'lieutenant' | 'commander' | 'captain' | 'admiral';
+  /**
+   * Used to link this account to Stripe payments.
+   */
+  stripeCustomerId?: string | null;
+  /**
+   * Indicates if the user has linked their YouTube account.
+   */
+  youtubeConnected?: boolean | null;
+  googleAccessToken?: string | null;
+  googleRefreshToken?: string | null;
+  googleTokenExpiry?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mailing-list".
+ */
+export interface MailingList {
+  id: number;
+  email: string;
+  source?: ('spotify_presave' | 'newsletter_signup' | 'merch_purchase') | null;
+  tags?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "playlists".
+ */
+export interface Playlist {
+  id: number;
+  title: string;
+  slug?: string | null;
+  description?: string | null;
+  coverArt?: (number | null) | Media;
+  /**
+   * Add and reorder songs. Updates instantly on the site.
+   */
+  tracks?: (number | Song)[] | null;
+  isFeatured?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -424,7 +534,6 @@ export interface Song {
         id?: string | null;
       }[]
     | null;
-  folder?: (number | null) | FolderInterface;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -451,24 +560,6 @@ export interface Release {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "playlists".
- */
-export interface Playlist {
-  id: number;
-  title: string;
-  slug?: string | null;
-  description?: string | null;
-  coverArt?: (number | null) | Media;
-  /**
-   * Add and reorder songs. Updates instantly on the site.
-   */
-  tracks?: (number | Song)[] | null;
-  isFeatured?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tags".
  */
 export interface Tag {
@@ -476,84 +567,6 @@ export interface Tag {
   name: string;
   category: 'genre' | 'style' | 'mood' | 'production' | 'theme' | 'instrument' | 'arrangement' | 'other';
   slug?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories".
- */
-export interface Category {
-  id: number;
-  title: string;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
-  parent?: (number | null) | Category;
-  breadcrumbs?:
-    | {
-        doc?: (number | null) | Category;
-        url?: string | null;
-        label?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: number;
-  name?: string | null;
-  role: 'admin' | 'user';
-  /**
-   * Indicates if the user has an active premium subscription.
-   */
-  isPremiumMember?: boolean | null;
-  /**
-   * Used to link this account to Stripe payments.
-   */
-  stripeCustomerId?: string | null;
-  /**
-   * Indicates if the user has linked their YouTube account.
-   */
-  youtubeConnected?: boolean | null;
-  googleAccessToken?: string | null;
-  googleRefreshToken?: string | null;
-  googleTokenExpiry?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "mailing-list".
- */
-export interface MailingList {
-  id: number;
-  email: string;
-  source?: ('spotify_presave' | 'newsletter_signup' | 'merch_purchase') | null;
-  tags?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1261,7 +1274,6 @@ export interface SongsSelect<T extends boolean = true> {
         accessLevel?: T;
         id?: T;
       };
-  folder?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -1282,9 +1294,16 @@ export interface TagsSelect<T extends boolean = true> {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
-  name?: T;
+  firstName?: T;
+  lastName?: T;
+  username?: T;
+  displayNameFormat?: T;
+  displayName?: T;
+  avatar?: T;
+  bio?: T;
+  zipCode?: T;
   role?: T;
-  isPremiumMember?: T;
+  crewRank?: T;
   stripeCustomerId?: T;
   youtubeConnected?: T;
   googleAccessToken?: T;
