@@ -29,7 +29,14 @@ const navItems: NavItem[] = [
   { type: 'link', label: 'Videos', href: '/videos' },
   { type: 'link', label: 'Personal File', href: '/bio' },
   { type: 'link', label: "Admiral's Log", href: '/posts' },
-  { type: 'link', label: 'Members', href: '/login' },
+  {
+    type: 'dropdown',
+    label: 'Members',
+    items: [
+      { type: 'link', label: 'Memberships', href: '/memberships' },
+      { type: 'link', label: 'Login', href: '/login' },
+    ],
+  },
   // {
   //   type: 'dropdown',
   //   label: 'Dropdown',
@@ -151,7 +158,7 @@ export const Nav: React.FC = () => {
                   >
                     <div className="relative flex h-full cursor-pointer items-center">
                       <button
-                        className={`flex items-center gap-1 uppercase transition-colors ${isOpen ? 'text-secondary' : 'text-foreground/75 hover:text-secondary'}`}
+                        className={`flex items-center gap-1 uppercase transition-colors ${isOpen ? 'text-muted-foreground' : 'text-foreground/75 hover:text-accent'}`}
                       >
                         {item.label}
                         <ChevronDown
@@ -172,7 +179,7 @@ export const Nav: React.FC = () => {
                               <Link
                                 key={j}
                                 href={subItem.href}
-                                className="group/sub flex items-center justify-between px-4 py-3 text-sm text-foreground/75 transition-colors hover:bg-border/5 hover:text-foreground"
+                                className="group/sub flex items-center justify-between px-4 py-3 text-sm text-foreground/75 transition-colors hover:bg-border/5 hover:text-accent"
                               >
                                 {subItem.label}
                               </Link>
@@ -202,7 +209,7 @@ export const Nav: React.FC = () => {
             <li>
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="p-2 text-foreground/50 transition-colors hover:text-primary"
+                className="text-foreground/50 transition-colors hover:text-primary"
                 aria-label="Search Site"
               >
                 <SearchIcon size={20} />

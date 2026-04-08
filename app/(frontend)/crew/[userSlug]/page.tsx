@@ -3,8 +3,6 @@ import { getMeUser } from '@/utilities/getMeUser'
 import { redirect } from 'next/navigation'
 // Import your custom rank badge components (e.g., Star Trek style insignia)
 import { Badge } from '@/components/ui/badge'
-import { getPayload } from 'payload'
-import configPromise from '@payload-config'
 
 const EnsignBadge = () => <Badge variant="default">Ensign</Badge>
 const LieutenantBadge = () => <Badge variant="outline">Lieutenant</Badge>
@@ -13,23 +11,6 @@ const CaptainBadge = () => <Badge variant="outline">Captain</Badge>
 
 export default async function CrewDashboard() {
   const { user } = await getMeUser()
-
-  const now = new Date().toISOString()
-
-  const payload = await getPayload({ config: configPromise })
-
-  const wipSongs = await payload.find({
-    collection: 'songs',
-    where: {
-      or: [
-        { releaseDate: { exists: false } },
-        { releaseDate: { equals: null } },
-        { releaseDate: { greater_than: now } },
-      ],
-    },
-    // Sort by updated date so the song you most recently worked on is at the top
-    sort: '-updatedAt',
-  })
 
   if (!user) {
     redirect('/login') // Force login
@@ -79,21 +60,6 @@ export default async function CrewDashboard() {
             {/* Render voting component here */}
           </section>
         )}
-      </div>
-
-      <div className="mt-10">
-        <h2 className="text-2xl font-bold">Active Directives</h2>
-        <p>
-          Vote on the mix for the upcoming single &quot;Interstellar Love
-          Song&quot;.
-        </p>
-        <ul className="space-y-4">
-          {wipSongs.docs.map((song) => (
-            <li key={song.id}>
-              <h3 className="text-xl font-bold">{song.title}</h3>
-            </li>
-          ))}
-        </ul>
       </div>
     </div>
   )

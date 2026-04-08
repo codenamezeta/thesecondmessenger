@@ -14,6 +14,12 @@ export default async function MusicPage() {
   // Fetch ALL songs (we will handle sorting/filtering on the client for instant feedback)
   const songs = await payload.find({
     collection: 'songs',
+    where: {
+      and: [
+        { releaseDate: { exists: true } },
+        { releaseDate: { not_equals: null } },
+      ],
+    },
     sort: '-releaseDate', // Default to newest first
     limit: 100,
     depth: 1, // We just need basic info (title, slug, date, cover)
@@ -24,7 +30,7 @@ export default async function MusicPage() {
       {/* Header */}
       <div className="mb-12 border-b border-border/50 pb-8">
         <h1 className="mb-4 font-heading text-4xl tracking-widest text-foreground uppercase md:text-6xl">
-          Transmission Log
+          Transmissions Log
         </h1>
         <p className="max-w-2xl font-mono text-muted-foreground">
           Accessing complete audio database. Select a file to initiate playback

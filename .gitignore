@@ -38,3 +38,9 @@ next-env.d.ts
 # cursor
 .cursor/*
 .vercel
+
+# Gated content: keep small audio/art in-repo; videos belong in Payload storage or Git LFS
+gated-content/**/*.MP4
+gated-content/**/*.mp4
+gated-content/**/*.mov
+gated-content/**/*.MOV

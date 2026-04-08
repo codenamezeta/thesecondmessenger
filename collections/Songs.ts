@@ -1,6 +1,5 @@
 //* src/collections/Songs.ts
 import { CollectionConfig } from 'payload'
-import { isCommanderOrHigher } from '@/access/crewRanks'
 import { formatSlug } from './utils/formatSlug'
 import { parseStream } from 'music-metadata'
 import { getServerSideURL } from '../utilities/getURL'
@@ -20,6 +19,7 @@ import { Code } from '@/blocks/Code/config'
 import { Content } from '@/blocks/Content/config'
 import { FormBlock } from '@/blocks/Form/config'
 import { MediaBlock } from '@/blocks/MediaBlock/config'
+import type { Release } from '@/payload-types'
 
 export const Songs: CollectionConfig = {
   slug: 'songs',
@@ -100,7 +100,6 @@ export const Songs: CollectionConfig = {
 
           // 3. Parse Metadata using music-metadata stream
           // We stream directly from the Fetch response, avoiding loading the whole file into RAM
-          // @ts-ignore - response.body is a ReadableStream, music-metadata expects Node stream or similar
           // but newer versions often handle web streams or we might need a tiny adapter if it strictly requires Node stream.
           // However, for many environments, this just works or we can use a small utility if it fails.
           // Let's try passing the body first. If it fails, we might need to cast/transform.
@@ -108,7 +107,7 @@ export const Songs: CollectionConfig = {
           // Fetch body is a Web ReadableStream. We can use `Readable.fromWeb(response.body)` if Node 16+
 
           const { Readable } = await import('stream')
-          // @ts-ignore
+          // @ts-expect-error - response.body is a ReadableStream, music-metadata expects Node stream or similar
           const nodeStream = Readable.fromWeb(response.body)
 
           const metadata = await parseStream(nodeStream, {
@@ -163,9 +162,12 @@ export const Songs: CollectionConfig = {
         if (!data) return data
         try {
           // We can only look up parents for existing songs (need an ID)
-          const songId =
-            originalDoc?.id ||
-            ((req as any).params ? (req as any).params.id : undefined)
+          const requestWithParams = req as typeof req & {
+            params?: {
+              id?: string
+            }
+          }
+          const songId = originalDoc?.id || requestWithParams.params?.id
 
           if (!songId) return data
 
@@ -183,7 +185,10 @@ export const Songs: CollectionConfig = {
             })
 
             if (releases.length > 0) {
-              const release = releases[0] as any
+              const release = releases[0] as Pick<
+                Release,
+                'title' | 'releaseDate' | 'coverArt'
+              >
 
               if (!data.releaseDate && release.releaseDate) {
                 data.releaseDate = release.releaseDate
@@ -362,9 +367,6 @@ export const Songs: CollectionConfig = {
               name: 'stems',
               type: 'array',
               label: 'Interactive Stems',
-              access: {
-                read: isCommanderOrHigher, // Blocks unauthorized users from even seeing the URL via the API
-              },
               admin: {
                 description:
                   'Upload synchronized files for the deep-dive player.',
@@ -451,17 +453,19 @@ export const Songs: CollectionConfig = {
                           },
                         ],
                       },
-                      validate: (value: any) => {
+                      validate: (value: unknown) => {
                         if (!value) return true
                         // Simulate the hook's cleaning so client-side validation passes for unformatted input
-                        const cleanValue =
-                          typeof value === 'string'
-                            ? value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
-                            : value
+                        if (typeof value !== 'string') {
+                          return 'Invalid ISRC format. Must be 12 characters: CCOOOYYSSSSS.'
+                        }
+                        const cleanValue = value
+                          .replace(/[^a-zA-Z0-9]/g, '')
+                          .toUpperCase()
                         // CC (2 chars) + OOO (3 alphanumeric) + YY (2 digits) + SSSSS (5 digits)
                         const regex = /^[A-Z]{2}[A-Z0-9]{3}\d{7}$/
                         return (
-                          regex.test(cleanValue as string) ||
+                          regex.test(cleanValue) ||
                           'Invalid ISRC format. Must be 12 characters: CCOOOYYSSSSS.'
                         )
                       },
@@ -789,58 +793,33 @@ export const Songs: CollectionConfig = {
           ],
         },
 
-        // --- TAB 4: DOWNLOADS & PERMISSIONS ---
+        // --- TAB 4: CREW EXCLUSIVES (Gated Content) ---
         {
-          label: 'Downloads & Bonus',
+          label: 'Crew Exclusives',
           fields: [
             {
-              name: 'downloadPermissions',
-              type: 'group',
-              label: 'Download Settings',
-              fields: [
-                {
-                  name: 'allowMasterDownload',
-                  type: 'checkbox',
-                  label: 'Allow Public MP3 Download',
-                  defaultValue: false,
-                },
-                {
-                  name: 'allowStemDownload',
-                  type: 'checkbox',
-                  label: 'Allow Stem Download',
-                  defaultValue: false,
-                },
-                {
-                  name: 'requiresEmail',
-                  type: 'checkbox',
-                  label: 'Require Email to Download',
-                  defaultValue: true,
-                },
-              ],
-            },
-            {
-              name: 'bonusContent',
+              name: 'gatedBonusContent',
               type: 'array',
-              label: 'Bonus Assets',
+              label: 'Exclusive Assets',
+              admin: {
+                description:
+                  'Add sonic time-lapses, stems, or videos here. The required tier is inherited from the GatedContent file itself.',
+              },
               fields: [
                 {
-                  name: 'type',
-                  type: 'select',
-                  options: [
-                    'Alternate Audio',
-                    'Video',
-                    'Artwork',
-                    'Sheet Music',
-                    'Other',
-                  ],
+                  name: 'content',
+                  type: 'upload',
+                  relationTo: 'gated-content',
+                  required: true,
                 },
-                { name: 'label', type: 'text', required: true },
-                { name: 'file', type: 'upload', relationTo: 'media' }, // Allows any file type supported by Media collection
                 {
-                  name: 'accessLevel',
-                  type: 'select',
-                  options: ['Public', 'Press', 'Members'],
-                  defaultValue: 'Public',
+                  name: 'contextNote',
+                  type: 'textarea',
+                  label: 'Context / Producer Note',
+                  admin: {
+                    description:
+                      'E.g., "Day 4: Added the Juno synth pad to the bridge."',
+                  },
                 },
               ],
             },

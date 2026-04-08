@@ -75,6 +75,7 @@ export interface Config {
     presaves: Presave;
     releases: Release;
     songs: Song;
+    'gated-content': GatedContent;
     tags: Tag;
     users: User;
     redirects: Redirect;
@@ -106,6 +107,7 @@ export interface Config {
     presaves: PresavesSelect<false> | PresavesSelect<true>;
     releases: ReleasesSelect<false> | ReleasesSelect<true>;
     songs: SongsSelect<false> | SongsSelect<true>;
+    'gated-content': GatedContentSelect<false> | GatedContentSelect<true>;
     tags: TagsSelect<false> | TagsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -520,17 +522,16 @@ export interface Song {
    * Plain text version for search indexing and quick view.
    */
   lyrics?: string | null;
-  downloadPermissions?: {
-    allowMasterDownload?: boolean | null;
-    allowStemDownload?: boolean | null;
-    requiresEmail?: boolean | null;
-  };
-  bonusContent?:
+  /**
+   * Add sonic time-lapses, stems, or videos here. The required tier is inherited from the GatedContent file itself.
+   */
+  gatedBonusContent?:
     | {
-        type?: ('Alternate Audio' | 'Video' | 'Artwork' | 'Sheet Music' | 'Other') | null;
-        label: string;
-        file?: (number | null) | Media;
-        accessLevel?: ('Public' | 'Press' | 'Members') | null;
+        content: number | GatedContent;
+        /**
+         * E.g., "Day 4: Added the Juno synth pad to the bridge."
+         */
+        contextNote?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -569,6 +570,27 @@ export interface Tag {
   slug?: string | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gated-content".
+ */
+export interface GatedContent {
+  id: number;
+  title: string;
+  tierRequired: 'lieutenant' | 'commander' | 'captain';
+  contentType: 'audio' | 'image' | 'video' | 'download';
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -998,6 +1020,10 @@ export interface PayloadLockedDocument {
         value: number | Song;
       } | null)
     | ({
+        relationTo: 'gated-content';
+        value: number | GatedContent;
+      } | null)
+    | ({
         relationTo: 'tags';
         value: number | Tag;
       } | null)
@@ -1258,25 +1284,36 @@ export interface SongsSelect<T extends boolean = true> {
   tagline?: T;
   about?: T;
   lyrics?: T;
-  downloadPermissions?:
+  gatedBonusContent?:
     | T
     | {
-        allowMasterDownload?: T;
-        allowStemDownload?: T;
-        requiresEmail?: T;
-      };
-  bonusContent?:
-    | T
-    | {
-        type?: T;
-        label?: T;
-        file?: T;
-        accessLevel?: T;
+        content?: T;
+        contextNote?: T;
         id?: T;
       };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gated-content_select".
+ */
+export interface GatedContentSelect<T extends boolean = true> {
+  title?: T;
+  tierRequired?: T;
+  contentType?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
