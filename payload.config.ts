@@ -15,6 +15,7 @@ import { Playlists } from './collections/Playlists'
 import { Presaves } from './collections/Presaves'
 import { Releases } from './collections/Releases'
 import { Songs } from './collections/Songs'
+import { GatedContent } from './collections/GatedContent'
 import { Tags } from './collections/Tags'
 import { Users } from './collections/Users'
 
@@ -41,6 +42,7 @@ export default buildConfig({
     Presaves,
     Releases,
     Songs,
+    GatedContent,
     Tags,
     Users,
   ],

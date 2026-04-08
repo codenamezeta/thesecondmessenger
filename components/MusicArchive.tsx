@@ -283,9 +283,9 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
 
   // --- RENDER ---
   return (
-    <section className="space-y-8">
+    <section className="space-y-0">
       {/* CONTROLS TOOLBAR */}
-      <div className="space-y-4 rounded-lg border border-border/30 bg-secondary p-4">
+      <div className="space-y-3 rounded-lg border border-border/30 bg-secondary p-4">
         {/* Top Row: Search & View Toggles */}
         <div className="flex flex-row flex-wrap items-center justify-between gap-4">
           {/* Search */}

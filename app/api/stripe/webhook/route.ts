@@ -1,1 +1,7 @@
+import { NextResponse } from 'next/server'
+
 // This is the crucial part. When a fan successfully pays on Stripe, Stripe silently hits this webhook. Your Next.js server will catch it, verify the payment, and use Payload's Local API (payload.update({ collection: 'users', id: userId, data: { crewRank: 'commander' } })) to automatically promote them in the database!
+
+export async function POST() {
+  return NextResponse.json({ ok: true, stub: true }, { status: 200 })
+}

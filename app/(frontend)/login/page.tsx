@@ -20,6 +20,26 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Something went wrong'
 }
 
+function parsePayloadError(payload: unknown): string | null {
+  if (!payload || typeof payload !== 'object') return null
+
+  const data = payload as {
+    errors?: Array<{ message?: string }>
+    message?: string
+  }
+
+  if (Array.isArray(data.errors) && data.errors.length > 0) {
+    const firstError = data.errors[0]?.message
+    if (firstError) return firstError
+  }
+
+  if (typeof data.message === 'string' && data.message.trim()) {
+    return data.message
+  }
+
+  return null
+}
+
 export default function AuthPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
@@ -28,7 +48,9 @@ export default function AuthPage() {
   // Form State
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [username, setUsername] = useState('')
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,18 +86,34 @@ export default function AuthPage() {
       const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name, role: 'user' }), // Automatically defaults to 'user' role based on our schema
+        body: JSON.stringify({
+          email,
+          password,
+          role: 'user',
+          firstName,
+          lastName,
+          username,
+        }),
       })
 
-      if (!res.ok)
-        throw new Error('Failed to create account. Email may be in use.')
+      if (!res.ok) {
+        const payloadError = parsePayloadError(await res.json().catch(() => null))
+        throw new Error(payloadError ?? 'Failed to create account.')
+      }
 
       // 2. Automatically log them in right after creating the account
-      await fetch('/api/users/login', {
+      const loginRes = await fetch('/api/users/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       })
+
+      if (!loginRes.ok) {
+        const payloadError = parsePayloadError(
+          await loginRes.json().catch(() => null),
+        )
+        throw new Error(payloadError ?? 'Account created, but login failed.')
+      }
 
       router.push('/')
       router.refresh()
@@ -167,13 +205,35 @@ export default function AuthPage() {
                   <p className="text-sm font-bold text-destructive">{error}</p>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="reg-name">Display Name</Label>
+                  <Label htmlFor="reg-first-name">First Name</Label>
                   <Input
-                    id="reg-name"
+                    id="reg-first-name"
                     type="text"
-                    value={name}
-                    placeholder="John Doe"
-                    onChange={(e) => setName(e.target.value)}
+                    value={firstName}
+                    placeholder="John"
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="reg-last-name">Last Name</Label>
+                  <Input
+                    id="reg-last-name"
+                    type="text"
+                    value={lastName}
+                    placeholder="Doe"
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="reg-username">Username</Label>
+                  <Input
+                    id="reg-username"
+                    type="text"
+                    value={username}
+                    placeholder="spacepilot42"
+                    onChange={(e) => setUsername(e.target.value)}
                     required
                   />
                 </div>

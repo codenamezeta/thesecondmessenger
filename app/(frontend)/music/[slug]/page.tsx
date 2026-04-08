@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { cookies } from 'next/headers'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -11,16 +12,8 @@ import { Share } from '@/components/Share'
 import { LibrarySync } from '@/components/LibrarySync'
 import CommentsYT from '@/components/CommentsYT'
 import RichText from '@/components/RichText'
-import {
-  Layers,
-  Users,
-  Disc,
-  ExternalLink,
-  Download,
-  FileAudio,
-  Image as ImageIcon,
-} from 'lucide-react'
-import type { Media } from '@/payload-types'
+import { Users, Disc, ExternalLink } from 'lucide-react'
+import type { GatedContent, Media } from '@/payload-types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -37,7 +30,8 @@ import { generateMeta } from '@/utilities/generateMeta'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
 
-import { cache } from 'react'
+import { getMeUser } from '@/utilities/getMeUser'
+import { SongGatedBonusSection } from '@/components/SongGatedBonusSection'
 
 // --- Types ---
 type Args = {
@@ -56,12 +50,6 @@ type CreditItem = {
   name: string
   category: string
   roles: CreditRole[]
-}
-type BonusItem = {
-  id: string | number
-  label: string
-  type: string
-  file?: Media | number | string | null
 }
 type PlaylistItem = { id: string | number; slug: string; title: string }
 
@@ -164,15 +152,15 @@ function StreamingLinksCard({ song }: { song: SongDoc }) {
   )
 }
 
-function CrewCard({ song }: { song: SongDoc }) {
+function CreditsCard({ song }: { song: SongDoc }) {
   const credits = (song.credits as CreditItem[] | null | undefined) ?? []
   if (credits.length === 0) return null
 
   return (
     <SidebarCard
       icon={<Users size={16} className="text-primary" />}
-      title="Crew"
-      description="Primary contributors and role groups."
+      title="Credits"
+      description="The people who made this song possible."
     >
       <ul className="space-y-4">
         {credits.map((credit, index: number) => (
@@ -190,59 +178,6 @@ function CrewCard({ song }: { song: SongDoc }) {
           </li>
         ))}
       </ul>
-    </SidebarCard>
-  )
-}
-
-function DataCacheCard({ song }: { song: SongDoc }) {
-  const hasBonus = song.bonusContent && song.bonusContent.length > 0
-  if (!song.masterAudio && !hasBonus) return null
-
-  return (
-    <SidebarCard
-      icon={<Layers size={16} className="text-primary" />}
-      title="Data Cache"
-      description="Download high-fidelity and bonus assets."
-    >
-      <div className="space-y-2">
-        {song.masterAudio && (
-          <Button asChild className="h-12 w-full justify-between px-4">
-            <a href={(song.masterAudio as Media).url || '#'} download>
-              <span className="inline-flex items-center gap-2">
-                <FileAudio size={14} aria-hidden />
-                <span className="font-body text-sm">Master Audio</span>
-              </span>
-              <Download size={14} aria-hidden />
-            </a>
-          </Button>
-        )}
-
-        {(song.bonusContent as BonusItem[] | null | undefined)?.map((item) => {
-          const fileUrl = (item.file as Media)?.url
-          if (!fileUrl) return null
-
-          return (
-            <Button
-              key={item.id}
-              asChild
-              variant="secondary"
-              className="h-12 w-full justify-between px-4"
-            >
-              <a href={fileUrl} download>
-                <span className="inline-flex items-center gap-2">
-                  {item.type === 'Artwork' ? (
-                    <ImageIcon size={14} aria-hidden />
-                  ) : (
-                    <FileAudio size={14} aria-hidden />
-                  )}
-                  <span className="font-body text-sm">{item.label}</span>
-                </span>
-                <Download size={14} aria-hidden />
-              </a>
-            </Button>
-          )
-        })}
-      </div>
     </SidebarCard>
   )
 }
@@ -346,11 +281,25 @@ export async function generateMetadata({
 
 export default async function SongPage({ params }: Args) {
   const { slug } = await params
-  const song = await querySongBySlug(slug)
+  const initialSong = await querySongBySlug(slug)
 
-  if (!song) return notFound()
+  if (!initialSong) return notFound()
 
   const payload = await getPayload({ config: configPromise })
+
+  // --- FETCH THE USER (vault tiers checked in SongGatedBonusSection) ---
+  const { user } = await getMeUser()
+
+  // Fetch a request-scoped copy for page rendering so auth-sensitive fields
+  // like vaultAudio are not affected by the shared slug cache.
+  const songResult = await payload.find({
+    collection: 'songs',
+    where: { slug: { equals: slug } },
+    depth: 2,
+    limit: 1,
+    overrideAccess: true,
+  })
+  const song = (songResult.docs[0] as SongDoc | undefined) ?? initialSong
 
   // --- CHECK SAVED STATUS ---
   let isSaved = false
@@ -398,6 +347,20 @@ export default async function SongPage({ params }: Args) {
     },
   })
 
+  const gatedBonusRows =
+    song.gatedBonusContent?.flatMap((row) => {
+      const c = row.content
+      if (!c || typeof c !== 'object') return []
+      const gated = c as GatedContent
+      return [
+        {
+          rowId: row.id ?? `gated-${gated.id}`,
+          contextNote: row.contextNote,
+          gated,
+        },
+      ]
+    }) ?? []
+
   return (
     <article className="min-h-screen pb-12">
       <MusicRecordingSchema song={song} />
@@ -408,32 +371,38 @@ export default async function SongPage({ params }: Args) {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10">
           <section className="space-y-10 lg:col-span-8">
             {song.about && (
-              <main className="space-y-6 rounded-sm border border-border/60 bg-background/80 p-6 shadow-xs backdrop-blur-sm md:p-8">
-                <div className="space-y-3">
-                  <p className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">
-                    Story
-                  </p>
-                  <h2 className="font-heading text-2xl tracking-tight md:text-3xl">
-                    Transmission Log
-                  </h2>
-                </div>
+              <main className="space-y-3 rounded-sm border border-border/60 bg-background/80 p-6 shadow-xs backdrop-blur-sm md:p-8">
+                {/* <div className="space-y-1"> */}
+                <p className="font-mono text-xs tracking-widest text-primary uppercase">
+                  {'// Transmission Log'}
+                </p>
+                <h2 className="font-heading text-2xl tracking-tight md:text-3xl">
+                  Liner Notes
+                </h2>
+                {/* </div> */}
                 <Separator />
                 <RichText data={song.about} />
               </main>
             )}
 
+            <SongGatedBonusSection
+              items={gatedBonusRows}
+              user={user}
+              returnPath={`/music/${slug}`}
+            />
+
             {song.lyrics && (
-              <section className="rounded-sm border border-border/60 bg-card/80 p-6 shadow-xs backdrop-blur-sm md:p-8">
-                <div className="space-y-3">
-                  <p className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase">
-                    Lyrics
-                  </p>
-                  <h2 className="font-heading text-2xl tracking-tight md:text-3xl">
-                    Vocal Data
-                  </h2>
-                </div>
-                <Separator className="my-6" />
-                <pre className="font-body text-sm leading-relaxed whitespace-pre-wrap text-foreground/85">
+              <section className="space-y-3 rounded-sm border border-border/60 bg-muted/20 p-6 shadow-xs backdrop-blur-sm md:p-8">
+                {/* <div className="space-y-1"> */}
+                <p className="font-mono text-xs tracking-widest text-primary uppercase">
+                  {'// Vocal Data'}
+                </p>
+                <h2 className="font-heading text-2xl tracking-tight md:text-3xl">
+                  Lyrics
+                </h2>
+                {/* </div> */}
+                <Separator />
+                <pre className="font-mono text-xs leading-relaxed whitespace-pre-wrap text-muted-foreground">
                   {song.lyrics}
                 </pre>
               </section>
@@ -462,15 +431,14 @@ export default async function SongPage({ params }: Args) {
             />
 
             <StreamingLinksCard song={song} />
-            <CrewCard song={song} />
-            <DataCacheCard song={song} />
+            <CreditsCard song={song} />
             <FeaturedInCard song={song} />
           </aside>
         </div>
 
         {song.youtubeId && (
           <section className="mt-12">
-            <Separator className="mb-8" />
+            {/* <Separator className="mb-8" /> */}
             <CommentsYT videoId={song.youtubeId} />
           </section>
         )}
@@ -481,7 +449,7 @@ export default async function SongPage({ params }: Args) {
             <h2 className="mb-8 font-heading text-2xl tracking-wider uppercase">
               Convergent Signals
             </h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
               {relatedSongs.docs.map((s) => (
                 <SongCard key={s.id} song={s} />
               ))}

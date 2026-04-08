@@ -145,11 +145,12 @@
 }
 
 @layer base {
-  body {
-    @apply bg-background pb-[bottom-bar-height] font-body text-foreground;
-  }
   html {
     @apply font-body;
+    scrollbar-gutter: stable;
+  }
+  body {
+    @apply bg-background pb-[bottom-bar-height] font-body text-foreground;
   }
 
   /* --- MY SEMANTIC HTML STYLES --- */
