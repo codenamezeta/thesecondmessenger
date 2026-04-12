@@ -5,6 +5,8 @@ export const GatedContent: CollectionConfig = {
   slug: 'gated-content',
   admin: {
     useAsTitle: 'title',
+    description:
+      "Audio, image, video, and zip downloads are shown in the Vault from the file's MIME type (no extra content-type field).",
   },
   access: {
     read: isLieutenantOrHigher, // Server-side block for unauthorized downloads
@@ -28,6 +30,14 @@ export const GatedContent: CollectionConfig = {
       required: true,
     },
     {
+      name: 'description',
+      type: 'textarea',
+      label: 'Description',
+      admin: {
+        description: 'A brief description of the content.',
+      },
+    },
+    {
       name: 'tierRequired',
       type: 'select',
       defaultValue: 'lieutenant',
@@ -37,23 +47,6 @@ export const GatedContent: CollectionConfig = {
         { label: 'Captain (Tier 3)', value: 'captain' },
       ],
       required: true,
-      admin: {
-        position: 'sidebar',
-      },
-    },
-    {
-      name: 'contentType',
-      type: 'select',
-      options: [
-        { label: 'Audio', value: 'audio' },
-        { label: 'Image (High-Res Art/Tabs)', value: 'image' },
-        { label: 'Video (Fly on the Wall)', value: 'video' },
-        { label: 'Downloadable Archive (Stems/Zips)', value: 'download' },
-      ],
-      required: true,
-      admin: {
-        position: 'sidebar',
-      },
     },
   ],
 }

@@ -40,7 +40,7 @@ interface MusicArchiveProps {
 }
 
 export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
-  const [view, setView] = useState<ViewMode>('timeline')
+  const [view, setView] = useState<ViewMode>('grid')
   const [sort, setSort] = useState<SortMode>('newest')
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState<FilterState>({
@@ -208,7 +208,7 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
     return (
       <li className="relative my-0 pl-8 md:pl-0">
         {/* Center Line (Desktop) */}
-        <div className="absolute top-0 bottom-0 left-[0.38rem] -ml-px w-px bg-border md:left-1/2 md:block"></div>
+        <div className="absolute top-0 bottom-0 left-[0.38rem] -ml-px w-px bg-foreground/50 md:left-1/2 md:block"></div>
 
         {/* Node Dot */}
         <div
@@ -220,7 +220,7 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
 
         <div
           className={cn(
-            'relative transform pt-4 pb-12 transition-all duration-500 hover:-translate-y-1 md:w-1/2',
+            'relative transform transition-all duration-500 hover:-translate-y-1 md:w-1/2',
             isLeft
               ? 'md:ml-0 md:pr-12 md:text-right'
               : 'md:ml-auto md:pl-12 md:text-left',
@@ -228,7 +228,7 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
         >
           <Link
             href={`/music/${song.slug}`}
-            className="group inline-block max-w-lg"
+            className="group inline-block max-w-lg rounded p-4 hover:border"
           >
             {/* Artwork Thumbnail */}
             {song.coverArt && (
@@ -269,7 +269,7 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
 
             <p
               className={cn(
-                'mt-3 font-mono text-sm leading-relaxed text-muted-foreground',
+                'mt-3 font-mono text-sm leading-relaxed text-pretty text-muted-foreground',
                 isLeft ? 'ml-auto' : 'mr-auto',
               )}
             >
@@ -287,9 +287,9 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
       {/* CONTROLS TOOLBAR */}
       <div className="space-y-3 rounded-lg border border-border/30 bg-secondary p-4">
         {/* Top Row: Search & View Toggles */}
-        <div className="flex flex-row flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col items-end justify-between gap-4 lg:flex-row lg:items-center">
           {/* Search */}
-          <div className="relative max-w-96 min-w-64 flex-auto">
+          <div className="relative w-full min-w-64 flex-auto lg:max-w-1/2">
             <Label htmlFor="music-archive-search" className="sr-only">
               Search songs by title, lyrics, credits, moods, or genres
             </Label>
@@ -308,54 +308,10 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
               className="pl-9"
             />
           </div>
-
-          {/* View Toggles */}
-          <div
-            className="flex items-center gap-1 rounded-lg border border-border/30 bg-input p-1"
-            role="group"
-            aria-label="Library layout"
-          >
-            <Button
-              type="button"
-              variant={view === 'timeline' ? 'default' : 'ghost'}
-              size="icon-sm"
-              className="min-h-11 min-w-11 shrink-0"
-              aria-pressed={view === 'timeline'}
-              aria-label="Timeline view"
-              onClick={() => setView('timeline')}
-            >
-              <CalendarArrowDown className="size-4" />
-            </Button>
-            <Button
-              type="button"
-              variant={view === 'grid' ? 'default' : 'ghost'}
-              size="icon-sm"
-              className="min-h-11 min-w-11 shrink-0"
-              aria-pressed={view === 'grid'}
-              aria-label="Grid view"
-              onClick={() => setView('grid')}
-            >
-              <LayoutGrid className="size-4" />
-            </Button>
-            <Button
-              type="button"
-              variant={view === 'list' ? 'default' : 'ghost'}
-              size="icon-sm"
-              className="min-h-11 min-w-11 shrink-0"
-              aria-pressed={view === 'list'}
-              aria-label="List view"
-              onClick={() => setView('list')}
-            >
-              <List className="size-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Bottom Row: Filters & Sort */}
-        <div className="flex flex-wrap items-center gap-4 border-t border-border/30 pt-4">
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Filters */}
+          <div className="flex items-center gap-1">
             <span
-              className="font-mono text-xs text-muted-foreground uppercase"
+              className="hidden font-mono text-xs text-muted-foreground uppercase sm:block"
               aria-hidden
             >
               Filter:
@@ -448,6 +404,50 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
               {filters.explicit === 'hide' ? 'Show Explicit' : 'Hide Explicit'}
             </Button>
           </div>
+        </div>
+
+        {/* Bottom Row: Filters & Sort */}
+        <div className="flex flex-wrap items-center gap-4 border-t border-border/30 pt-4">
+          {/* View Toggles */}
+          <div
+            className="flex items-center gap-1 rounded-lg border border-border/30 bg-input p-1"
+            role="group"
+            aria-label="Library layout"
+          >
+            <Button
+              type="button"
+              variant={view === 'timeline' ? 'default' : 'ghost'}
+              size="icon-sm"
+              className="min-h-11 min-w-11 shrink-0"
+              aria-pressed={view === 'timeline'}
+              aria-label="Timeline view"
+              onClick={() => setView('timeline')}
+            >
+              <CalendarArrowDown className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant={view === 'grid' ? 'default' : 'ghost'}
+              size="icon-sm"
+              className="min-h-11 min-w-11 shrink-0"
+              aria-pressed={view === 'grid'}
+              aria-label="Grid view"
+              onClick={() => setView('grid')}
+            >
+              <LayoutGrid className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant={view === 'list' ? 'default' : 'ghost'}
+              size="icon-sm"
+              className="min-h-11 min-w-11 shrink-0"
+              aria-pressed={view === 'list'}
+              aria-label="List view"
+              onClick={() => setView('list')}
+            >
+              <List className="size-4" />
+            </Button>
+          </div>
 
           <div className="flex-1" />
 
@@ -490,11 +490,11 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
       {/* CONTENT AREA */}
       <ol
         className={cn(
-          'min-h-[400px] transition-all duration-500',
+          'min-h-[400px] pb-8 transition-all duration-500',
           view === 'grid' &&
             'grid auto-rows-fr grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
           view === 'list' && 'flex flex-col',
-          view === 'timeline' && 'relative pb-8',
+          view === 'timeline' && 'relative',
         )}
       >
         {filteredSongs.length > 0 ? (

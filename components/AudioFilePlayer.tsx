@@ -7,9 +7,14 @@ import { usePlayer } from '@/context/PlayerContext'
 interface AudioFilePlayerProps {
   src: string // The secure Payload URL: /api/gated-content/file/track.mp3
   title: string
+  description: string
 }
 
-export default function AudioFilePlayer({ src, title }: AudioFilePlayerProps) {
+export default function AudioFilePlayer({
+  src,
+  title,
+  description,
+}: AudioFilePlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null)
 
   // Bring in methods to control GlobalPlayer
@@ -23,15 +28,10 @@ export default function AudioFilePlayer({ src, title }: AudioFilePlayerProps) {
   }
 
   return (
-    <div className="my-6 flex flex-col gap-3 rounded-lg border border-accent/30 bg-accent/5 p-4">
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-sm tracking-wider text-accent uppercase">
-          Security Clearance Accepted
-        </span>
-      </div>
-
-      <p className="text-lg font-bold">{title}</p>
-
+    <>
+      <h4 className="font-heading text-lg font-bold tracking-wider text-foreground uppercase">
+        {title}
+      </h4>
       <audio
         ref={audioRef}
         controls
@@ -40,6 +40,9 @@ export default function AudioFilePlayer({ src, title }: AudioFilePlayerProps) {
         onPlay={handlePlay}
         className="mt-2 w-full"
       />
-    </div>
+      <p className="font-mono text-sm text-muted-foreground italic">
+        {description}
+      </p>
+    </>
   )
 }

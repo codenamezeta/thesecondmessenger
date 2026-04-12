@@ -355,7 +355,6 @@ export default async function SongPage({ params }: Args) {
       return [
         {
           rowId: row.id ?? `gated-${gated.id}`,
-          contextNote: row.contextNote,
           gated,
         },
       ]
@@ -409,7 +408,7 @@ export default async function SongPage({ params }: Args) {
             )}
           </section>
 
-          <aside className="space-y-4 lg:sticky lg:top-24 lg:col-span-4 lg:self-start">
+          <aside className="space-y-4 lg:sticky lg:top-[calc(var(--main-nav-bar-height)+var(--admin-bar-height)+0.5rem)] lg:col-span-4 lg:self-start">
             <Share
               title={song.title}
               url={`${process.env.NEXT_PUBLIC_SERVER_URL}/music/${song.slug}`}

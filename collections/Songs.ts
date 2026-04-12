@@ -812,15 +812,6 @@ export const Songs: CollectionConfig = {
                   relationTo: 'gated-content',
                   required: true,
                 },
-                {
-                  name: 'contextNote',
-                  type: 'textarea',
-                  label: 'Context / Producer Note',
-                  admin: {
-                    description:
-                      'E.g., "Day 4: Added the Juno synth pad to the bridge."',
-                  },
-                },
               ],
             },
           ],
