@@ -253,6 +253,28 @@ export const SongCard = ({ song, className }: SongCardProps) => {
         <div className="absolute inset-0 -translate-x-full skew-x-12 bg-linear-to-r from-transparent via-foreground/10 to-transparent opacity-0 transition-[transform,opacity] duration-700 ease-out group-hover:translate-x-full group-hover:opacity-100" />
       </div>
 
+      {/* Background void */}
+      <div className="absolute inset-0 bg-transparent">
+        {/* CSS grid pattern */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              'linear-gradient(color-mix(in oklch, var(--primary) 50%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklch, var(--primary) 50%, transparent) 1px, transparent 1px)',
+            backgroundSize: '36px 36px',
+            opacity: 0.12,
+          }}
+        />
+        {/* Scanlines */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px)',
+          }}
+        />
+      </div>
+
       {/* Art frame */}
       <div
         className={cn(

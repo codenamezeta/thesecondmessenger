@@ -528,10 +528,6 @@ export interface Song {
   gatedBonusContent?:
     | {
         content: number | GatedContent;
-        /**
-         * E.g., "Day 4: Added the Juno synth pad to the bridge."
-         */
-        contextNote?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -572,14 +568,19 @@ export interface Tag {
   createdAt: string;
 }
 /**
+ * Audio, image, video, and zip downloads are shown in the Vault from the file's MIME type (no extra content-type field).
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "gated-content".
  */
 export interface GatedContent {
   id: number;
   title: string;
+  /**
+   * A brief description of the content.
+   */
+  description?: string | null;
   tierRequired: 'lieutenant' | 'commander' | 'captain';
-  contentType: 'audio' | 'image' | 'video' | 'download';
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -1288,7 +1289,6 @@ export interface SongsSelect<T extends boolean = true> {
     | T
     | {
         content?: T;
-        contextNote?: T;
         id?: T;
       };
   updatedAt?: T;
@@ -1301,8 +1301,8 @@ export interface SongsSelect<T extends boolean = true> {
  */
 export interface GatedContentSelect<T extends boolean = true> {
   title?: T;
+  description?: T;
   tierRequired?: T;
-  contentType?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

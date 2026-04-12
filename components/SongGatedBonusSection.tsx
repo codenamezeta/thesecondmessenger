@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { GatedContent, User } from '@/payload-types'
 import { userMeetsGatedTier, type GatedTierRequired } from '@/access/crewRanks'
 import { getMediaUrl } from '@/utilities/getMediaUrl'
+import { gatedContentKindFromMimeType } from '@/utilities/gatedContentKindFromMimeType'
 import AudioFilePlayer from '@/components/AudioFilePlayer'
 import { Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -10,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 
 export type SongGatedBonusRow = {
   rowId: string
-  contextNote?: string | null
+  description?: string | null
   gated: GatedContent
 }
 
@@ -34,9 +35,32 @@ function GatedAssetRenderer({ gated }: { gated: GatedContent }) {
     )
   }
 
-  switch (gated.contentType) {
+  const kind = gatedContentKindFromMimeType(gated.mimeType)
+  if (kind === null) {
+    return (
+      <div className="space-y-3">
+        <p className="font-body text-sm text-muted-foreground">
+          This file type is not previewed in the Vault UI. You can still fetch it
+          from the direct link if your clearance allows.
+        </p>
+        <Button asChild variant="secondary" className="rounded-none">
+          <a href={src} download>
+            Download — {gated.title}
+          </a>
+        </Button>
+      </div>
+    )
+  }
+
+  switch (kind) {
     case 'audio':
-      return <AudioFilePlayer title={gated.title} src={src} />
+      return (
+        <AudioFilePlayer
+          title={gated.title}
+          src={src}
+          description={gated.description ?? ''}
+        />
+      )
     case 'download':
       return (
         <div className="my-4">
@@ -66,7 +90,7 @@ function GatedAssetRenderer({ gated }: { gated: GatedContent }) {
         />
       )
     default: {
-      const _exhaustive: never = gated.contentType
+      const _exhaustive: never = kind
       return _exhaustive
     }
   }
@@ -216,17 +240,8 @@ export function SongGatedBonusSection({
         <VaultTeaser user={user} rows={items} returnPath={returnPath} />
       ) : (
         <div className="space-y-8">
-          {accessible.map(({ rowId, contextNote, gated }, index) => (
+          {accessible.map(({ rowId, gated }) => (
             <div key={rowId}>
-              {index > 0 ? <Separator className="mb-8" /> : null}
-              <h3 className="font-heading text-lg text-foreground">
-                {gated.title}
-              </h3>
-              {contextNote ? (
-                <p className="mt-2 font-body text-sm whitespace-pre-wrap text-muted-foreground">
-                  {contextNote}
-                </p>
-              ) : null}
               <GatedAssetRenderer gated={gated} />
             </div>
           ))}

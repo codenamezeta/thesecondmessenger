@@ -84,7 +84,7 @@ export const Nav: React.FC = () => {
 
   // --- THE LOGIC TO PUSH THE NAV DOWN ---
   useEffect(() => {
-    const heightValue: number = 100 / 16 // 1/16th of the screen height
+    const heightValue: number = 100 / 12 // 1/16th of the screen height
     document.documentElement.style.setProperty(
       '--main-nav-bar-height',
       `${heightValue}vh`,

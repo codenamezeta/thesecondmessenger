@@ -67,15 +67,15 @@ export const SongHero = ({ song }: { song: Song }) => {
           </div>
 
           {/* 2. METADATA */}
-          <div className="flex h-full flex-col items-center justify-around text-center md:items-start md:text-left">
-            <h1 className="font-heading text-4xl font-bold tracking-wide text-foreground uppercase drop-shadow-lg md:text-6xl">
+          <div className="flex h-full flex-col items-center justify-between space-y-3 text-center md:items-start md:justify-center md:text-left">
+            <h1 className="font-heading text-4xl leading-[0.75] font-bold tracking-wide text-foreground uppercase drop-shadow-lg md:text-6xl">
               {song.title}
             </h1>
-            <span className="-my-6 font-heading text-xl tracking-widest text-primary uppercase opacity-80 md:text-2xl">
+            <span className="font-heading text-xl tracking-widest text-primary uppercase opacity-80 md:text-2xl">
               The Second Messenger
             </span>
             {song.tagline && (
-              <p className="max-w-4xl font-mono text-base text-muted-foreground italic">
+              <p className="max-w-4xl font-mono text-base leading-tight text-pretty text-muted-foreground italic">
                 &quot;{song.tagline}&quot;
               </p>
             )}

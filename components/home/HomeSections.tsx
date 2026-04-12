@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/accordion'
 import { usePlayer } from '@/context/PlayerContext'
 import type { Song, Media } from '@/payload-types'
+import { Button } from '../ui/button'
 
 export type SongPreview = Pick<
   Song,
@@ -386,13 +387,13 @@ function SongTile({
   return (
     <SpotlightCard
       className={cn(
-        'group cursor-pointer rounded-none border-border/30 bg-card/5 p-0 backdrop-blur-sm transition-all duration-300 hover:border-primary/40',
+        'flex flex-col rounded-none border-border/30 bg-card/5 p-0 backdrop-blur-sm transition-all duration-300 hover:border-accent/50',
         featured ? 'h-full min-h-[400px]' : 'h-full',
       )}
       spotlightColor="color-mix(in oklch, var(--primary) 12%, transparent)"
     >
       <button
-        className="relative flex h-full w-full flex-col text-left focus:outline-none"
+        className="group relative flex h-full w-full cursor-pointer flex-col text-left focus:outline-none"
         onClick={() =>
           song.youtubeId && playMedia(song as Parameters<typeof playMedia>[0])
         }
@@ -447,27 +448,29 @@ function SongTile({
             </div>
           )}
         </div>
-
-        {/* Info */}
-        <div className={cn('shrink-0 p-4', featured ? 'pb-6' : '')}>
-          <div className="mb-1.5 font-mono text-[9px] tracking-[0.3em] text-primary/60 uppercase">
-            AUDIO_LOG{releaseYear ? ` · ${releaseYear}` : ''}
-          </div>
-          <h3
-            className={cn(
-              'font-heading leading-tight font-bold tracking-tight text-foreground uppercase',
-              featured ? 'text-2xl md:text-3xl' : 'text-sm',
-            )}
-          >
-            {song.title}
-          </h3>
-          {featured && song.tagline && (
-            <p className="mt-2 line-clamp-2 font-mono text-[10px] tracking-wide text-muted-foreground">
-              {song.tagline}
-            </p>
-          )}
-        </div>
       </button>
+      {/* Info */}
+      <div className={cn('shrink-0 space-y-2 p-4', featured ? 'pb-6' : '')}>
+        <span className="font-mono text-[9px] tracking-[0.3em] text-primary/60 uppercase">
+          {releaseYear ? ` STAR_DATE: ${releaseYear}` : ''}
+        </span>
+        <h3
+          className={cn(
+            'font-heading leading-tight font-bold tracking-tight text-foreground uppercase',
+            featured ? 'text-2xl md:text-3xl' : 'text-sm',
+          )}
+        >
+          {song.title}
+        </h3>
+        {featured && song.tagline && (
+          <p className="mt-2 line-clamp-2 font-mono text-[10px] tracking-wide text-muted-foreground">
+            {song.tagline}
+          </p>
+        )}
+        <Button variant="default" size="sm" asChild>
+          <Link href={`/music/${song.slug}`}>View Song</Link>
+        </Button>
+      </div>
     </SpotlightCard>
   )
 }
@@ -477,7 +480,9 @@ function ArchiveSection({ songs }: { songs: SongPreview[] }) {
   const inView = useInView(ref, { once: true, margin: '-10%' })
 
   const featured = songs[0]
-  const sideSongs = songs.slice(1, 5)
+  const sideSongs = songs.slice(1, 4)
+  const bottomLargeSongs = songs.slice(4, 6)
+  const bottomSmallSongs = songs.slice(6, 12)
 
   return (
     <section ref={ref} className="relative overflow-hidden px-4 py-28">
@@ -522,13 +527,13 @@ function ArchiveSection({ songs }: { songs: SongPreview[] }) {
             initial="hidden"
             animate={inView ? 'visible' : 'hidden'}
             variants={stagger}
-            className="grid grid-cols-1 gap-px bg-border/20 md:grid-cols-12"
+            className="grid grid-cols-2 gap-px bg-border/20 md:grid-cols-12"
           >
             {/* Featured tile */}
             {featured && (
               <motion.div
                 variants={fadeUp}
-                className="md:col-span-7 md:row-span-3"
+                className="col-span-2 md:col-span-7 md:row-span-3"
               >
                 <SongTile song={featured} featured />
               </motion.div>
@@ -539,7 +544,28 @@ function ArchiveSection({ songs }: { songs: SongPreview[] }) {
               <motion.div
                 key={song.id}
                 variants={fadeUp}
-                className="md:col-span-5"
+                className="col-span-2 md:col-span-5"
+              >
+                <SongTile song={song} />
+              </motion.div>
+            ))}
+
+            {/* Bottom large tiles */}
+            {bottomLargeSongs.map((song) => (
+              <motion.div
+                key={song.id}
+                variants={fadeUp}
+                className="md:col-span-6"
+              >
+                <SongTile song={song} />
+              </motion.div>
+            ))}
+            {/* Bottom small tiles */}
+            {bottomSmallSongs.map((song) => (
+              <motion.div
+                key={song.id}
+                variants={fadeUp}
+                className="md:col-span-4"
               >
                 <SongTile song={song} />
               </motion.div>
@@ -564,7 +590,7 @@ function ArchiveSection({ songs }: { songs: SongPreview[] }) {
             href="/music"
             className="group flex items-center gap-3 border border-border/30 bg-card/5 px-6 py-3 font-mono text-xs tracking-[0.2em] text-muted-foreground uppercase backdrop-blur-sm transition-colors duration-300 hover:border-primary/40 hover:text-primary"
           >
-            Full Database
+            Explore Full Music Database
             <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </motion.div>
