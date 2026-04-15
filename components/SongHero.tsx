@@ -8,6 +8,7 @@ import { Play, Pause, Clock, Music2, Activity, ListMusic } from 'lucide-react' /
 import { cn } from '@/utilities/ui'
 import formatTime from '@/utilities/formatTime'
 import type { Media } from '@/payload-types'
+import placeholderArt from '@/public/imgs/placeholder-art.png'
 
 export const SongHero = ({ song }: { song: Song }) => {
   const { playMedia, currentSong, isPlaying, togglePlay } = usePlayer()
@@ -46,24 +47,35 @@ export const SongHero = ({ song }: { song: Song }) => {
                 sizes="(max-width: 768px) 100vw, 300px"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-background/50 text-muted-foreground">
-                Signal Interference... No Artwork Data Received.
+              <div className="flex h-full w-full items-center justify-center p-6">
+                <h2 className="relative z-10 text-center font-heading text-2xl font-bold tracking-widest text-pretty text-accent uppercase drop-shadow">
+                  {song.title}
+                </h2>
+                <Image
+                  src={placeholderArt}
+                  alt="No artwork... yet."
+                  fill
+                  sizes="300px"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                />
               </div>
             )}
 
             {/* Overlay Play Button */}
-            <button
-              onClick={() => (isCurrent ? togglePlay() : playMedia(song))}
-              className="absolute inset-0 flex items-center justify-center bg-background/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-            >
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_20px_var(--color-primary)] transition-transform hover:scale-110">
-                {isActive ? (
-                  <Pause size={32} fill="currentColor" />
-                ) : (
-                  <Play size={32} fill="currentColor" className="ml-1" />
-                )}
-              </div>
-            </button>
+            {song.masterAudio && (
+              <button
+                onClick={() => (isCurrent ? togglePlay() : playMedia(song))}
+                className="absolute inset-0 flex items-center justify-center bg-background/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+              >
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_20px_var(--color-primary)] transition-transform hover:scale-110">
+                  {isActive ? (
+                    <Pause size={32} fill="currentColor" />
+                  ) : (
+                    <Play size={32} fill="currentColor" className="ml-1" />
+                  )}
+                </div>
+              </button>
+            )}
           </div>
 
           {/* 2. METADATA */}
@@ -121,33 +133,36 @@ export const SongHero = ({ song }: { song: Song }) => {
 
             {/* Action Bar */}
 
-            <Button
-              onClick={() => playMedia(song)}
-              variant={isActive ? 'default' : 'outline'}
-              size="lg"
-              className={cn(
-                'group w-96 animate-in border-primary font-bold tracking-widest uppercase shadow-[0_0_20px_hsla(--primary,0.4)] duration-300 group-hover:text-accent group-hover:shadow-[0_0_20px_rgba(var(--primary-rgb),0.6)] hover:border-accent',
-                isActive && 'animate-none group-hover:text-primary-foreground',
-              )}
-            >
-              {isActive ? (
-                <>
-                  <Pause
-                    size={16}
-                    className="mr-2 text-primary-foreground group-hover:fill-primary-foreground"
-                  />{' '}
-                  Pause
-                </>
-              ) : (
-                <>
-                  <Play
-                    size={16}
-                    className="mr-2 text-primary group-hover:fill-accent group-hover:text-accent"
-                  />{' '}
-                  Initialize Playback
-                </>
-              )}
-            </Button>
+            {song.masterAudio && (
+              <Button
+                onClick={() => playMedia(song)}
+                variant={isActive ? 'default' : 'outline'}
+                size="lg"
+                className={cn(
+                  'group w-96 animate-in border-primary font-bold tracking-widest uppercase shadow-[0_0_20px_hsla(--primary,0.4)] duration-300 group-hover:text-accent group-hover:shadow-[0_0_20px_rgba(var(--primary-rgb),0.6)] hover:border-accent',
+                  isActive &&
+                    'animate-none group-hover:text-primary-foreground',
+                )}
+              >
+                {isActive ? (
+                  <>
+                    <Pause
+                      size={16}
+                      className="mr-2 text-primary-foreground group-hover:fill-primary-foreground"
+                    />{' '}
+                    Pause
+                  </>
+                ) : (
+                  <>
+                    <Play
+                      size={16}
+                      className="mr-2 text-primary group-hover:fill-accent group-hover:text-accent"
+                    />{' '}
+                    Initialize Playback
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </div>

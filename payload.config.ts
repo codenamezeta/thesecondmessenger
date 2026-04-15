@@ -1,4 +1,5 @@
 import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
+import { s3Storage } from '@payloadcms/storage-s3'
 import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
@@ -64,6 +65,43 @@ export default buildConfig({
         media: true,
       },
       token: process.env.BLOB_READ_WRITE_TOKEN || '',
+    }),
+    s3Storage({
+      enabled: Boolean(process.env.R2_BUCKET && process.env.R2_ENDPOINT),
+      bucket: process.env.R2_BUCKET || '',
+      // Browser → R2 PUT requires a matching bucket CORS policy. If uploads fail
+      // with "Failed to fetch" after storage-s3-generate-signed-url 200, set
+      // R2_DISABLE_CLIENT_UPLOADS=true (small files only on Vercel) or fix CORS
+      // (see r2-cors-policy.example.json).
+      clientUploads: process.env.R2_DISABLE_CLIENT_UPLOADS !== 'true',
+      collections: {
+        'gated-content': {
+          prefix: process.env.R2_PREFIX || 'gated-content',
+          signedDownloads: {
+            expiresIn: 3600,
+            shouldUseSignedURL: ({ filename }) => {
+              const lower = filename.toLowerCase()
+              return (
+                lower.endsWith('.zip') ||
+                lower.endsWith('.flac') ||
+                lower.endsWith('.wav') ||
+                lower.endsWith('.mp4') ||
+                lower.endsWith('.mov') ||
+                lower.endsWith('.webm')
+              )
+            },
+          },
+        },
+      },
+      config: {
+        credentials: {
+          accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+          secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+        },
+        endpoint: process.env.R2_ENDPOINT || '',
+        forcePathStyle: true,
+        region: 'auto',
+      },
     }),
   ],
 })

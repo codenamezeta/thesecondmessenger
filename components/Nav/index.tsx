@@ -34,6 +34,9 @@ const navItems: NavItem[] = [
     label: 'Members',
     items: [
       { type: 'link', label: 'Memberships', href: '/memberships' },
+      { type: 'link', label: 'Crew', href: '/crew' },
+      { type: 'link', label: 'Account', href: '/account' },
+      { type: 'link', label: 'Unreleased Content', href: '/music/unreleased' },
       { type: 'link', label: 'Login', href: '/login' },
     ],
   },

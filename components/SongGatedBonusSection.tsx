@@ -1,6 +1,11 @@
 import Link from 'next/link'
 import type { GatedContent, User } from '@/payload-types'
-import { userMeetsGatedTier, type GatedTierRequired } from '@/access/crewRanks'
+import {
+  gatedAssetTier,
+  userMeetsGatedFileAccess,
+  userMeetsVaultFloor,
+  type GatedTierRequired,
+} from '@/access/crewRanks'
 import { getMediaUrl } from '@/utilities/getMediaUrl'
 import { gatedContentKindFromMimeType } from '@/utilities/gatedContentKindFromMimeType'
 import AudioFilePlayer from '@/components/AudioFilePlayer'
@@ -12,17 +17,29 @@ import { Badge } from '@/components/ui/badge'
 export type SongGatedBonusRow = {
   rowId: string
   description?: string | null
-  gated: GatedContent
+  asset: GatedContent
 }
 
 const TIER_LABEL: Record<GatedTierRequired, string> = {
-  lieutenant: 'Lieutenant (Tier 1)',
-  commander: 'Commander (Tier 2)',
-  captain: 'Captain (Tier 3)',
+  lieutenant: 'Lieutenant',
+  commander: 'Commander',
+  captain: 'Captain',
 }
 
 function tierLabel(tier: GatedTierRequired): string {
   return TIER_LABEL[tier]
+}
+
+function DownloadAssetButton({ href, title }: { href: string; title: string }) {
+  return (
+    <div className="my-4">
+      <Button asChild variant="secondary" className="rounded-none">
+        <a href={href} download>
+          Download — {title}
+        </a>
+      </Button>
+    </div>
+  )
 }
 
 function GatedAssetRenderer({ gated }: { gated: GatedContent }) {
@@ -30,24 +47,20 @@ function GatedAssetRenderer({ gated }: { gated: GatedContent }) {
   if (!src) {
     return (
       <p className="font-body text-sm text-muted-foreground">
-        This asset is not available to stream yet.
+        This asset is not available with your current clearance.
       </p>
     )
   }
 
   const kind = gatedContentKindFromMimeType(gated.mimeType)
+
   if (kind === null) {
     return (
       <div className="space-y-3">
         <p className="font-body text-sm text-muted-foreground">
-          This file type is not previewed in the Vault UI. You can still fetch it
-          from the direct link if your clearance allows.
+          This file type is not previewed in the Vault UI.
         </p>
-        <Button asChild variant="secondary" className="rounded-none">
-          <a href={src} download>
-            Download — {gated.title}
-          </a>
-        </Button>
+        <DownloadAssetButton href={src} title={gated.title} />
       </div>
     )
   }
@@ -58,19 +71,11 @@ function GatedAssetRenderer({ gated }: { gated: GatedContent }) {
         <AudioFilePlayer
           title={gated.title}
           src={src}
-          description={gated.description ?? ''}
+          description={gated.description ?? null}
         />
       )
     case 'download':
-      return (
-        <div className="my-4">
-          <Button asChild variant="secondary" className="rounded-none">
-            <a href={src} download>
-              Download — {gated.title}
-            </a>
-          </Button>
-        </div>
-      )
+      return <DownloadAssetButton href={src} title={gated.title} />
     case 'video':
       return (
         <video
@@ -89,6 +94,10 @@ function GatedAssetRenderer({ gated }: { gated: GatedContent }) {
           className="mt-4 max-h-[min(70vh,720px)] w-auto border border-border/50 object-contain"
         />
       )
+    case 'pdf':
+      return <DownloadAssetButton href={src} title={gated.title} />
+    case 'text':
+      return <DownloadAssetButton href={src} title={gated.title} />
     default: {
       const _exhaustive: never = kind
       return _exhaustive
@@ -97,36 +106,36 @@ function GatedAssetRenderer({ gated }: { gated: GatedContent }) {
 }
 
 function LockedBonusRow({
-  gated,
+  title,
+  requiredTier,
   user,
 }: {
-  gated: GatedContent
+  title: string
+  requiredTier: GatedTierRequired
   user: User | null | undefined
 }) {
   return (
     <div className="rounded-sm border border-dashed border-border/60 bg-background/40 p-4">
       <div className="flex flex-wrap items-center gap-2">
         <Lock className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-        <span className="font-heading text-sm text-foreground">
-          {gated.title}
-        </span>
+        <span className="font-heading text-sm text-foreground">{title}</span>
         <Badge
           variant="outline"
           className="rounded-none font-mono text-[10px] uppercase"
         >
-          {tierLabel(gated.tierRequired)}
+          {tierLabel(requiredTier)}
         </Badge>
       </div>
       <p className="mt-2 font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
         {user
-          ? 'Upgrade your crew rank to unlock this asset.'
-          : 'Sign in and upgrade to unlock this asset.'}
+          ? 'Upgrade your crew rank to access this file.'
+          : 'Sign in and upgrade to access this file.'}
       </p>
     </div>
   )
 }
 
-function VaultTeaser({
+function VaultMarketingTeaser({
   user,
   rows,
   returnPath,
@@ -155,7 +164,7 @@ function VaultTeaser({
         <p className="mx-auto mb-6 max-w-lg font-body text-sm text-muted-foreground">
           This transmission includes bonus material in the Vault — demos,
           context, and other files gated by tier. Sign in with Lieutenant
-          clearance or higher to stream or download.
+          clearance or higher to access them.
         </p>
 
         {rows.length > 0 && (
@@ -163,15 +172,22 @@ function VaultTeaser({
             <li className="font-mono text-[10px] tracking-widest text-primary uppercase">
               {'// '}Included assets (locked)
             </li>
-            {rows.map(({ rowId, gated }) => (
+            {rows.map(({ rowId, asset }) => (
               <li
                 key={rowId}
-                className="flex flex-wrap items-center justify-between gap-2 font-mono text-xs text-muted-foreground"
+                className="space-y-1 border-b border-border/20 py-2 font-mono text-xs text-muted-foreground last:border-b-0"
               >
-                <span className="text-foreground">{gated.title}</span>
-                <span className="text-primary">
-                  {tierLabel(gated.tierRequired)}
-                </span>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-foreground">{asset.title}</span>
+                </div>
+                <div className="text-[10px] uppercase">
+                  <span>
+                    Clearance required:{' '}
+                    <span className="text-primary">
+                      {tierLabel(gatedAssetTier(asset.tierRequired))}
+                    </span>
+                  </span>
+                </div>
               </li>
             ))}
           </ul>
@@ -219,11 +235,32 @@ export function SongGatedBonusSection({
 }) {
   if (items.length === 0) return null
 
-  const accessible = items.filter((row) =>
-    userMeetsGatedTier(user, row.gated.tierRequired),
+  const vaultFloor = userMeetsVaultFloor(user)
+
+  if (!vaultFloor) {
+    return (
+      <section className="space-y-3 rounded-sm border border-border/60 bg-secondary/80 p-6 shadow-xs backdrop-blur-sm md:p-8">
+        <p className="font-mono text-xs tracking-widest text-primary uppercase">
+          {'// Clearance Accepted. Access Granted'}
+        </p>
+        <h2 className="font-heading text-2xl tracking-tight md:text-3xl">
+          Vault Content
+        </h2>
+        <Separator />
+        <VaultMarketingTeaser
+          user={user}
+          rows={items}
+          returnPath={returnPath}
+        />
+      </section>
+    )
+  }
+
+  const unlocked = items.filter((row) =>
+    userMeetsGatedFileAccess(user, row.asset.tierRequired),
   )
   const locked = items.filter(
-    (row) => !userMeetsGatedTier(user, row.gated.tierRequired),
+    (row) => !userMeetsGatedFileAccess(user, row.asset.tierRequired),
   )
 
   return (
@@ -234,15 +271,47 @@ export function SongGatedBonusSection({
       <h2 className="font-heading text-2xl tracking-tight md:text-3xl">
         Vault Content
       </h2>
-      <Separator />
-
-      {accessible.length === 0 ? (
-        <VaultTeaser user={user} rows={items} returnPath={returnPath} />
+      {unlocked.length === 0 ? (
+        locked.length > 0 ? (
+          <div className="space-y-4">
+            <Separator />
+            <p className="font-body text-sm text-muted-foreground">
+              Your clearance does not yet include these files.
+            </p>
+            <div className="space-y-4">
+              {locked.map(({ rowId, asset }) => (
+                <LockedBonusRow
+                  key={rowId}
+                  title={asset.title}
+                  requiredTier={gatedAssetTier(asset.tierRequired)}
+                  user={user}
+                />
+              ))}
+            </div>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="rounded-none font-mono text-[10px] tracking-widest uppercase"
+            >
+              <Link href="/memberships">Upgrade for more</Link>
+            </Button>
+          </div>
+        ) : null
       ) : (
         <div className="space-y-8">
-          {accessible.map(({ rowId, gated }) => (
-            <div key={rowId}>
-              <GatedAssetRenderer gated={gated} />
+          {unlocked.map(({ rowId, asset }) => (
+            <div key={rowId} className="space-y-4">
+              <Separator />
+              <div className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+                <span>
+                  Clearance required:{' '}
+                  <span className="text-primary">
+                    {tierLabel(gatedAssetTier(asset.tierRequired))}
+                  </span>
+                </span>
+              </div>
+              <GatedAssetRenderer gated={asset} />
             </div>
           ))}
 
@@ -253,8 +322,13 @@ export function SongGatedBonusSection({
                 {'// '}Higher clearance required
               </p>
               <div className="space-y-4">
-                {locked.map(({ rowId, gated }) => (
-                  <LockedBonusRow key={rowId} gated={gated} user={user} />
+                {locked.map(({ rowId, asset }) => (
+                  <LockedBonusRow
+                    key={rowId}
+                    title={asset.title}
+                    requiredTier={gatedAssetTier(asset.tierRequired)}
+                    user={user}
+                  />
                 ))}
               </div>
               <div className="flex flex-wrap gap-3 pt-2">

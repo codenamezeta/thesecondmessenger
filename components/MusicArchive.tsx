@@ -146,7 +146,7 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
     return data
   }, [initialSongs, search, sort, filters])
 
-  // 1. GRID CARD
+  //- 1. GRID CARD
   const GridItem = ({ song }: { song: Song }) => {
     return (
       <li className="h-full">
@@ -155,7 +155,7 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
     )
   }
 
-  // 2. LIST ROW
+  //- 2. LIST ROW
   const ListItem = ({ song }: { song: Song }) => (
     <li>
       <Link
@@ -206,9 +206,9 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
   const TimelineItem = ({ song, index }: { song: Song; index: number }) => {
     const isLeft = index % 2 === 0
     return (
-      <li className="relative my-0 pl-8 md:pl-0">
+      <li className="relative my-0 py-6 pl-8 md:pl-0">
         {/* Center Line (Desktop) */}
-        <div className="absolute top-0 bottom-0 left-[0.38rem] -ml-px w-px bg-foreground/50 md:left-1/2 md:block"></div>
+        <div className="absolute top-0 bottom-0 left-[0.38rem] -ml-px w-[2px] bg-foreground/50 md:left-1/2 md:block"></div>
 
         {/* Node Dot */}
         <div
@@ -285,7 +285,7 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
   return (
     <section className="space-y-0">
       {/* CONTROLS TOOLBAR */}
-      <div className="space-y-3 rounded-lg border border-border/30 bg-secondary p-4">
+      <div className="space-y-4 rounded-lg border border-border bg-linear-to-b from-secondary to-background p-4">
         {/* Top Row: Search & View Toggles */}
         <div className="flex flex-col items-end justify-between gap-4 lg:flex-row lg:items-center">
           {/* Search */}
@@ -490,9 +490,9 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
       {/* CONTENT AREA */}
       <ol
         className={cn(
-          'min-h-[400px] pb-8 transition-all duration-500',
+          'my-0 min-h-[400px] transition-all duration-500',
           view === 'grid' &&
-            'grid auto-rows-fr grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
+            'grid auto-rows-fr grid-cols-1 gap-6 pt-4 pb-12 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
           view === 'list' && 'flex flex-col',
           view === 'timeline' && 'relative',
         )}

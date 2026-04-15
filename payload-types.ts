@@ -93,6 +93,7 @@ export interface Config {
     songs: {
       relatedReleases: 'releases';
       inPlaylists: 'playlists';
+      linkedGatedContent: 'gated-content';
     };
     'payload-folders': {
       documentsAndFolders: 'payload-folders' | 'media';
@@ -287,8 +288,8 @@ export interface Category {
  */
 export interface User {
   id: number;
-  firstName: string;
-  lastName: string;
+  firstName?: string | null;
+  lastName?: string | null;
   username: string;
   /**
    * Controls how your name appears to others on the site, in the forum, and in email communications.
@@ -523,14 +524,13 @@ export interface Song {
    */
   lyrics?: string | null;
   /**
-   * Add sonic time-lapses, stems, or videos here. The required tier is inherited from the GatedContent file itself.
+   * Files that point to this song from the Gated Content collection.
    */
-  gatedBonusContent?:
-    | {
-        content: number | GatedContent;
-        id?: string | null;
-      }[]
-    | null;
+  linkedGatedContent?: {
+    docs?: (number | GatedContent)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -568,7 +568,7 @@ export interface Tag {
   createdAt: string;
 }
 /**
- * Audio, image, video, and zip downloads are shown in the Vault from the file's MIME type (no extra content-type field).
+ * One minimum crew rank per file. Eligible fans can view or play media in the Vault; archives and documents get a download button.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "gated-content".
@@ -580,7 +580,15 @@ export interface GatedContent {
    * A brief description of the content.
    */
   description?: string | null;
+  /**
+   * Optional. Link this Vault file to a song. Song pages and the Song editor can surface linked files through this relationship.
+   */
+  relatedSong?: (number | null) | Song;
+  /**
+   * Fans at this rank or higher can access the file (Vault + direct file routes). Matches Lieutenant / Commander / Captain Vault clearance in crew rules.
+   */
   tierRequired: 'lieutenant' | 'commander' | 'captain';
+  prefix?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -1285,12 +1293,7 @@ export interface SongsSelect<T extends boolean = true> {
   tagline?: T;
   about?: T;
   lyrics?: T;
-  gatedBonusContent?:
-    | T
-    | {
-        content?: T;
-        id?: T;
-      };
+  linkedGatedContent?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -1302,7 +1305,9 @@ export interface SongsSelect<T extends boolean = true> {
 export interface GatedContentSelect<T extends boolean = true> {
   title?: T;
   description?: T;
+  relatedSong?: T;
   tierRequired?: T;
+  prefix?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

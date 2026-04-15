@@ -32,6 +32,7 @@ import { PayloadRedirects } from '@/components/PayloadRedirects'
 
 import { getMeUser } from '@/utilities/getMeUser'
 import { SongGatedBonusSection } from '@/components/SongGatedBonusSection'
+import { userMeetsGatedFileAccess } from '@/access/crewRanks'
 
 // --- Types ---
 type Args = {
@@ -347,18 +348,39 @@ export default async function SongPage({ params }: Args) {
     },
   })
 
-  const gatedBonusRows =
-    song.gatedBonusContent?.flatMap((row) => {
-      const c = row.content
-      if (!c || typeof c !== 'object') return []
-      const gated = c as GatedContent
-      return [
-        {
-          rowId: row.id ?? `gated-${gated.id}`,
-          gated,
-        },
-      ]
+  const linkedBySongRelation = await payload.find({
+    collection: 'gated-content',
+    where: { relatedSong: { equals: song.id } },
+    depth: 0,
+    limit: 100,
+    overrideAccess: true,
+  })
+
+  const fromSongJoin =
+    song.linkedGatedContent?.docs?.flatMap((doc) => {
+      if (!doc || typeof doc !== 'object') return []
+      const asset = doc as GatedContent
+      return [{ rowId: `join-${asset.id}`, asset }]
     }) ?? []
+
+  const fromRelatedSong = linkedBySongRelation.docs.map((asset) => ({
+    rowId: `related-${asset.id}`,
+    asset: asset as GatedContent,
+  }))
+
+  const mergedById = new Map<number, { rowId: string; asset: GatedContent }>()
+  for (const row of [...fromSongJoin, ...fromRelatedSong]) {
+    mergedById.set(row.asset.id, row)
+  }
+
+  const gatedBonusRows = Array.from(mergedById.values()).map((row) => {
+    const asset = row.asset
+    const canExposeUrl = userMeetsGatedFileAccess(user, asset.tierRequired)
+    const publicAsset: GatedContent = canExposeUrl
+      ? asset
+      : { ...asset, url: '' }
+    return { ...row, asset: publicAsset }
+  })
 
   return (
     <article className="min-h-screen pb-12">
@@ -414,20 +436,22 @@ export default async function SongPage({ params }: Args) {
               url={`${process.env.NEXT_PUBLIC_SERVER_URL}/music/${song.slug}`}
             />
 
-            <LibrarySync
-              songId={String(song.id)}
-              youtubeId={song.youtubeId || undefined}
-              spotifyId={song.spotifyId || undefined}
-              isReleased={
-                song.relatedReleases?.docs?.some(
-                  (doc) =>
-                    typeof doc === 'object' &&
-                    doc.releaseDate &&
-                    new Date(doc.releaseDate) <= new Date(),
-                ) ?? false
-              }
-              initialIsSaved={isSaved}
-            />
+            {song.releaseDate && (
+              <LibrarySync
+                songId={String(song.id)}
+                youtubeId={song.youtubeId || undefined}
+                spotifyId={song.spotifyId || undefined}
+                isReleased={
+                  song.relatedReleases?.docs?.some(
+                    (doc) =>
+                      typeof doc === 'object' &&
+                      doc.releaseDate &&
+                      new Date(doc.releaseDate) <= new Date(),
+                  ) ?? false
+                }
+                initialIsSaved={isSaved}
+              />
+            )}
 
             <StreamingLinksCard song={song} />
             <CreditsCard song={song} />

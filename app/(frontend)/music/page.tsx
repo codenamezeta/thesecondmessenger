@@ -4,8 +4,22 @@ import { MusicArchive } from '@/components/MusicArchive'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Data Archives | The Second Messenger',
-  description: 'Full transmission history and audio logs.',
+  title: 'Music by The Second Messenger',
+  description: 'Full music archive and audio logs.',
+  openGraph: {
+    images: [
+      {
+        url: 'https://thesecondmessenger.com/imgs/michael/michael-today.jpg',
+      },
+    ],
+  },
+  twitter: {
+    images: [
+      {
+        url: 'https://thesecondmessenger.com/imgs/michael/michael-today.jpg',
+      },
+    ],
+  },
 }
 
 export default async function MusicPage() {
@@ -26,15 +40,15 @@ export default async function MusicPage() {
   })
 
   return (
-    <main className="container bg-transparent pt-24">
+    <main className="container bg-transparent py-24">
       {/* Header */}
-      <div className="mb-12 border-b border-border/50 pb-8">
-        <h1 className="mb-4 font-heading text-4xl tracking-widest text-foreground uppercase md:text-6xl">
-          Transmissions Log
+      <div className="mb-24 text-center">
+        <h1 className="mb-4 text-center font-heading text-7xl tracking-widest text-foreground uppercase md:text-6xl">
+          Music Archive
         </h1>
-        <p className="max-w-2xl font-mono text-muted-foreground">
-          Accessing complete audio database. Select a file to initiate playback
-          or retrieve data cache.
+        <p className="mx-auto max-w-2xl font-mono text-muted-foreground">
+          Accessing complete music archive. Select a song to initiate playback
+          or retrieve song data.
         </p>
       </div>
 
