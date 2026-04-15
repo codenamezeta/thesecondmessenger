@@ -5,8 +5,10 @@ import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 
 import type { Media, User } from '@/payload-types'
+import { getBillingSummaryForCustomer } from '@/utilities/billing'
 import { getMeUser } from '@/utilities/getMeUser'
 
+import { AccountBillingSection } from './account-billing-section'
 import { AccountProfileForm } from './profile-form'
 
 type AccountProfileInitialData = {
@@ -72,6 +74,8 @@ export default async function AccountPage() {
   })
   const avatar = readAvatar(userWithAvatar.avatar)
 
+  const billing = await getBillingSummaryForCustomer(userWithAvatar.stripeCustomerId)
+
   const initialData: AccountProfileInitialData = {
     id: userWithAvatar.id,
     username: userWithAvatar.username,
@@ -123,6 +127,8 @@ export default async function AccountPage() {
         </header>
 
         <AccountProfileForm initialData={initialData} />
+
+        <AccountBillingSection crewRank={userWithAvatar.crewRank} billing={billing} />
       </div>
     </article>
   )
