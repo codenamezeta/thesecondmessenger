@@ -275,6 +275,7 @@ export const Songs: CollectionConfig = {
         position: 'sidebar',
         allowCreate: true,
         description: 'Add this song to existing playlists.',
+        defaultColumns: ['title', 'description'],
       },
     },
     {
@@ -793,26 +794,26 @@ export const Songs: CollectionConfig = {
           ],
         },
 
-        // --- TAB 4: CREW EXCLUSIVES (Gated Content) ---
+        // --- TAB 4: Bonus Content ---
         {
-          label: 'Crew Exclusives',
+          label: 'Gated Content',
           fields: [
             {
-              name: 'gatedBonusContent',
-              type: 'array',
-              label: 'Exclusive Assets',
+              name: 'linkedGatedContent',
+              type: 'join',
+              collection: 'gated-content',
+              on: 'relatedSong',
+              label: 'Linked from Gated Content',
               admin: {
                 description:
-                  'Add sonic time-lapses, stems, or videos here. The required tier is inherited from the GatedContent file itself.',
+                  'Files that point to this song from the Gated Content collection.',
+                defaultColumns: [
+                  'title',
+                  'mimeType',
+                  'description',
+                  'tierRequired',
+                ],
               },
-              fields: [
-                {
-                  name: 'content',
-                  type: 'upload',
-                  relationTo: 'gated-content',
-                  required: true,
-                },
-              ],
             },
           ],
         },

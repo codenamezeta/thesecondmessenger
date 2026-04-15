@@ -6,12 +6,41 @@ import { Badge } from '@/components/ui/badge'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 
+type SearchParams = Record<string, string | string[] | undefined>
+
 const EnsignBadge = () => <Badge variant="default">Ensign</Badge>
 const LieutenantBadge = () => <Badge variant="outline">Lieutenant</Badge>
 const CommanderBadge = () => <Badge variant="outline">Commander</Badge>
 const CaptainBadge = () => <Badge variant="outline">Captain</Badge>
 
-export default async function CrewDashboard() {
+function getFirstParam(value: string | string[] | undefined): string | null {
+  if (!value) return null
+  return Array.isArray(value) ? value[0] || null : value
+}
+
+function normalizeTier(
+  value: string | null,
+): 'lieutenant' | 'commander' | 'captain' | null {
+  if (!value) return null
+  if (value === 'lieutenant' || value === 'commander' || value === 'captain') {
+    return value
+  }
+  return null
+}
+
+function formatTier(value: 'lieutenant' | 'commander' | 'captain' | null): string {
+  if (!value) return 'membership'
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+export default async function CrewDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
+  const params = await searchParams
+  const stripeStatus = getFirstParam(params.stripe)
+  const selectedTier = normalizeTier(getFirstParam(params.tier))
   const { user } = await getMeUser()
 
   const now = new Date().toISOString()
@@ -37,6 +66,18 @@ export default async function CrewDashboard() {
 
   return (
     <div className="container mx-auto py-10">
+      {stripeStatus === 'success' && (
+        <section className="mb-6 border border-primary/50 bg-primary/10 p-4">
+          <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">
+            {'// Subscription Activated'}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Stripe confirmed your {formatTier(selectedTier)} checkout. Rank
+            updates usually appear immediately after webhook processing.
+          </p>
+        </section>
+      )}
+
       <h1 className="font-mono text-4xl font-bold text-primary">
         Welcome to the Fleet, {user.username}
       </h1>

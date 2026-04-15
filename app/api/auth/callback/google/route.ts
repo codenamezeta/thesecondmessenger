@@ -6,6 +6,9 @@ import { headers } from 'next/headers'
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams
   const code = searchParams.get('code')
+  const state = searchParams.get('state')
+  const safeReturnTo =
+    state && state.startsWith('/') && !state.startsWith('//') ? state : '/account'
 
   if (!code) {
     return NextResponse.json({ error: 'No code provided' }, { status: 400 })
@@ -66,8 +69,8 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    // 5. Send them back to the music player or their dashboard!
-    return NextResponse.redirect(new URL('/', req.url))
+    // 5. Send them back to the requested page (defaults to account settings).
+    return NextResponse.redirect(new URL(safeReturnTo, req.url))
   } catch (error) {
     console.error('OAuth Callback Error:', error)
     return NextResponse.json(

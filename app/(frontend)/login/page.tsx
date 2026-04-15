@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -40,8 +40,19 @@ function parsePayloadError(payload: unknown): string | null {
   return null
 }
 
+function getSafeRedirectPath(rawRedirect: string | null): string {
+  if (!rawRedirect) return '/'
+  // Only allow same-origin app routes.
+  if (!rawRedirect.startsWith('/') || rawRedirect.startsWith('//')) return '/'
+  // Avoid redirect loops back to the auth page.
+  if (rawRedirect === '/login' || rawRedirect.startsWith('/login?')) return '/'
+  return rawRedirect
+}
+
 export default function AuthPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectPath = getSafeRedirectPath(searchParams.get('redirect'))
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -67,7 +78,7 @@ export default function AuthPage() {
       if (!res.ok) throw new Error('Invalid email or password')
 
       // Payload automatically sets the secure cookie here!
-      router.push('/') // Redirect home or to a specific dashboard
+      router.push(redirectPath)
       router.refresh() // Refresh the server components to show logged-in state
     } catch (err: unknown) {
       setError(errorMessage(err))
@@ -115,7 +126,7 @@ export default function AuthPage() {
         throw new Error(payloadError ?? 'Account created, but login failed.')
       }
 
-      router.push('/')
+      router.push(redirectPath)
       router.refresh()
     } catch (err: unknown) {
       setError(errorMessage(err))

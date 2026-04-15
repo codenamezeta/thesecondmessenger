@@ -3,17 +3,16 @@
 
 import { useRef } from 'react'
 import { usePlayer } from '@/context/PlayerContext'
-
 interface AudioFilePlayerProps {
   src: string // The secure Payload URL: /api/gated-content/file/track.mp3
   title: string
-  description: string
+  description?: string | null
 }
 
 export default function AudioFilePlayer({
   src,
   title,
-  description,
+  description = null,
 }: AudioFilePlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null)
 
@@ -35,7 +34,6 @@ export default function AudioFilePlayer({
       <audio
         ref={audioRef}
         controls
-        controlsList="nodownload" // Hides the default download button in Chrome/Edge
         src={src}
         onPlay={handlePlay}
         className="mt-2 w-full"

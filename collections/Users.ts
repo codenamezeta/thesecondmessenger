@@ -9,6 +9,18 @@ const RANK_LABELS: Record<string, string> = {
   admiral: 'Admiral',
 }
 
+const canReadPrivateUserField = ({
+  req: { user },
+  doc,
+}: {
+  req: { user?: { id: number; role?: string } | null }
+  doc?: { id?: number } | null
+}): boolean => {
+  if (!user) return false
+  if (user.role === 'admin') return true
+  return user.id === doc?.id
+}
+
 export const Users: CollectionConfig = {
   slug: 'users',
   admin: {
@@ -54,7 +66,8 @@ export const Users: CollectionConfig = {
           rank_username: `${rankLabel} ${username}`.trim(),
         }
 
-        data.displayName = formats[format] ?? username
+        const computedDisplayName = formats[format]?.trim()
+        data.displayName = computedDisplayName || username || 'Messenger'
         return data
       },
     ],
@@ -64,12 +77,18 @@ export const Users: CollectionConfig = {
     {
       name: 'firstName',
       type: 'text',
-      required: true,
+      required: false,
+      access: {
+        read: canReadPrivateUserField,
+      },
     },
     {
       name: 'lastName',
       type: 'text',
-      required: true,
+      required: false,
+      access: {
+        read: canReadPrivateUserField,
+      },
     },
     {
       name: 'username',
@@ -137,13 +156,8 @@ export const Users: CollectionConfig = {
       name: 'zipCode',
       type: 'number',
       required: false,
-      // Only visible to the user themselves and admins
       access: {
-        read: ({ req: { user }, doc }) => {
-          if (!user) return false
-          if (user.role === 'admin') return true
-          return user.id === doc?.id
-        },
+        read: canReadPrivateUserField,
       },
     },
     // --- AUTH ---
@@ -152,13 +166,8 @@ export const Users: CollectionConfig = {
       type: 'email',
       required: true,
       unique: true,
-      // Email is private; only the account owner and admins can read it
       access: {
-        read: ({ req: { user }, doc }) => {
-          if (!user) return false
-          if (user.role === 'admin') return true
-          return user.id === doc?.id
-        },
+        read: canReadPrivateUserField,
       },
     },
     // --- CMS ACCESS ---
