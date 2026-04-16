@@ -8,6 +8,7 @@ import { SongCard } from '@/components/SongCard'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { SongHero } from '@/components/SongHero'
+import { SongInlineVideoFrame } from '@/components/SongInlineVideoFrame'
 import { Share } from '@/components/Share'
 import { LibrarySync } from '@/components/LibrarySync'
 import CommentsYT from '@/components/CommentsYT'
@@ -390,9 +391,35 @@ export default async function SongPage({ params }: Args) {
 
       <div className="container py-10 md:py-16">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10">
-          <section className="space-y-10 lg:col-span-8">
+          <main className="space-y-10 lg:col-span-8">
+            {song.youtubeId && (
+              <section>
+                {/* The Viewscreen — hosts either a standby thumbnail + play button
+              (SongInlineVideoFrame) or, when this song is the one currently
+              playing in the Global Player AND video is disabled, the Global
+              Player's VideoStage lays its iframe over the frame via fixed
+              positioning. The overlay respects the `p-3` inset and matches
+              the frame's `rounded-sm` corners. */}
+                <div className="group relative z-10 aspect-video overflow-hidden rounded-md border border-primary/20 bg-primary/5 p-3 shadow-[0_0_50px_rgba(0,0,0,0.9)]">
+                  <SongInlineVideoFrame song={song} />
+
+                  {/* Corner Decor */}
+                  <div className="pointer-events-none absolute top-2 left-2 size-3 border-t border-l border-primary/50" />
+                  <div className="pointer-events-none absolute top-2 right-2 size-3 border-t border-r border-primary/50" />
+                  <div className="pointer-events-none absolute bottom-2 left-2 size-3 border-b border-l border-primary/50" />
+                  <div className="pointer-events-none absolute right-2 bottom-2 size-3 border-r border-b border-primary/50" />
+                </div>
+              </section>
+            )}
+
+            {song.youtubeId && (
+              <section className="mt-6 px-3 lg:col-span-8">
+                {/* <Separator className="mb-8" /> */}
+                <CommentsYT videoId={song.youtubeId} />
+              </section>
+            )}
             {song.about && (
-              <main className="space-y-3 rounded-sm border border-border/60 bg-background/80 p-6 shadow-xs backdrop-blur-sm md:p-8">
+              <section className="space-y-3 rounded-sm border border-border/60 bg-background/80 p-6 shadow-xs backdrop-blur-sm md:p-8">
                 {/* <div className="space-y-1"> */}
                 <p className="font-mono text-xs tracking-widest text-primary uppercase">
                   {'// Transmission Log'}
@@ -403,7 +430,7 @@ export default async function SongPage({ params }: Args) {
                 {/* </div> */}
                 <Separator />
                 <RichText data={song.about} />
-              </main>
+              </section>
             )}
 
             <SongGatedBonusSection
@@ -428,7 +455,7 @@ export default async function SongPage({ params }: Args) {
                 </pre>
               </section>
             )}
-          </section>
+          </main>
 
           <aside className="space-y-4 lg:sticky lg:top-[calc(var(--main-nav-bar-height)+var(--admin-bar-height)+0.5rem)] lg:col-span-4 lg:self-start">
             <Share
@@ -458,13 +485,6 @@ export default async function SongPage({ params }: Args) {
             <FeaturedInCard song={song} />
           </aside>
         </div>
-
-        {song.youtubeId && (
-          <section className="mt-12">
-            {/* <Separator className="mb-8" /> */}
-            <CommentsYT videoId={song.youtubeId} />
-          </section>
-        )}
 
         {relatedSongs.docs.length > 0 && (
           <aside className="mt-12">

@@ -59,7 +59,10 @@ export const BottomBar = () => {
     setCurrentTime(newPercent * duration)
   }
 
-  const handleSeekMouseUp = (e: React.MouseEvent<HTMLInputElement>) => {
+  // Pointer events unify mouse, touch, and pen. Using them here fixes the
+  // long-standing bug where touch users could drag the scrubber visually but
+  // `seekTo()` never fired (onMouseUp doesn't run on touch devices).
+  const handleSeekPointerUp = (e: React.PointerEvent<HTMLInputElement>) => {
     setIsSeeking(false)
     const newPercent = parseFloat((e.target as HTMLInputElement).value)
     seekTo(newPercent * duration)
@@ -76,14 +79,22 @@ export const BottomBar = () => {
           : 'translate-y-full opacity-0',
       )}
     >
-      {/* Seek bar — spans across the entire top edge, outside the container */}
+      {/* Seek bar — the visible track stays slim (2px, 4px on hover) in its
+          original spot above the bottom bar, but the invisible <input> hit
+          area extends 12px upward so finger taps can actually land on it.
+          Touch precision matters more than visual width, so we decouple the
+          two. `touch-none` prevents iOS Safari from eating the drag as a
+          scroll gesture. */}
       <div
         id="seek_bar"
-        className="group absolute -top-[2px] right-0 left-0 z-20 h-[2px] cursor-pointer transition-all hover:h-1"
+        className="group absolute -top-3 right-0 left-0 z-20 h-3 cursor-pointer"
       >
-        <div className="absolute inset-0 bg-muted" />
+        {/* Visible muted track, anchored to the BOTTOM of the hit area (=
+            the top edge of the bottom bar). Matches the original position. */}
+        <div className="pointer-events-none absolute right-0 bottom-0 left-0 h-[2px] bg-muted transition-all duration-150 group-hover:h-1" />
+        {/* Filled primary track */}
         <div
-          className="absolute top-0 bottom-0 left-0 bg-primary shadow-[0_0_10px_hsl(var(--primary))] transition-all duration-100 ease-linear"
+          className="pointer-events-none absolute bottom-0 left-0 h-[2px] bg-primary shadow-[0_0_10px_hsl(var(--primary))] transition-all duration-150 ease-linear group-hover:h-1"
           style={{ width: `${(played ?? 0) * 100}%` }}
         />
         <input
@@ -95,9 +106,10 @@ export const BottomBar = () => {
           step="any"
           value={played ?? 0}
           onChange={handleSeekChange}
-          onMouseDown={() => setIsSeeking(true)}
-          onMouseUp={handleSeekMouseUp}
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          onPointerDown={() => setIsSeeking(true)}
+          onPointerUp={handleSeekPointerUp}
+          onPointerCancel={() => setIsSeeking(false)}
+          className="absolute inset-0 h-full w-full cursor-pointer touch-none opacity-0"
           aria-label="Seek"
         />
       </div>

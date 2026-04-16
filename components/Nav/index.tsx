@@ -27,8 +27,8 @@ const navItems: NavItem[] = [
   { type: 'link', label: 'Home', href: '/' },
   { type: 'link', label: 'Music', href: '/music' },
   { type: 'link', label: 'Videos', href: '/videos' },
-  { type: 'link', label: 'Personal File', href: '/bio' },
-  { type: 'link', label: "Admiral's Log", href: '/posts' },
+  { type: 'link', label: 'Bio', href: '/bio' },
+  { type: 'link', label: 'Posts', href: '/posts' },
   {
     type: 'dropdown',
     label: 'Members',
@@ -87,7 +87,7 @@ export const Nav: React.FC = () => {
 
   // --- THE LOGIC TO PUSH THE NAV DOWN ---
   useEffect(() => {
-    const heightValue: number = 100 / 12 // 1/16th of the screen height
+    const heightValue: number = 100 / 20 // 1/12th of the screen height
     document.documentElement.style.setProperty(
       '--main-nav-bar-height',
       `${heightValue}vh`,
@@ -116,10 +116,10 @@ export const Nav: React.FC = () => {
         <Image
           src="/imgs/logos/radio-dish-logo.png"
           alt="The 2nd Messenger Logo"
-          sizes="(max-width: 768px) 100vw, 160px"
+          sizes="(max-width: 768px) 100vw, 200px"
           width={200}
-          height={50}
-          className="object-contain opacity-85 transition-opacity group-hover:opacity-100"
+          height={60}
+          className="h-15 w-[200px] max-w-none object-contain opacity-85 transition-opacity group-hover:opacity-100"
           onError={() => setLogoError(true)}
           priority
         />
@@ -136,16 +136,16 @@ export const Nav: React.FC = () => {
   return (
     <>
       {/* --- DESKTOP NAV --- */}
-      <nav className="h-(calc(var(--admin-bar-height,0px)+var(--main-nav-bar-height,0px))) sticky top-0 z-40 flex w-full flex-col border-b border-border bg-transparent backdrop-blur-3xl">
+      <nav className="sticky inset-x-0 top-0 z-40 flex w-full flex-col border-b border-border bg-transparent backdrop-blur-3xl">
         <AdminBar />
-        <div className="container flex justify-between">
+        <div className="item-center container flex h-(--main-nav-bar-height) justify-between gap-0">
           {/* Logo */}
-          <Link href="/" className="group z-40 flex flex-col justify-center">
+          <Link href="/" className="group z-10 flex flex-col justify-center">
             {renderNavLogo()}
           </Link>
 
           {/* Desktop Links */}
-          <ul className="relative z-40 hidden list-none items-center gap-8 font-heading text-sm tracking-widest uppercase md:flex">
+          <ul className="relative z-40 hidden list-none items-center justify-between gap-x-5 font-heading text-sm tracking-widest uppercase md:flex">
             {/* 1. Render CMS Items */}
             {navItems.map((item, i) => {
               const isDropdown = item.type === 'dropdown'
@@ -155,13 +155,13 @@ export const Nav: React.FC = () => {
                 return (
                   <li
                     key={i}
-                    className="group relative flex h-[var(--totalNavBarHeight),80px] items-center"
+                    className="group relative flex items-center"
                     onMouseEnter={() => handleMouseEnter(i)}
                     onMouseLeave={handleMouseLeave}
                   >
                     <div className="relative flex h-full cursor-pointer items-center">
                       <button
-                        className={`flex items-center gap-1 uppercase transition-colors ${isOpen ? 'text-muted-foreground' : 'text-foreground/75 hover:text-accent'}`}
+                        className={`flex items-center gap-[2px] uppercase transition-colors ${isOpen ? 'text-muted-foreground' : 'text-foreground/75 hover:text-accent'}`}
                       >
                         {item.label}
                         <ChevronDown
@@ -197,10 +197,10 @@ export const Nav: React.FC = () => {
 
               // Standard Link
               return (
-                <li key={i} className="group relative flex h-20 items-center">
+                <li key={i} className="group">
                   <Link
                     href={item.href}
-                    className="relative flex items-center gap-2 py-2 text-foreground/75 transition-colors hover:text-primary"
+                    className="text-foreground/75 transition-colors hover:text-primary"
                   >
                     {item.label}
                   </Link>
@@ -212,7 +212,7 @@ export const Nav: React.FC = () => {
             <li>
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="text-foreground/50 transition-colors hover:text-primary"
+                className="p-2 text-foreground/75 transition-colors hover:text-primary"
                 aria-label="Search Site"
               >
                 <SearchIcon size={20} />
@@ -249,7 +249,7 @@ export const Nav: React.FC = () => {
 
       <aside
         className={cn(
-          'fixed top-(--admin-bar-height,0px) right-0 z-50 flex h-full w-[85vw] max-w-sm transform flex-col border-l border-sidebar-primary/50 bg-sidebar shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-out',
+          'fixed top-0 right-0 z-50 flex h-full w-[85vw] max-w-sm transform flex-col border-l border-sidebar-primary/50 bg-sidebar shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-out',
           navOpen ? 'translate-x-0' : 'translate-x-full',
         )}
       >

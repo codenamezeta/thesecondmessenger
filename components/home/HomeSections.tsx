@@ -204,7 +204,7 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
   const { playMedia } = usePlayer()
 
   return (
-    <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
+    <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
       {/* Background void */}
       <div className="absolute inset-0 bg-background">
         {/* Primary radial glow — blooms from top-center behind the title */}
@@ -361,7 +361,7 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
           <ChevronDown className="h-4 w-4 text-muted-foreground" />
         </motion.div>
       </div>
-    </section>
+    </main>
   )
 }
 
@@ -988,7 +988,7 @@ function DebriefSection() {
   const inView = useInView(ref, { once: true, margin: '-10%' })
 
   return (
-    <section ref={ref} className="relative overflow-hidden pt-24">
+    <section ref={ref} className="relative overflow-hidden px-4">
       <div
         className="absolute inset-0"
         style={{
@@ -1106,7 +1106,7 @@ function DebriefSection() {
 
 export function HomeSections({ songs }: HomeProps) {
   return (
-    <main className="relative bg-background">
+    <article className="relative bg-background">
       <HeroSection featuredSong={songs[0]} />
       <div className="border-t border-border/20" />
       <ArchiveSection songs={songs} />
@@ -1118,6 +1118,6 @@ export function HomeSections({ songs }: HomeProps) {
       <AlternativeSection />
       <div className="border-t border-border/20" />
       <DebriefSection />
-    </main>
+    </article>
   )
 }

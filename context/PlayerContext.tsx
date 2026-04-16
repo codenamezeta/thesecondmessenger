@@ -15,6 +15,16 @@ import { Song, Release } from '@/payload-types'
 export type ViewMode = 'audio' | 'medium' | 'fullscreen'
 export type VideoMode = 'theater' | 'mini'
 
+/**
+ * Metadata for a Song page that wants the Global Player's VideoStage to land
+ * inline on its own viewscreen frame. Registered by `SongInlineVideoFrame`,
+ * consumed by `VideoStage` to compute fixed-overlay coordinates.
+ */
+export interface InlineTarget {
+  element: HTMLElement
+  songYoutubeId: string
+}
+
 export type PlayableMedia =
   | (Song & { coverImage?: string; description?: string; artist?: string })
   | {
@@ -60,6 +70,8 @@ interface PlayerState {
   duration: number
   played: number
   isSeeking: boolean
+  /** Song page inline video frame registration (see InlineTarget) */
+  inlineTarget: InlineTarget | null
 }
 
 interface PlayerActions {
@@ -99,6 +111,18 @@ interface PlayerActions {
   /** Close the player (standby mode): pause + hide all UI */
   closePlayer: () => void
   updateSongMetadata: (id: string, metadata: Partial<PlayableMedia>) => void
+  /**
+   * Register a Song page's inline video frame. VideoStage will lay its
+   * iframe over this element (matching position + size) when the currentSong
+   * matches and videoEnabled is false.
+   */
+  setInlineTarget: (target: InlineTarget) => void
+  /**
+   * Clear the registered inline target, but only if the element passed in is
+   * still the active target. This avoids a race when a new SongInlineVideoFrame
+   * mounts before the previous one's cleanup effect runs.
+   */
+  clearInlineTarget: (element: HTMLElement) => void
 }
 
 type PlayerContextType = PlayerState & PlayerActions
@@ -158,6 +182,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [duration, setDuration] = useState(0)
   const [played, setPlayed] = useState(0)
   const [isSeeking, setIsSeeking] = useState(false)
+
+  // Inline target (Song page viewscreen frame that wants to host the video)
+  const [inlineTarget, setInlineTargetState] = useState<InlineTarget | null>(null)
 
   // YouTube player ref — VideoStage registers its player instance here
   const ytPlayerRef = useRef<any>(null)
@@ -314,6 +341,14 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setIsPlaying(true)
   }, [currentSongIndex, queue])
 
+  const setInlineTarget = useCallback((target: InlineTarget) => {
+    setInlineTargetState(target)
+  }, [])
+
+  const clearInlineTarget = useCallback((element: HTMLElement) => {
+    setInlineTargetState((prev) => (prev?.element === element ? null : prev))
+  }, [])
+
   const updateSongMetadata = useCallback((id: string, metadata: Partial<PlayableMedia>) => {
     setAllSongs((prev) =>
       prev.map((s) => (s.youtubeId === id ? ({ ...s, ...metadata } as PlayableMedia) : s)),
@@ -349,6 +384,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       duration,
       played,
       isSeeking,
+      inlineTarget,
       playMedia,
       playPlaylist,
       playNext,
@@ -379,6 +415,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       registerYouTubePlayer,
       closePlayer,
       updateSongMetadata,
+      setInlineTarget,
+      clearInlineTarget,
     }),
     [
       currentSong,
@@ -402,6 +440,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       duration,
       played,
       isSeeking,
+      inlineTarget,
       playMedia,
       playPlaylist,
       playNext,
@@ -421,6 +460,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       registerYouTubePlayer,
       closePlayer,
       updateSongMetadata,
+      setInlineTarget,
+      clearInlineTarget,
     ],
   )
 

@@ -287,7 +287,7 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
       {/* CONTROLS TOOLBAR */}
       <div className="space-y-4 rounded-lg border border-border bg-linear-to-b from-secondary to-background p-4">
         {/* Top Row: Search & View Toggles */}
-        <div className="flex flex-col items-end justify-between gap-4 lg:flex-row lg:items-center">
+        <div className="flex flex-col items-center justify-between gap-4 sm:items-end lg:flex-row lg:items-center">
           {/* Search */}
           <div className="relative w-full min-w-64 flex-auto lg:max-w-1/2">
             <Label htmlFor="music-archive-search" className="sr-only">
@@ -309,7 +309,7 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
             />
           </div>
           {/* Filters */}
-          <div className="flex items-center gap-1">
+          <div className="flex flex-col items-center gap-1 sm:flex-row">
             <span
               className="hidden font-mono text-xs text-muted-foreground uppercase sm:block"
               aria-hidden
@@ -318,7 +318,7 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
             </span>
 
             {/* Composition Type */}
-            <div className="flex flex-col gap-1">
+            <div className="flex gap-1">
               <Label htmlFor="music-archive-composition" className="sr-only">
                 Composition type
               </Label>
@@ -407,7 +407,7 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
         </div>
 
         {/* Bottom Row: Filters & Sort */}
-        <div className="flex flex-wrap items-center gap-4 border-t border-border/30 pt-4">
+        <div className="flex flex-col flex-wrap items-center gap-4 border-t border-border/30 pt-4 sm:flex-row">
           {/* View Toggles */}
           <div
             className="flex items-center gap-1 rounded-lg border border-border/30 bg-input p-1"
@@ -449,13 +449,13 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
             </Button>
           </div>
 
-          <div className="flex-1" />
+          <div className="hidden flex-1 sm:block" />
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-2">
             <ArrowUpDown
               size={14}
-              className="shrink-0 text-muted-foreground"
+              className="hidden shrink-0 text-muted-foreground sm:block"
               aria-hidden
             />
             <div className="flex flex-col gap-1">
