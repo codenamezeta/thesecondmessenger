@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -49,7 +49,7 @@ function getSafeRedirectPath(rawRedirect: string | null): string {
   return rawRedirect
 }
 
-export default function AuthPage() {
+function AuthPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectPath = getSafeRedirectPath(searchParams.get('redirect'))
@@ -290,5 +290,19 @@ export default function AuthPage() {
         </TabsContent>
       </Tabs>
     </div>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container flex min-h-[80vh] items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <AuthPageContent />
+    </Suspense>
   )
 }
