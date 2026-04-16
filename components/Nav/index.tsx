@@ -249,7 +249,7 @@ export const Nav: React.FC = () => {
 
       <aside
         className={cn(
-          'fixed top-[var(--admin-bar-height,0px)] right-0 z-50 flex h-full w-[85vw] max-w-sm transform flex-col border-l border-sidebar-primary/50 bg-sidebar shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-out',
+          'fixed top-(--admin-bar-height,0px) right-0 z-50 flex h-full w-[85vw] max-w-sm transform flex-col border-l border-sidebar-primary/50 bg-sidebar shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-out',
           navOpen ? 'translate-x-0' : 'translate-x-full',
         )}
       >
