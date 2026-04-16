@@ -49,6 +49,13 @@ interface VideoStageProps {
   className?: string
 }
 
+interface InlineRect {
+  top: number
+  left: number
+  width: number
+  height: number
+}
+
 export const VideoStage = ({
   isMobileExpanded,
   className,
@@ -60,6 +67,7 @@ export const VideoStage = ({
     isMuted,
     videoEnabled,
     videoMode,
+    inlineTarget,
     setCurrentTime,
     setDuration,
     setPlayed,
@@ -76,6 +84,80 @@ export const VideoStage = ({
   const internalPlayerRef = useRef<YouTubePlayerRef | null>(null)
   const progressInterval = useRef<NodeJS.Timeout | null>(null)
   const isSeeking = useRef(false)
+
+  // --- Inline rect tracking ---
+  //
+  // When a Song page has registered an inline target AND that target's
+  // youtubeId matches currentSong AND the user has video disabled, we lay the
+  // iframe over the target via `position: fixed` with measured coordinates.
+  // The rect is remeasured on scroll / resize / layout changes, throttled to
+  // one update per animation frame.
+  const [inlineRect, setInlineRect] = useState<InlineRect | null>(null)
+  const rafRef = useRef<number | null>(null)
+
+  const isInlineActive =
+    !videoEnabled &&
+    !!inlineTarget &&
+    !!currentSong?.youtubeId &&
+    currentSong.youtubeId === inlineTarget.songYoutubeId
+
+  useEffect(() => {
+    if (!isInlineActive || !inlineTarget) {
+      setInlineRect(null)
+      return
+    }
+    const element = inlineTarget.element
+
+    const measureNow = () => {
+      const r = element.getBoundingClientRect()
+      setInlineRect((prev) => {
+        if (
+          prev &&
+          prev.top === r.top &&
+          prev.left === r.left &&
+          prev.width === r.width &&
+          prev.height === r.height
+        ) {
+          return prev
+        }
+        return { top: r.top, left: r.left, width: r.width, height: r.height }
+      })
+    }
+
+    const scheduleMeasure = () => {
+      if (rafRef.current !== null) return
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null
+        measureNow()
+      })
+    }
+
+    measureNow()
+
+    const scrollOptions: AddEventListenerOptions = {
+      passive: true,
+      capture: true,
+    }
+    window.addEventListener('scroll', scheduleMeasure, scrollOptions)
+    window.addEventListener('resize', scheduleMeasure)
+
+    const resizeObserver = new ResizeObserver(scheduleMeasure)
+    resizeObserver.observe(element)
+    // Body observation catches layout shifts from content above the target
+    // (e.g. an image loads and pushes the frame down) even when the frame's
+    // own size hasn't changed.
+    resizeObserver.observe(document.body)
+
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
+      window.removeEventListener('scroll', scheduleMeasure, scrollOptions)
+      window.removeEventListener('resize', scheduleMeasure)
+      resizeObserver.disconnect()
+    }
+  }, [isInlineActive, inlineTarget])
 
   // Scroll lock: prevent page scroll when theater mode is active on desktop
   useEffect(() => {
@@ -229,6 +311,7 @@ export const VideoStage = ({
   // Desktop theater:  fixed inset-x-0, from nav bottom to bottom-bar top
   // Desktop mini:     fixed, bottom-right corner, 300px wide
   // Mobile expanded:  relative flex-1 min-h-0 (parent is a flex column)
+  // Inline (any):     fixed, positioned over a Song page's registered frame
   // Audio only:       absolute 1×1px off-screen (keeps iframe alive for audio)
 
   const isDesktopTheater =
@@ -236,10 +319,25 @@ export const VideoStage = ({
   const isDesktopMini =
     !isMobileExpanded && videoEnabled && videoMode === 'mini'
   const isMobileVideo = isMobileExpanded && videoEnabled
-  const isHidden = !isDesktopTheater && !isDesktopMini && !isMobileVideo
+  // Inline only activates once we've successfully measured a rect — this
+  // avoids a one-frame flash at (0,0) before the first layout measurement.
+  const isInline = isInlineActive && inlineRect !== null
+  const isHidden =
+    !isDesktopTheater && !isDesktopMini && !isMobileVideo && !isInline
+
+  const inlineStyle =
+    isInline && inlineRect
+      ? {
+          top: inlineRect.top,
+          left: inlineRect.left,
+          width: inlineRect.width,
+          height: inlineRect.height,
+        }
+      : undefined
 
   return (
     <div
+      style={inlineStyle}
       className={cn(
         // Only ONE group of positioning classes is ever active at a time.
         // This is critical — Tailwind applies all classes simultaneously, so
@@ -263,11 +361,19 @@ export const VideoStage = ({
         isMobileVideo &&
           'pointer-events-auto relative min-h-0 w-full min-w-0 flex-1 overflow-hidden bg-background',
 
+        // Inline: floating over a Song page's viewscreen frame. The matching
+        // `rounded-sm` mirrors `SongInlineVideoFrame` so the overlay lands
+        // perfectly inside that frame's corners. `pointer-events-auto` lets
+        // the YouTube iframe receive clicks; the standby UI underneath is
+        // hidden while the overlay is active.
+        isInline &&
+          'pointer-events-auto fixed z-20 overflow-hidden rounded-sm bg-black',
+
         className,
       )}
     >
       {/* Video mode toggle — floating inside the stage when video is visible */}
-      {!isHidden && <VideoModeToggle isDesktopMini={isDesktopMini} />}
+      {!isHidden && !isInline && <VideoModeToggle isDesktopMini={isDesktopMini} />}
 
       {origin && (
         <YouTube
@@ -276,9 +382,14 @@ export const VideoStage = ({
           onReady={onPlayerReady}
           onStateChange={onPlayerStateChange}
           opts={opts}
-          // `absolute inset-0` fills whatever size the container is —
-          // works for theater (fixed top/bottom), mini (aspect-video), and mobile (flex-1).
-          className={isHidden ? 'h-full w-full' : 'absolute inset-0'}
+          // `absolute inset-0` fills whatever size the container is — works
+          // for theater (fixed top/bottom), mini (aspect-video), mobile
+          // (flex-1), inline (fixed w/h), and hidden (1×1 parent). Keeping
+          // this prop a stable string literal avoids `react-youtube`'s
+          // `updatePlayer` churn (and the "iframe.removeAttribute of null"
+          // unhandled promise rejection it emits when re-rendered during
+          // iframe init / Fast Refresh).
+          className="absolute inset-0"
           iframeClassName="w-full h-full"
         />
       )}

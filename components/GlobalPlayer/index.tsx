@@ -115,11 +115,20 @@ export const GlobalPlayer = () => {
             without duplicating VideoStage — crossing the breakpoint only flips
             props/CSS, so the YouTube iframe is never torn down.
           ================================================================ */}
+      {/* NOTE: `backdrop-blur-lg` and `bg-background/95` are applied ONLY when
+          the wrapper is actually visible (videoEnabled on mobile). When the
+          wrapper is collapsed to `h-0`, those properties would still create a
+          containing block for fixed-positioned descendants (CSS spec: any
+          non-none `backdrop-filter` does this), which would trap the Song
+          page's inline VideoStage overlay inside a 0-height box and hide it.
+          See: https://developer.mozilla.org/docs/Web/CSS/CSS_positioned_layout/Containing_block */}
       <div
         className={cn(
-          'flex flex-col overflow-hidden bg-background/95 backdrop-blur-lg transition-all duration-300 ease-in-out',
+          'flex flex-col overflow-hidden transition-all duration-300 ease-in-out',
           'max-md:min-h-0',
-          videoEnabled ? 'max-md:flex-1' : 'max-md:h-0',
+          videoEnabled
+            ? 'max-md:flex-1 max-md:bg-background/95 max-md:backdrop-blur-lg'
+            : 'max-md:h-0',
           'md:contents',
         )}
       >
