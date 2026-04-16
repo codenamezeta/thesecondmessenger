@@ -2,13 +2,27 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 
 import type { Media, User } from '@/payload-types'
 import { getClientSideURL } from '@/utilities/getURL'
 import { getMediaUrl } from '@/utilities/getMediaUrl'
 import { cn } from '@/utilities/ui'
+
+/**
+ * Event name dispatched on `window` whenever the auth state changes outside
+ * of a route transition (e.g. programmatic sign-out). `AdminBar` listens for
+ * this event in addition to re-checking on pathname changes, so the session
+ * UI never gets out of sync with the actual cookie state.
+ */
+const AUTH_CHANGED_EVENT = 'tsm:auth-changed'
+
+/** Dispatches the auth-changed event; safe to call from any client code. */
+export const notifyAuthChanged = (): void => {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new Event(AUTH_CHANGED_EVENT))
+}
 
 function memberAvatarSrc(user: User): string {
   const avatar = user.avatar
@@ -34,7 +48,7 @@ const SessionProfileColumn: React.FC<{ user: User }> = ({ user }) => {
     >
       <Image
         src={src}
-        alt=""
+        alt="Profile Avatar"
         width={24}
         height={24}
         unoptimized
@@ -51,17 +65,17 @@ const MemberSessionBar: React.FC<{
   user: User
   onSignOut: () => void
 }> = ({ user, onSignOut }) => (
-  <div className="container flex h-9 min-h-9 items-center justify-between gap-4 py-1">
+  <div className="container flex h-(--admin-bar-height) min-h-6 items-center justify-between gap-4 py-1">
     <SessionProfileColumn user={user} />
     <nav
-      className="flex shrink-0 items-center gap-3 text-sm font-medium sm:gap-5"
+      className="flex shrink-0 items-center gap-2 pr-1 text-xs font-medium sm:gap-3"
       aria-label="Member shortcuts"
     >
       <Link
         href="/music/unreleased"
         className="whitespace-nowrap text-foreground/75 transition-colors hover:text-primary"
       >
-        The Vault
+        Vault
       </Link>
       <Link
         href="/crew"
@@ -72,7 +86,7 @@ const MemberSessionBar: React.FC<{
       <button
         type="button"
         onClick={onSignOut}
-        className="whitespace-nowrap text-foreground/75 transition-colors hover:text-primary"
+        className="rounded border border-border/85 p-1 whitespace-nowrap text-foreground/75 transition-colors hover:text-primary"
       >
         Sign out
       </button>
@@ -84,7 +98,7 @@ const AdminSessionBar: React.FC<{
   user: User
   onSignOut: () => void
 }> = ({ user, onSignOut }) => (
-  <div className="container flex h-9 min-h-9 items-center justify-between gap-4 py-1">
+  <div className="container flex h-8 min-h-8 items-center justify-between gap-4 py-1">
     <SessionProfileColumn user={user} />
     <nav
       className="flex shrink-0 items-center gap-3 text-sm font-medium sm:gap-5"
@@ -115,11 +129,18 @@ const AdminSessionBar: React.FC<{
 
 export const AdminBar: React.FC = () => {
   const router = useRouter()
+  // `pathname` is used as an effect dependency so that the auth check re-runs
+  // on every route transition. Without this the bar gets stuck in whatever
+  // state it had when the nav first mounted — since the nav is persistent
+  // across App Router navigations, the component never remounts on its own,
+  // so logging in from `/login` would otherwise never update `me`.
+  const pathname = usePathname()
   const [me, setMe] = useState<User | null | undefined>(undefined)
 
   useEffect(() => {
     let cancelled = false
-    void (async () => {
+
+    const fetchMe = async () => {
       try {
         const res = await fetch(`${getClientSideURL()}/api/users/me?depth=1`, {
           credentials: 'include',
@@ -131,17 +152,28 @@ export const AdminBar: React.FC = () => {
       } catch {
         if (!cancelled) setMe(null)
       }
-    })()
+    }
+
+    void fetchMe()
+
+    // Pick up explicit auth changes that don't involve a route transition
+    // (e.g. the sign-out button, or a future refresh-token flow).
+    const handleAuthChanged = () => {
+      void fetchMe()
+    }
+    window.addEventListener(AUTH_CHANGED_EVENT, handleAuthChanged)
+
     return () => {
       cancelled = true
+      window.removeEventListener(AUTH_CHANGED_EVENT, handleAuthChanged)
     }
-  }, [])
+  }, [pathname])
 
   useEffect(() => {
     if (me) {
       document.documentElement.style.setProperty('--admin-bar-height', '36px')
     } else {
-      document.documentElement.style.removeProperty('--admin-bar-height')
+      document.documentElement.style.setProperty('--admin-bar-height', '0px')
     }
   }, [me])
 
@@ -154,6 +186,7 @@ export const AdminBar: React.FC = () => {
       })
     } finally {
       setMe(null)
+      notifyAuthChanged()
       router.refresh()
       router.push('/')
     }
@@ -165,7 +198,7 @@ export const AdminBar: React.FC = () => {
   return (
     <div
       className={cn(
-        'min-h-(--admin-bar-height,36px) min-w-full items-center border-b border-white/10 bg-background/85 text-foreground backdrop-blur-3xl',
+        'min-h-(--admin-bar-height,36px) min-w-full items-center border-b border-white/10 bg-transparent backdrop-blur-3xl',
         {
           flex: visible,
           hidden: !visible,

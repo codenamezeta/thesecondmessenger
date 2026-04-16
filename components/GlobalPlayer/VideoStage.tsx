@@ -263,7 +263,10 @@ export const VideoStage = ({
       }
       // Keep React state in sync when the user uses native iframe controls
       // (or any other path that changes playback outside BottomBar).
-      if (state === YT_PLAYER_STATE.PLAYING || state === YT_PLAYER_STATE.BUFFERING) {
+      if (
+        state === YT_PLAYER_STATE.PLAYING ||
+        state === YT_PLAYER_STATE.BUFFERING
+      ) {
         setIsPlaying(true)
         return
       }
@@ -272,7 +275,11 @@ export const VideoStage = ({
         try {
           const time = event.target.getCurrentTime()
           const total = event.target.getDuration()
-          if (typeof time === 'number' && typeof total === 'number' && total > 0) {
+          if (
+            typeof time === 'number' &&
+            typeof total === 'number' &&
+            total > 0
+          ) {
             setCurrentTime(time)
             setPlayed(time / total)
           }
@@ -281,12 +288,7 @@ export const VideoStage = ({
         }
       }
     },
-    [
-      playNext,
-      setIsPlaying,
-      setCurrentTime,
-      setPlayed,
-    ],
+    [playNext, setIsPlaying, setCurrentTime, setPlayed],
   )
 
   const opts: YouTubeProps['opts'] = useMemo(
@@ -351,7 +353,7 @@ export const VideoStage = ({
         // Desktop theater: full viewport width, between nav and bottom bar
         // `fixed` creates a containing block so the YouTube child can use `absolute inset-0`.
         isDesktopTheater &&
-          'pointer-events-auto fixed inset-x-0 top-[calc(var(--admin-bar-height,0px)+var(--main-nav-bar-height,0px))] bottom-(--bottom-bar-height,5rem) z-10 bg-background',
+          'pointer-events-auto fixed inset-x-0 top-[calc(var(--admin-bar-height)+var(--main-nav-bar-height))] bottom-(--bottom-bar-height,5rem) z-10 bg-background',
 
         // Desktop mini: 300px floating above the bottom bar, bottom-right corner
         isDesktopMini &&
@@ -373,7 +375,9 @@ export const VideoStage = ({
       )}
     >
       {/* Video mode toggle — floating inside the stage when video is visible */}
-      {!isHidden && !isInline && <VideoModeToggle isDesktopMini={isDesktopMini} />}
+      {!isHidden && !isInline && (
+        <VideoModeToggle isDesktopMini={isDesktopMini} />
+      )}
 
       {origin && (
         <YouTube

@@ -40,9 +40,9 @@ export default async function MusicPage() {
   })
 
   return (
-    <main className="container bg-transparent py-24">
+    <main className="container bg-transparent pb-24">
       {/* Header */}
-      <div className="mb-24 text-center">
+      <div className="my-12 text-center sm:my-24">
         <h1 className="mb-4 text-center font-heading text-7xl tracking-widest text-foreground uppercase md:text-6xl">
           Music Archive
         </h1>

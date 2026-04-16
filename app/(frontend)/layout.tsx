@@ -42,7 +42,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
           <YouTubeAuthProvider>
             <PlayerProvider>
               <Nav />
-              <main className="flex flex-1 flex-col">{children}</main>
+              {children}
               <Footer />
               <GlobalPlayer />
             </PlayerProvider>

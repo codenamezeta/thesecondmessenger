@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Loader2 } from 'lucide-react'
+import { notifyAuthChanged } from '@/components/Nav/AdminBar'
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Something went wrong'
@@ -77,7 +78,11 @@ function AuthPageContent() {
 
       if (!res.ok) throw new Error('Invalid email or password')
 
-      // Payload automatically sets the secure cookie here!
+      // Payload automatically sets the secure cookie here. Fire the auth
+      // notification BEFORE the router transition so the AdminBar refetches
+      // immediately — otherwise it has to wait for the pathname change,
+      // which briefly leaves the nav stale.
+      notifyAuthChanged()
       router.push(redirectPath)
       router.refresh() // Refresh the server components to show logged-in state
     } catch (err: unknown) {
@@ -126,6 +131,7 @@ function AuthPageContent() {
         throw new Error(payloadError ?? 'Account created, but login failed.')
       }
 
+      notifyAuthChanged()
       router.push(redirectPath)
       router.refresh()
     } catch (err: unknown) {

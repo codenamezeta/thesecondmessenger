@@ -11,6 +11,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import { SwipeableDrawer } from './ui/SwipeableDrawer'
 
 /** Inner content shared between the desktop Sheet and mobile inline panel */
 const LibraryContent = () => {
@@ -207,7 +208,7 @@ interface LibraryDrawerInlineProps {
 export const LibraryDrawerInline = ({
   className,
 }: LibraryDrawerInlineProps) => {
-  const { isLibraryDrawerOpen } = usePlayer()
+  const { isLibraryDrawerOpen, setIsLibraryDrawerOpen } = usePlayer()
 
   return (
     <div
@@ -218,7 +219,9 @@ export const LibraryDrawerInline = ({
       )}
     >
       <div className="h-[40svh] border-b border-border/50 bg-background/75 backdrop-blur-sm">
-        <LibraryContent />
+        <SwipeableDrawer onClose={() => setIsLibraryDrawerOpen(false)}>
+          <LibraryContent />
+        </SwipeableDrawer>
       </div>
     </div>
   )

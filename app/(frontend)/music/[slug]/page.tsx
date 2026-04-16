@@ -413,7 +413,7 @@ export default async function SongPage({ params }: Args) {
             )}
 
             {song.youtubeId && (
-              <section className="mt-12 lg:col-span-8">
+              <section className="mt-6 px-3 lg:col-span-8">
                 {/* <Separator className="mb-8" /> */}
                 <CommentsYT videoId={song.youtubeId} />
               </section>

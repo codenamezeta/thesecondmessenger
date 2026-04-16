@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { motion, useDragControls, type PanInfo } from 'motion/react'
 import { usePlayer } from '@/context/PlayerContext'
 import { cn } from '@/utilities/ui'
 import { useMediaQuery } from '@/utilities/useMediaQuery'
@@ -12,6 +13,9 @@ import { InfoDrawerSheet, InfoDrawerInline } from './InfoDrawer'
 import { GlobalControls } from './ui/GlobalControls'
 import { ActionButtons } from './ui/ActionButtons'
 import { QueueControls } from './ui/QueueControls'
+
+const COLLAPSE_SWIPE_DISTANCE_PX = 80
+const COLLAPSE_SWIPE_VELOCITY = 500
 
 // ---------------------------------------------------------------------------
 // YouTube metadata sync
@@ -94,19 +98,42 @@ const useYouTubeMetadataSync = () => {
 // ---------------------------------------------------------------------------
 
 export const GlobalPlayer = () => {
-  const { currentSong, videoEnabled } = usePlayer()
+  const { currentSong, videoEnabled, setVideoEnabled } = usePlayer()
 
   // Match Tailwind `md` (768px) so layout + `md:*` utilities stay in sync.
   const isDesktop = useMediaQuery('(min-width: 768px)')
 
   useYouTubeMetadataSync()
 
+  // Drag controls for collapsing the expanded mobile player. Only the pill
+  // handle initiates the drag (dragListener=false), so taps on child controls
+  // never accidentally dismiss the player.
+  const collapseControls = useDragControls()
+
+  const handleCollapseDragEnd = (
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo,
+  ) => {
+    if (
+      info.offset.y > COLLAPSE_SWIPE_DISTANCE_PX ||
+      info.velocity.y > COLLAPSE_SWIPE_VELOCITY
+    ) {
+      setVideoEnabled(false)
+    }
+  }
+
+  // Only engage drag on mobile while the expanded player is actually showing.
+  // On desktop the wrapper uses `display: contents` (no box), so even if drag
+  // were active, transforms wouldn't render; but disabling drag also avoids
+  // attaching unnecessary pointer listeners.
+  const collapseDragActive = !isDesktop && videoEnabled
+
   if (!currentSong?.youtubeId) return null
 
   return (
     <aside
       id="media_player"
-      className="pointer-events-none fixed inset-x-0 top-[calc(var(--admin-bar-height,0px)+var(--main-nav-bar-height,0px))] bottom-0 z-20 flex flex-col justify-end md:sticky"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex flex-col justify-end md:sticky"
     >
       {/* ================================================================
           Single flex column + one VideoStage instance.
@@ -122,9 +149,19 @@ export const GlobalPlayer = () => {
           non-none `backdrop-filter` does this), which would trap the Song
           page's inline VideoStage overlay inside a 0-height box and hide it.
           See: https://developer.mozilla.org/docs/Web/CSS/CSS_positioned_layout/Containing_block */}
-      <div
+      <motion.div
+        drag={collapseDragActive ? 'y' : false}
+        dragListener={false}
+        dragControls={collapseControls}
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0, bottom: 0.35 }}
+        dragSnapToOrigin
+        onDragEnd={handleCollapseDragEnd}
         className={cn(
-          'flex flex-col overflow-hidden transition-all duration-300 ease-in-out',
+          'flex flex-col overflow-hidden duration-300 ease-in-out',
+          // Transition only layout-affecting properties — leaving `transform`
+          // alone so framer-motion's drag transforms don't double-animate.
+          'transition-[flex,height,background-color]',
           'max-md:min-h-0',
           videoEnabled
             ? 'max-md:flex-1 max-md:bg-background/95 max-md:backdrop-blur-lg'
@@ -132,6 +169,23 @@ export const GlobalPlayer = () => {
           'md:contents',
         )}
       >
+        {/* 0. Mobile-only drag handle — grab target for swipe-down-to-collapse.
+            Rendered via `md:hidden` so the expanded mobile stack gets a visible
+            pill, while desktop never sees it. Pointer-down starts the drag
+            on the parent motion.div (dragListener=false keeps taps elsewhere
+            from triggering dismissal). */}
+        {collapseDragActive && (
+          <div
+            onPointerDown={(e) => collapseControls.start(e)}
+            role="button"
+            tabIndex={-1}
+            aria-label="Drag handle — swipe down to collapse player"
+            className="pointer-events-auto flex h-6 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing md:hidden"
+          >
+            <div className="h-1 w-10 rounded-full bg-muted-foreground/40" />
+          </div>
+        )}
+
         {/* 1. Global Controls row (mobile only in flow) */}
         <GlobalControls
           hideVolume
@@ -155,7 +209,7 @@ export const GlobalPlayer = () => {
 
         {/* 6. Info Drawer — inline on mobile */}
         <InfoDrawerInline className="pointer-events-auto shrink-0 md:hidden" />
-      </div>
+      </motion.div>
 
       {/* Desktop: sheet variants (VideoStage stays in the column above). */}
       {isDesktop && (

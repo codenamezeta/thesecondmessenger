@@ -12,6 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import { SwipeableDrawer } from './ui/SwipeableDrawer'
 
 /** Inner content shared between the desktop Sheet and mobile inline panel */
 const InfoContent = () => {
@@ -209,7 +210,7 @@ interface InfoDrawerInlineProps {
 }
 
 export const InfoDrawerInline = ({ className }: InfoDrawerInlineProps) => {
-  const { isInfoDrawerOpen } = usePlayer()
+  const { isInfoDrawerOpen, setIsInfoDrawerOpen } = usePlayer()
 
   return (
     <div
@@ -219,9 +220,16 @@ export const InfoDrawerInline = ({ className }: InfoDrawerInlineProps) => {
         className,
       )}
     >
-      {/* Tab bar is always visible even when closed (height is the 2.5rem fallback) */}
+      {/* Tab bar is always visible even when closed (height is the 2.5rem fallback).
+          The drag handle only appears when the drawer is OPEN — otherwise it
+          would consume the small 40px closed-state area and crop the tab bar. */}
       <div className="h-[40svh] bg-background/75 backdrop-blur-sm">
-        <InfoContent />
+        <SwipeableDrawer
+          onClose={() => setIsInfoDrawerOpen(false)}
+          showHandle={isInfoDrawerOpen}
+        >
+          <InfoContent />
+        </SwipeableDrawer>
       </div>
     </div>
   )
