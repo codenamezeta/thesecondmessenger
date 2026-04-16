@@ -129,7 +129,7 @@ export const VisualLog = ({ videos }: VisualLogProps) => {
           <Button
             variant="ghost"
             size="icon-lg"
-            className="mt-3 py-3 text-xs tracking-widest uppercase"
+            className="mt-3 w-full py-3 text-xs tracking-widest uppercase"
             onClick={() => setIsExpanded(!isExpanded)}
           >
             {isExpanded ? 'Collapse' : 'Expand'}{' '}
@@ -172,6 +172,7 @@ export const VisualLog = ({ videos }: VisualLogProps) => {
                     src={`https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`}
                     alt={video.title}
                     fill
+                    sizes="100px"
                     className={cn(
                       'object-cover transition-opacity',
                       isActive

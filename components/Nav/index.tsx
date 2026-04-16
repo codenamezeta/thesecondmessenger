@@ -116,10 +116,10 @@ export const Nav: React.FC = () => {
         <Image
           src="/imgs/logos/radio-dish-logo.png"
           alt="The 2nd Messenger Logo"
-          sizes="(max-width: 768px) 100vw, 160px"
-          width={200}
-          height={50}
-          className="object-contain opacity-85 transition-opacity group-hover:opacity-100"
+          sizes="(max-width: 768px) 100vw, 240px"
+          width={240}
+          height={60}
+          className="h-[60px] w-[240px] max-w-none object-contain opacity-85 transition-opacity group-hover:opacity-100"
           onError={() => setLogoError(true)}
           priority
         />

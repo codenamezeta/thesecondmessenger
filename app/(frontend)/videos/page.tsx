@@ -47,22 +47,25 @@ export default async function VideosPage() {
         {/* Header */}
         <div className="mb-12 flex items-end justify-between border-b border-border/50 pb-8">
           <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-primary/10 rounded text-primary">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="rounded bg-primary/10 p-2 text-primary">
                 <Film size={24} />
               </div>
-              <h1 className="text-4xl md:text-5xl font-heading text-foreground uppercase tracking-widest">
+              <h1 className="font-heading text-4xl tracking-widest text-foreground uppercase md:text-5xl">
                 Visual Logs
               </h1>
             </div>
-            <p className="text-foreground/50 font-mono max-w-xl">
-              Accessing video archive. Select a file to initiate playback and establish comms.
+            <p className="max-w-xl font-mono text-foreground/50">
+              Accessing video archive. Select a file to initiate playback and
+              establish comms.
             </p>
           </div>
 
-          <div className="hidden md:block text-right">
-            <div className="text-3xl font-heading text-foreground">{mergedVideos.length}</div>
-            <div className="text-[10px] text-primary uppercase tracking-widest font-mono">
+          <div className="hidden text-right md:block">
+            <div className="font-heading text-3xl text-foreground">
+              {mergedVideos.length}
+            </div>
+            <div className="font-mono text-[10px] tracking-widest text-primary uppercase">
               Files Found
             </div>
           </div>

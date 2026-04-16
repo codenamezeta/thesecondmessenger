@@ -14,6 +14,14 @@ import { cn } from '@/utilities/ui'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 
+const YOUTUBE_CONNECT_PATH = '/api/auth/youtube/connect'
+const commentDateFormatter = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'UTC',
+})
+
 interface CommentSnippet {
   textDisplay: string
   textOriginal: string
@@ -109,7 +117,7 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
       const message =
         error instanceof Error ? error.message : 'Failed to post comment'
       if (message === 'Not connected to YouTube') {
-        window.location.assign('/api/auth/youtube/connect')
+        window.location.assign(YOUTUBE_CONNECT_PATH)
         return
       }
       console.error(error)
@@ -145,7 +153,7 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
       const message =
         error instanceof Error ? error.message : 'Failed to post reply'
       if (message === 'Not connected to YouTube') {
-        window.location.assign('/api/auth/youtube/connect')
+        window.location.assign(YOUTUBE_CONNECT_PATH)
         return
       }
       console.error('Failed to post reply', error)
@@ -154,11 +162,7 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
 
   // --- 3. Render Helpers ---
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
+    return commentDateFormatter.format(new Date(dateStr))
   }
 
   const CommentItem = ({
@@ -239,18 +243,18 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
   return (
     <section className="mx-auto w-full">
       <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
-        <h3 className="font-heading flex items-center gap-2 text-xl tracking-wider text-foreground uppercase">
+        <h3 className="flex items-center gap-2 font-heading text-xl tracking-wider text-foreground uppercase">
           <MessageSquare size={20} className="text-primary" />
           Comms Channel
         </h3>
         {!commentsDisabled && (
           <Button
-            onClick={() => window.location.assign('/api/auth/youtube/connect')}
+            asChild
             variant="outline"
             size="sm"
-            className="flex items-center gap-2 border-secondary text-xs tracking-wider text-secondary hover:border-primary"
+            className="flex items-center gap-2 border-accent bg-accent/10 text-xs tracking-wider text-accent/50 hover:border-primary"
           >
-            Connect YouTube
+            <a href={YOUTUBE_CONNECT_PATH}>Connect YouTube</a>
           </Button>
         )}
       </div>
@@ -263,7 +267,8 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
               type="text"
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Hailing frequencies open. What's your message?"
+              // placeholder="Hailing frequencies open. What's your message?"
+              placeholder="Share your thoughts with the community on YouTube"
               className="flex-1 border-x-0 border-t-0 border-b border-border bg-transparent py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-none focus:bg-input"
             />
             <Button
