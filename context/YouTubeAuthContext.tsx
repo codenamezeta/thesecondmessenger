@@ -1,161 +1,283 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import Script from 'next/script'
 
-interface YouTubeUser {
+/**
+ * Unified YouTube auth layer.
+ *
+ * Priority order for obtaining a working YouTube access token:
+ *
+ *   1. TSM-logged-in + YouTube connected
+ *        → `/api/auth/youtube/token` returns a fresh access token backed by a
+ *          server-side refresh token. Zero prompts, survives sessions/devices.
+ *   2. Anonymous (or TSM-logged-in but not connected)
+ *        → Google Identity Services `initTokenClient` implicit popup. Token
+ *          is held in memory only for the lifetime of the tab. Re-consent is
+ *          required on reload; that's fine — one popup click is cheap.
+ *
+ * TSM users who want to skip the popup forever can visit Account Settings and
+ * run the server-side connect flow once. That's the *only* reason a TSM
+ * account is needed for YouTube features now.
+ */
+
+type TokenSource = 'server' | 'gis' | null
+
+interface YouTubeProfile {
   displayName: string
   profileImageUrl: string
-  accessToken: string
 }
 
-interface YouTubeAuthContextType {
-  user: YouTubeUser | null
+interface EnsureTokenOptions {
+  /**
+   * When true, trigger an interactive GIS popup if no valid token is cached.
+   * Must be called from a user gesture (e.g. click handler). When false, only
+   * returns a token if one is already cached (useful for "is the user
+   * connected?" checks).
+   */
+  interactive?: boolean
+}
+
+interface YouTubeAuthContextValue {
+  /** Current access token, or null if none is available. */
+  token: string | null
+  /** Whether the bootstrap fetch of a persistent token has completed. */
   isLoading: boolean
-  login: () => void
-  logout: () => void
+  /** How the current token was obtained, if any. */
+  source: TokenSource
+  /** YouTube channel profile, populated on first use. Best-effort. */
+  profile: YouTubeProfile | null
+  /**
+   * Get a valid token, prompting the user via GIS if needed (and if allowed).
+   * Returns null if the user cancels or no token can be obtained.
+   */
+  ensureToken: (options?: EnsureTokenOptions) => Promise<string | null>
+  /** Drop the current token and forget the profile. Does not revoke with Google. */
+  clear: () => void
 }
 
-const YouTubeAuthContext = createContext<YouTubeAuthContextType | undefined>(undefined)
+const YouTubeAuthContext = createContext<YouTubeAuthContextValue | undefined>(
+  undefined
+)
 
-let didWarnMissingProvider = false
+const GIS_SCOPE = 'https://www.googleapis.com/auth/youtube.force-ssl'
 
-export const YouTubeAuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<YouTubeUser | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [tokenClient, setTokenClient] = useState<any>(null)
+type GoogleTokenClient = {
+  requestAccessToken: (overrideConfig?: { prompt?: string }) => void
+}
 
+type GoogleTokenResponse = {
+  access_token?: string
+  expires_in?: number
+  error?: string
+}
+
+declare global {
+  interface Window {
+    google?: {
+      accounts?: {
+        oauth2?: {
+          initTokenClient: (config: {
+            client_id: string
+            scope: string
+            callback: (response: GoogleTokenResponse) => void
+          }) => GoogleTokenClient
+        }
+      }
+    }
+  }
+}
+
+export const YouTubeAuthProvider = ({ children }: { children: ReactNode }) => {
   const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
   const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
+
+  const [token, setToken] = useState<string | null>(null)
+  const [source, setSource] = useState<TokenSource>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [profile, setProfile] = useState<YouTubeProfile | null>(null)
+
+  const expiresAtRef = useRef<number>(0)
+  const tokenClientRef = useRef<GoogleTokenClient | null>(null)
+  const pendingResolversRef = useRef<Array<(token: string | null) => void>>([])
 
   const fetchProfile = useCallback(
     async (accessToken: string) => {
       if (!API_KEY) return
-
       try {
         const res = await fetch(
           `https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true&key=${API_KEY}`,
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          },
+          { headers: { Authorization: `Bearer ${accessToken}` } },
         )
-
-        if (!res.ok) {
-          // If token is invalid/expired
-          if (res.status === 401 || res.status === 403) {
-            throw new Error('Token invalid')
-          }
-          return
-        }
-
+        if (!res.ok) return
         const data = await res.json()
-        if (data.items?.[0]) {
-          const snippet = data.items[0].snippet
-          setUser({
+        const snippet = data.items?.[0]?.snippet
+        if (snippet) {
+          setProfile({
             displayName: snippet.title,
-            profileImageUrl: snippet.thumbnails?.default?.url,
-            accessToken,
+            profileImageUrl: snippet.thumbnails?.default?.url ?? '',
           })
-          localStorage.setItem('yt_access_token', accessToken)
         }
-      } catch (e) {
-        console.error('Failed to fetch user profile', e)
-        localStorage.removeItem('yt_access_token')
-        setUser(null)
-      } finally {
-        setIsLoading(false)
+      } catch (err) {
+        console.warn('Failed to fetch YouTube profile', err)
       }
     },
     [API_KEY],
   )
 
-  // Initialize: Check Local Storage
+  const applyToken = useCallback(
+    (accessToken: string, expiresInSeconds: number, nextSource: TokenSource) => {
+      setToken(accessToken)
+      setSource(nextSource)
+      expiresAtRef.current = Date.now() + expiresInSeconds * 1000
+      // Resolve any callers that were waiting on this token.
+      const waiters = pendingResolversRef.current
+      pendingResolversRef.current = []
+      waiters.forEach((resolve) => resolve(accessToken))
+      // Populate profile in the background. Best-effort.
+      void fetchProfile(accessToken)
+    },
+    [fetchProfile],
+  )
+
+  const clear = useCallback(() => {
+    setToken(null)
+    setSource(null)
+    setProfile(null)
+    expiresAtRef.current = 0
+  }, [])
+
+  // Bootstrap: try the server endpoint for a persistent (TSM-linked) token.
   useEffect(() => {
-    const token = localStorage.getItem('yt_access_token')
-    if (token) {
-      fetchProfile(token)
-    } else {
-      setIsLoading(false)
+    let cancelled = false
+    const bootstrap = async () => {
+      try {
+        const res = await fetch('/api/auth/youtube/token', {
+          credentials: 'include',
+        })
+        if (!res.ok) return
+        const data = (await res.json()) as {
+          accessToken: string | null
+          expiresAt?: string | null
+        }
+        if (cancelled || !data.accessToken) return
+        const expiresInSeconds = data.expiresAt
+          ? Math.max(
+              60,
+              Math.floor((new Date(data.expiresAt).getTime() - Date.now()) / 1000),
+            )
+          : 3600
+        applyToken(data.accessToken, expiresInSeconds, 'server')
+      } catch (err) {
+        console.warn('YouTube token bootstrap failed', err)
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
     }
-  }, [fetchProfile])
+    void bootstrap()
+    return () => {
+      cancelled = true
+    }
+  }, [applyToken])
 
-  // Initialize: Google Identity Services
-  const handleGsiLoad = useCallback(() => {
-    if (!CLIENT_ID || typeof window === 'undefined' || !(window as any).google) return
+  const initTokenClient = useCallback(() => {
+    if (tokenClientRef.current) return tokenClientRef.current
+    if (!CLIENT_ID) return null
+    const oauth2 = window.google?.accounts?.oauth2
+    if (!oauth2) return null
 
-    const client = (window as any).google.accounts.oauth2.initTokenClient({
+    const client = oauth2.initTokenClient({
       client_id: CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/youtube.force-ssl',
-      callback: (tokenResponse: any) => {
-        if (tokenResponse && tokenResponse.access_token) {
-          fetchProfile(tokenResponse.access_token)
+      scope: GIS_SCOPE,
+      callback: (response) => {
+        if (response.access_token && response.expires_in) {
+          applyToken(response.access_token, response.expires_in, 'gis')
+        } else {
+          // User cancelled / errored out. Resolve pending waiters with null.
+          const waiters = pendingResolversRef.current
+          pendingResolversRef.current = []
+          waiters.forEach((resolve) => resolve(null))
         }
       },
     })
-    setTokenClient(client)
-  }, [CLIENT_ID, fetchProfile])
+    tokenClientRef.current = client
+    return client
+  }, [CLIENT_ID, applyToken])
 
-  // Ensure Script is loaded or check if already present
+  // If GIS loaded before the provider mounted, init now.
   useEffect(() => {
-    if ((window as any).google && !tokenClient) {
-      handleGsiLoad()
-    }
-  }, [tokenClient, handleGsiLoad])
+    if (typeof window === 'undefined') return
+    if (window.google?.accounts?.oauth2) initTokenClient()
+  }, [initTokenClient])
 
-  const login = useCallback(() => {
-    if (tokenClient) {
-      tokenClient.requestAccessToken()
-    } else {
-      console.warn('Google Sign-In not initialized')
-      // Try initializing again just in case
-      if ((window as any).google) handleGsiLoad()
-      else alert('Google Sign-In is initializing... please try again in a moment.')
-    }
-  }, [tokenClient, handleGsiLoad])
+  const handleGsiLoad = useCallback(() => {
+    initTokenClient()
+  }, [initTokenClient])
 
-  const logout = useCallback(() => {
-    setUser(null)
-    localStorage.removeItem('yt_access_token')
-    if ((window as any).google) {
-      ;(window as any).google.accounts.oauth2.revoke(user?.accessToken, () => {
-        console.log('Revoked')
+  const ensureToken = useCallback(
+    async ({ interactive = false }: EnsureTokenOptions = {}) => {
+      // Cached token still valid (with 1-minute safety buffer)?
+      if (token && Date.now() < expiresAtRef.current - 60_000) {
+        return token
+      }
+
+      if (!interactive) return null
+
+      const client = initTokenClient()
+      if (!client) {
+        console.warn(
+          'YouTube auth: Google Identity Services not ready. Is NEXT_PUBLIC_GOOGLE_CLIENT_ID set?',
+        )
+        return null
+      }
+
+      return new Promise<string | null>((resolve) => {
+        pendingResolversRef.current.push(resolve)
+        client.requestAccessToken({ prompt: 'consent' })
       })
-    }
-  }, [user?.accessToken])
+    },
+    [token, initTokenClient],
+  )
+
+  const value = useMemo<YouTubeAuthContextValue>(
+    () => ({ token, isLoading, source, profile, ensureToken, clear }),
+    [token, isLoading, source, profile, ensureToken, clear],
+  )
 
   return (
-    <YouTubeAuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <YouTubeAuthContext.Provider value={value}>
       <Script src="https://accounts.google.com/gsi/client" onLoad={handleGsiLoad} />
       {children}
     </YouTubeAuthContext.Provider>
   )
 }
 
-export const useYouTubeAuth = () => {
-  const context = useContext(YouTubeAuthContext)
-  // If a component calls this hook outside the provider, keep the app alive.
-  // The YouTube auth actions will be no-ops until `YouTubeAuthProvider` is mounted.
-  if (context === undefined) {
+let didWarnMissingProvider = false
+
+export const useYouTubeAuth = (): YouTubeAuthContextValue => {
+  const ctx = useContext(YouTubeAuthContext)
+  if (!ctx) {
     if (process.env.NODE_ENV !== 'production' && !didWarnMissingProvider) {
       didWarnMissingProvider = true
       console.warn('useYouTubeAuth must be used within a YouTubeAuthProvider')
     }
-
     return {
-      user: null,
+      token: null,
       isLoading: false,
-      login: () => {
-        if (process.env.NODE_ENV !== 'production') {
-          console.warn('YouTube login requested, but YouTubeAuthProvider is not mounted')
-        }
-      },
-      logout: () => {
-        if (process.env.NODE_ENV !== 'production') {
-          console.warn('YouTube logout requested, but YouTubeAuthProvider is not mounted')
-        }
-      },
+      source: null,
+      profile: null,
+      ensureToken: async () => null,
+      clear: () => {},
     }
   }
-
-  return context
+  return ctx
 }

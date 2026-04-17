@@ -11,9 +11,12 @@ import {
 } from '@/components/ui/card'
 import { Check, Disc3, Loader2, Save, Youtube } from 'lucide-react'
 import { cn } from '@/utilities/ui'
-import { likeYouTubeVideo, subscribeToChannel } from '@/actions/youtube'
+import { useYouTubeAuth } from '@/context/YouTubeAuthContext'
+import { likeVideo, subscribeToChannel } from '@/lib/youtube/client'
 import { getSpotifyAuthUrl } from '@/actions/library-sync'
 import { useRouter, useSearchParams } from 'next/navigation'
+
+const YOUTUBE_CHANNEL_ID = process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL_ID
 
 // import { Separator } from './ui/separator'
 import { Button } from './ui/button'
@@ -36,6 +39,7 @@ export const LibrarySync = ({
 }: LibrarySyncProps) => {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { ensureToken } = useYouTubeAuth()
 
   const [status, setStatus] = useState<
     'idle' | 'loading' | 'success' | 'connected'
@@ -62,31 +66,32 @@ export const LibrarySync = ({
 
   // --- YOUTUBE HANDLER ---
   const handleYouTube = async () => {
-    // If we have no youtube ID, we can't do anything (unless we just want to sub, which is fallback)
-    // But usually this button appears only if youtubeId is present.
     if (!youtubeId && isReleased) return
 
     setStatus('loading')
     setActivePlatform('youtube')
 
-    let result
-    if (isReleased && youtubeId) {
-      result = await likeYouTubeVideo(youtubeId)
-    } else {
-      // Setup your channel ID here or pull from config
-      result = await subscribeToChannel()
-    }
-
-    if (result.success) {
-      setStatus('success')
-      setTimeout(() => setStatus('idle'), 3000)
-    } else {
-      setStatus('idle')
-      if (result.error === 'Not connected to YouTube') {
-        router.push('/api/auth/youtube/connect')
+    try {
+      const token = await ensureToken({ interactive: true })
+      if (!token) {
+        setStatus('idle')
         return
       }
-      alert(result.error || 'Failed to connect to YouTube.')
+
+      if (isReleased && youtubeId) {
+        await likeVideo(youtubeId, token)
+      } else {
+        if (!YOUTUBE_CHANNEL_ID) {
+          throw new Error('Channel ID not configured')
+        }
+        await subscribeToChannel(YOUTUBE_CHANNEL_ID, token)
+      }
+
+      setStatus('success')
+      setTimeout(() => setStatus('idle'), 3000)
+    } catch (err) {
+      setStatus('idle')
+      alert(err instanceof Error ? err.message : 'Failed to connect to YouTube.')
     }
   }
 
