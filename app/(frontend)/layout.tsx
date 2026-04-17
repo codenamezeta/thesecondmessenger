@@ -38,16 +38,16 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
       <body className="flex min-h-screen flex-col font-body antialiased">
         <Analytics />
         <SpeedInsights />
-        <ThemeProvider>
-          <YouTubeAuthProvider>
+        <YouTubeAuthProvider>
+          <ThemeProvider>
             <PlayerProvider>
               <Nav />
               {children}
               <Footer />
               <GlobalPlayer />
             </PlayerProvider>
-          </YouTubeAuthProvider>
-        </ThemeProvider>
+          </ThemeProvider>
+        </YouTubeAuthProvider>
       </body>
     </html>
   )

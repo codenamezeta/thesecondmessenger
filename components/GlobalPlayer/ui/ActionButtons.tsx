@@ -11,7 +11,8 @@ import {
   Info,
 } from 'lucide-react'
 import { usePlayer } from '@/context/PlayerContext'
-import { likeYouTubeVideo, subscribeToChannel } from '@/actions/youtube'
+import { useYouTubeAuth } from '@/context/YouTubeAuthContext'
+import { likeVideo, subscribeToChannel } from '@/lib/youtube/client'
 import { cn } from '@/utilities/ui'
 import type { Media } from '@/payload-types'
 
@@ -19,8 +20,11 @@ interface ActionButtonsProps {
   className?: string
 }
 
+const YOUTUBE_CHANNEL_ID = process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL_ID
+
 export const ActionButtons = ({ className }: ActionButtonsProps) => {
   const { currentSong, isInfoDrawerOpen, setIsInfoDrawerOpen } = usePlayer()
+  const { ensureToken } = useYouTubeAuth()
 
   const [likeStatus, setLikeStatus] = useState<'idle' | 'loading' | 'success'>(
     'idle',
@@ -35,29 +39,41 @@ export const ActionButtons = ({ className }: ActionButtonsProps) => {
   const handleLike = async () => {
     if (!currentSong.youtubeId) return
     setLikeStatus('loading')
-    const res = await likeYouTubeVideo(currentSong.youtubeId as string)
-    if (res.success) {
+    try {
+      const token = await ensureToken({ interactive: true })
+      if (!token) {
+        setLikeStatus('idle')
+        return
+      }
+      await likeVideo(currentSong.youtubeId as string, token)
       setLikeStatus('success')
       setTimeout(() => setLikeStatus('idle'), 2000)
-    } else {
+    } catch (err) {
+      console.error('Like failed', err)
       setLikeStatus('idle')
-      if (res.error === 'Not connected to YouTube') {
-        window.location.assign('/api/auth/youtube/connect')
-      }
     }
   }
 
   const handleSubscribe = async () => {
+    if (!YOUTUBE_CHANNEL_ID) {
+      console.warn(
+        'NEXT_PUBLIC_YOUTUBE_CHANNEL_ID is not set; cannot subscribe from the client.',
+      )
+      return
+    }
     setSubStatus('loading')
-    const res = await subscribeToChannel()
-    if (res.success) {
+    try {
+      const token = await ensureToken({ interactive: true })
+      if (!token) {
+        setSubStatus('idle')
+        return
+      }
+      await subscribeToChannel(YOUTUBE_CHANNEL_ID, token)
       setSubStatus('success')
       setTimeout(() => setSubStatus('idle'), 2000)
-    } else {
+    } catch (err) {
+      console.error('Subscribe failed', err)
       setSubStatus('idle')
-      if (res.error === 'Not connected to YouTube') {
-        window.location.assign('/api/auth/youtube/connect')
-      }
     }
   }
 

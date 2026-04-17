@@ -542,7 +542,9 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Connect once to use like/comment/subscribe features without repeated sign-in prompts.
+          Optional. Liking, subscribing, and commenting on YouTube already work
+          with a one-time popup sign-in. Connect your account here to stay
+          signed in across sessions and devices so you’re never prompted again.
         </p>
       </section>
 

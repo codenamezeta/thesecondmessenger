@@ -12,7 +12,7 @@ function isValidThemeSetting(value: string | null): value is ThemeSetting {
 }
 
 function readInitialThemeSetting(): ThemeSetting {
-  if (typeof window === 'undefined') return 'system'
+  if (typeof window === 'undefined') return 'dark'
 
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY)
@@ -141,9 +141,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
     [themeSetting, resolvedTheme, setTheme],
   )
 
-  return (
-    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
-  )
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }
 
 export { ThemeProvider }

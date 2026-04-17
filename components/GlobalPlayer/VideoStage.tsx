@@ -102,10 +102,12 @@ export const VideoStage = ({
     currentSong.youtubeId === inlineTarget.songYoutubeId
 
   useEffect(() => {
-    if (!isInlineActive || !inlineTarget) {
-      setInlineRect(null)
-      return
-    }
+    // When inactive, don't run the measurement pipeline. We intentionally
+    // don't clear `inlineRect` here — every consumer gates on
+    // `isInline = isInlineActive && inlineRect !== null`, so a stale rect
+    // sitting in state is never read. Avoiding the setState sidesteps
+    // React 19's "cascading render" warning for redundant effect writes.
+    if (!isInlineActive || !inlineTarget) return
     const element = inlineTarget.element
 
     const measureNow = () => {

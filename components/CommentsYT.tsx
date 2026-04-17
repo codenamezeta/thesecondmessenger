@@ -9,12 +9,12 @@ import {
   Send,
   Reply as ReplyIcon,
 } from 'lucide-react'
-import { postCommentAction, replyToCommentAction } from '@/actions/youtube'
+import { useYouTubeAuth } from '@/context/YouTubeAuthContext'
+import { postComment, replyToComment } from '@/lib/youtube/client'
 import { cn } from '@/utilities/ui'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 
-const YOUTUBE_CONNECT_PATH = '/api/auth/youtube/connect'
 const commentDateFormatter = new Intl.DateTimeFormat('en-US', {
   year: 'numeric',
   month: 'short',
@@ -54,6 +54,8 @@ interface CommentThread {
 const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
 
 export default function CommentsYT({ videoId }: { videoId: string }) {
+  const { ensureToken, profile, source } = useYouTubeAuth()
+
   const [comments, setComments] = useState<CommentThread[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [nextPageToken, setNextPageToken] = useState<string | null>(null)
@@ -62,6 +64,7 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
   const [commentsDisabled, setCommentsDisabled] = useState(false)
   const [replyingToId, setReplyingToId] = useState<string | null>(null)
   const [replyText, setReplyText] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   // --- 1. Fetch Comments ---
   const fetchComments = useCallback(
@@ -87,8 +90,8 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
           )
           setNextPageToken(data.nextPageToken || null)
         }
-      } catch (error) {
-        console.error('Failed to fetch comments', error)
+      } catch (err) {
+        console.error('Failed to fetch comments', err)
       } finally {
         setIsLoading(false)
       }
@@ -104,23 +107,24 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
   }, [fetchComments])
 
   // --- 2. Posting ---
-
-  const postComment = async () => {
+  const handlePostComment = async () => {
     if (!newComment.trim()) return
     setIsPosting(true)
+    setError(null)
 
     try {
-      const savedComment = await postCommentAction(videoId, newComment)
-      setNewComment('')
-      setComments((prev) => [savedComment, ...prev])
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to post comment'
-      if (message === 'Not connected to YouTube') {
-        window.location.assign(YOUTUBE_CONNECT_PATH)
+      const token = await ensureToken({ interactive: true })
+      if (!token) {
+        setIsPosting(false)
         return
       }
-      console.error(error)
+      const savedComment = await postComment(videoId, newComment, token)
+      setNewComment('')
+      setComments((prev) => [savedComment, ...prev])
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to post comment'
+      setError(message)
     } finally {
       setIsPosting(false)
     }
@@ -128,10 +132,12 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
 
   const handleReplySubmit = async (parentId: string) => {
     if (!replyText.trim()) return
+    setError(null)
 
     try {
-      const newReply = await replyToCommentAction(parentId, replyText)
-      // Add to thread
+      const token = await ensureToken({ interactive: true })
+      if (!token) return
+      const newReply = await replyToComment(parentId, replyText, token)
       setComments((prev) =>
         prev.map((thread) => {
           if (thread.id === parentId) {
@@ -149,14 +155,10 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
       )
       setReplyingToId(null)
       setReplyText('')
-    } catch (error) {
+    } catch (err) {
       const message =
-        error instanceof Error ? error.message : 'Failed to post reply'
-      if (message === 'Not connected to YouTube') {
-        window.location.assign(YOUTUBE_CONNECT_PATH)
-        return
-      }
-      console.error('Failed to post reply', error)
+        err instanceof Error ? err.message : 'Failed to post reply'
+      setError(message)
     }
   }
 
@@ -240,6 +242,12 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
     </div>
   )
 
+  // Placeholder shown inside the composer when the user hasn't authenticated
+  // with YouTube yet. Clicking Send triggers the GIS popup.
+  const signInHintForPost = profile
+    ? `Commenting as ${profile.displayName}`
+    : 'Click Send — you’ll sign in to YouTube in a popup.'
+
   return (
     <section className="mx-auto w-full">
       <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
@@ -247,32 +255,34 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
           <MessageSquare size={20} className="text-primary" />
           Comms Channel
         </h3>
-        {!commentsDisabled && (
+        {!commentsDisabled && source !== 'server' && (
           <Button
             asChild
             variant="outline"
             size="sm"
             className="flex items-center gap-2 border-accent bg-accent/10 text-xs tracking-wider text-accent/50 hover:border-primary"
+            title="Save your YouTube connection to this account so you don't get prompted again"
           >
-            <a href={YOUTUBE_CONNECT_PATH}>Connect YouTube</a>
+            <a href="/api/auth/youtube/connect?returnTo=/account">
+              Stay signed in
+            </a>
           </Button>
         )}
       </div>
 
       {/* Post Box */}
       {!commentsDisabled && (
-        <div className="mb-8 flex gap-3">
+        <div className="mb-2 flex gap-3">
           <div className="flex flex-1 gap-2">
             <Input
               type="text"
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              // placeholder="Hailing frequencies open. What's your message?"
               placeholder="Share your thoughts with the community on YouTube"
               className="flex-1 border-x-0 border-t-0 border-b border-border bg-transparent py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-none focus:bg-input"
             />
             <Button
-              onClick={postComment}
+              onClick={handlePostComment}
               disabled={!newComment.trim() || isPosting}
               variant="ghost"
               size="sm"
@@ -287,6 +297,14 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
             </Button>
           </div>
         </div>
+      )}
+      {!commentsDisabled && (
+        <p className="mb-8 pl-1 text-[11px] text-muted-foreground">
+          {signInHintForPost}
+        </p>
+      )}
+      {error && (
+        <p className="mb-4 text-xs text-destructive">{error}</p>
       )}
 
       {/* List */}
