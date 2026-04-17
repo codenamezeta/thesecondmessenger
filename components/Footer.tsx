@@ -15,7 +15,10 @@ const accessLinks = [
   { label: 'Members', href: '/login' },
 ] as const
 
-const legalLinks = [{ label: 'Privacy', href: '/privacy' }] as const
+const legalLinks = [
+  { label: 'Privacy Policy', href: '/privacy-policy' },
+  { label: 'Terms of Service', href: '/terms-of-service' },
+] as const
 
 function FooterColumn({
   hud,

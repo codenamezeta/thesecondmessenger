@@ -9,6 +9,7 @@ import { getBillingSummaryForCustomer } from '@/utilities/billing'
 import { getMeUser } from '@/utilities/getMeUser'
 
 import { AccountBillingSection } from './account-billing-section'
+import { AccountDataAndPrivacy } from './data-and-privacy'
 import { AccountProfileForm } from './profile-form'
 
 type AccountProfileInitialData = {
@@ -129,6 +130,11 @@ export default async function AccountPage() {
         <AccountProfileForm initialData={initialData} />
 
         <AccountBillingSection crewRank={userWithAvatar.crewRank} billing={billing} />
+
+        <AccountDataAndPrivacy
+          youtubeConnected={Boolean(userWithAvatar.youtubeConnected)}
+          hasActiveSubscription={Boolean(billing.subscription)}
+        />
       </div>
     </article>
   )
