@@ -8,6 +8,7 @@ import {
   Loader2,
   Send,
   Reply as ReplyIcon,
+  Link,
 } from 'lucide-react'
 import { useYouTubeAuth } from '@/context/YouTubeAuthContext'
 import { postComment, replyToComment } from '@/lib/youtube/client'
@@ -249,13 +250,13 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
     : 'Click Send — you’ll sign in to YouTube in a popup.'
 
   return (
-    <section className="mx-auto w-full">
+    <section className="mx-auto w-full px-3">
       <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
         <h3 className="flex items-center gap-2 font-heading text-xl tracking-wider text-foreground uppercase">
           <MessageSquare size={20} className="text-primary" />
           Comms Channel
         </h3>
-        {!commentsDisabled && source !== 'server' && (
+        {/* {!commentsDisabled && source !== 'server' && (
           <Button
             asChild
             variant="outline"
@@ -263,11 +264,13 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
             className="flex items-center gap-2 border-accent bg-accent/10 text-xs tracking-wider text-accent/50 hover:border-primary"
             title="Save your YouTube connection to this account so you don't get prompted again"
           >
-            <a href="/api/auth/youtube/connect?returnTo=/account">
-              Stay signed in
-            </a>
+            <Link href="/api/auth/youtube/connect?returnTo=/account">
+              <span className="text-xs tracking-wider text-accent/50 hover:text-primary">
+                Stay signed in
+              </span>
+            </Link>
           </Button>
-        )}
+        )} */}
       </div>
 
       {/* Post Box */}
@@ -303,9 +306,7 @@ export default function CommentsYT({ videoId }: { videoId: string }) {
           {signInHintForPost}
         </p>
       )}
-      {error && (
-        <p className="mb-4 text-xs text-destructive">{error}</p>
-      )}
+      {error && <p className="mb-4 text-xs text-destructive">{error}</p>}
 
       {/* List */}
       {commentsDisabled ? (

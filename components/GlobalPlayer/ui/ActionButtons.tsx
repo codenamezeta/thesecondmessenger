@@ -11,8 +11,8 @@ import {
   Info,
 } from 'lucide-react'
 import { usePlayer } from '@/context/PlayerContext'
-import { useYouTubeAuth } from '@/context/YouTubeAuthContext'
 import { likeVideo, subscribeToChannel } from '@/lib/youtube/client'
+import { useYouTubeAction } from '@/components/YouTube/useYouTubeAction'
 import { cn } from '@/utilities/ui'
 import type { Media } from '@/payload-types'
 
@@ -24,58 +24,25 @@ const YOUTUBE_CHANNEL_ID = process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL_ID
 
 export const ActionButtons = ({ className }: ActionButtonsProps) => {
   const { currentSong, isInfoDrawerOpen, setIsInfoDrawerOpen } = usePlayer()
-  const { ensureToken } = useYouTubeAuth()
-
-  const [likeStatus, setLikeStatus] = useState<'idle' | 'loading' | 'success'>(
-    'idle',
-  )
-  const [subStatus, setSubStatus] = useState<'idle' | 'loading' | 'success'>(
-    'idle',
-  )
   const [shareStatus, setShareStatus] = useState<'idle' | 'copied'>('idle')
 
-  if (!currentSong) return null
+  const youtubeId = currentSong?.youtubeId as string | undefined
 
-  const handleLike = async () => {
-    if (!currentSong.youtubeId) return
-    setLikeStatus('loading')
-    try {
-      const token = await ensureToken({ interactive: true })
-      if (!token) {
-        setLikeStatus('idle')
-        return
-      }
-      await likeVideo(currentSong.youtubeId as string, token)
-      setLikeStatus('success')
-      setTimeout(() => setLikeStatus('idle'), 2000)
-    } catch (err) {
-      console.error('Like failed', err)
-      setLikeStatus('idle')
-    }
-  }
+  const like = useYouTubeAction({
+    run: async (token) => {
+      if (!youtubeId) throw new Error('No YouTube video for this song')
+      await likeVideo(youtubeId, token)
+    },
+  })
 
-  const handleSubscribe = async () => {
-    if (!YOUTUBE_CHANNEL_ID) {
-      console.warn(
-        'NEXT_PUBLIC_YOUTUBE_CHANNEL_ID is not set; cannot subscribe from the client.',
-      )
-      return
-    }
-    setSubStatus('loading')
-    try {
-      const token = await ensureToken({ interactive: true })
-      if (!token) {
-        setSubStatus('idle')
-        return
-      }
+  const subscribe = useYouTubeAction({
+    run: async (token) => {
+      if (!YOUTUBE_CHANNEL_ID) throw new Error('No channel ID configured')
       await subscribeToChannel(YOUTUBE_CHANNEL_ID, token)
-      setSubStatus('success')
-      setTimeout(() => setSubStatus('idle'), 2000)
-    } catch (err) {
-      console.error('Subscribe failed', err)
-      setSubStatus('idle')
-    }
-  }
+    },
+  })
+
+  if (!currentSong) return null
 
   const handleShare = async () => {
     const songUrl = currentSong.slug
@@ -140,19 +107,19 @@ export const ActionButtons = ({ className }: ActionButtonsProps) => {
 
       {/* Like */}
       <button
-        onClick={handleLike}
+        onClick={like.trigger}
         className={cn(
           btnBase,
-          likeStatus === 'success'
+          like.status === 'success'
             ? 'text-primary'
             : 'text-foreground/50 hover:text-foreground',
         )}
         title="Like on YouTube"
-        disabled={likeStatus === 'loading'}
+        disabled={like.status === 'loading' || !youtubeId}
       >
-        {likeStatus === 'loading' ? (
+        {like.status === 'loading' ? (
           <Loader2 size={18} className="animate-spin" />
-        ) : likeStatus === 'success' ? (
+        ) : like.status === 'success' ? (
           <Check size={18} />
         ) : (
           <ThumbsUp size={18} />
@@ -161,19 +128,19 @@ export const ActionButtons = ({ className }: ActionButtonsProps) => {
 
       {/* Subscribe */}
       <button
-        onClick={handleSubscribe}
+        onClick={subscribe.trigger}
         className={cn(
           btnBase,
-          subStatus === 'success'
+          subscribe.status === 'success'
             ? 'text-primary'
             : 'text-foreground/50 hover:text-foreground',
         )}
         title="Subscribe to Channel"
-        disabled={subStatus === 'loading'}
+        disabled={subscribe.status === 'loading'}
       >
-        {subStatus === 'loading' ? (
+        {subscribe.status === 'loading' ? (
           <Loader2 size={18} className="animate-spin" />
-        ) : subStatus === 'success' ? (
+        ) : subscribe.status === 'success' ? (
           <Check size={18} />
         ) : (
           <Bell size={18} />

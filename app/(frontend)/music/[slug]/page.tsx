@@ -12,8 +12,17 @@ import { SongInlineVideoFrame } from '@/components/SongInlineVideoFrame'
 import { Share } from '@/components/Share'
 import { LibrarySync } from '@/components/LibrarySync'
 import CommentsYT from '@/components/CommentsYT'
+import { YouTubeLikeButton } from '@/components/YouTube/LikeButton'
+import { YouTubeSubscribeButton } from '@/components/YouTube/SubscribeButton'
 import RichText from '@/components/RichText'
-import { Users, Disc, ExternalLink } from 'lucide-react'
+import {
+  Users,
+  Disc,
+  ExternalLink,
+  Youtube,
+  Loader2,
+  ThumbsUpIcon,
+} from 'lucide-react'
 import type { GatedContent, Media } from '@/payload-types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -34,6 +43,7 @@ import { PayloadRedirects } from '@/components/PayloadRedirects'
 import { getMeUser } from '@/utilities/getMeUser'
 import { SongGatedBonusSection } from '@/components/SongGatedBonusSection'
 import { userMeetsGatedFileAccess } from '@/access/crewRanks'
+import { cn } from '@/lib/utils'
 
 // --- Types ---
 type Args = {
@@ -414,7 +424,21 @@ export default async function SongPage({ params }: Args) {
 
             {song.youtubeId && (
               <section className="mt-6 px-3 lg:col-span-8">
-                {/* <Separator className="mb-8" /> */}
+                <div className="flex w-full flex-col items-center justify-center gap-2 md:flex-row">
+                  <YouTubeLikeButton
+                    videoId={song.youtubeId}
+                    className="flex w-full items-center justify-center gap-2 bg-secondary text-pretty text-foreground hover:bg-[#FF0000] hover:text-white md:w-1/2"
+                  >
+                    <ThumbsUpIcon size={20} />
+                    Like this video on YouTube
+                  </YouTubeLikeButton>
+
+                  <YouTubeSubscribeButton className="flex w-full items-center justify-center gap-2 bg-secondary text-pretty text-foreground hover:bg-[#FF0000] hover:text-white md:w-1/2">
+                    <Youtube size={20} />
+                    Subscribe to YouTube Channel
+                  </YouTubeSubscribeButton>
+                </div>
+                <Separator className="mb-8" />
                 <CommentsYT videoId={song.youtubeId} />
               </section>
             )}
