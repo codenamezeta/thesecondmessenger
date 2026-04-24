@@ -6,7 +6,7 @@ import configPromise from '@payload-config'
 // --- SPOTIFY CONFIG ---
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET
-// CRITICAL: This must match your .env NEXT_PUBLIC_SERVER_URL (http://127.0.0.1:3000 locally)
+// CRITICAL: This must match your .env NEXT_PUBLIC_SERVER_URL (http://localhost:3000 locally)
 const REDIRECT_URI = `${process.env.NEXT_PUBLIC_SERVER_URL}/api/spotify/callback`
 
 // Scopes: "user-library-modify" (Saving songs) + "user-follow-modify" (Pre-save artists)

@@ -1,5 +1,6 @@
 // src/collections/Releases.ts
 import { CollectionConfig } from 'payload'
+import { after } from 'next/server'
 import { formatSlug } from './utils/formatSlug'
 import { Song } from '@/payload-types'
 
@@ -11,45 +12,50 @@ export const Releases: CollectionConfig = {
   },
   hooks: {
     afterChange: [
-      // ... folder organizer hook ...
+      // --- HOOK: SYNC ART + RELEASE DATE TO THE RELEASE'S SONGS ---
+      //
+      // Runs AFTER the release transaction has fully committed. We must not
+      // await this inside the transaction, because the Songs `afterChange`
+      // cascade (including @payloadcms/plugin-search writes) is large enough
+      // to trip long-lived transaction behavior on Vercel/Neon Postgres,
+      // which was silently rolling the release itself back even though
+      // Payload returned 201. Scheduling the sync via Next's `after(...)`
+      // defers it until after the response is sent and, on Vercel, keeps
+      // the function invocation alive until the work finishes. Any sync
+      // failure only affects the cosmetic song fields, not the release.
+      ({ doc, req }) => {
+        if (!doc?.tracks || doc.tracks.length === 0) return doc
 
-      // --- HOOK: SYNC ART TO SONGS ---
-      async ({ doc, req }) => {
-        try {
-          // Only run if there are tracks to update
-          if (doc.tracks && doc.tracks.length > 0) {
-            // Prepare data to sync
-            const dataToSync: Record<string, string | number | undefined> = {}
-
-            // Sync Cover Art if it exists
-            if (doc.coverArt) {
-              dataToSync.coverArt =
-                typeof doc.coverArt === 'object' ? doc.coverArt.id : doc.coverArt
-            }
-
-            // Sync Release Date if it exists
-            if (doc.releaseDate) {
-              dataToSync.releaseDate = doc.releaseDate
-            }
-
-            if (Object.keys(dataToSync).length > 0) {
-              // Handle potential populated data (objects vs IDs) for tracks
-              const trackIds = doc.tracks.map((t: Song | number) => (typeof t === 'object' ? t.id : t))
-
-              // Update ALL songs in this release's tracklist at once
-              await req.payload.update({
-                collection: 'songs',
-                where: {
-                  id: { in: trackIds }, // Select all songs in the tracklist
-                },
-                data: dataToSync,
-              })
-              req.payload.logger.info(`Synced details to ${doc.tracks.length} songs.`)
-            }
-          }
-        } catch (err) {
-          req.payload.logger.error(`Failed to sync cover art: ${err}`)
+        const dataToSync: Record<string, string | number | undefined> = {}
+        if (doc.coverArt) {
+          dataToSync.coverArt =
+            typeof doc.coverArt === 'object' ? doc.coverArt.id : doc.coverArt
         }
+        if (doc.releaseDate) dataToSync.releaseDate = doc.releaseDate
+        if (Object.keys(dataToSync).length === 0) return doc
+
+        const trackIds = doc.tracks.map((t: Song | number) =>
+          typeof t === 'object' ? t.id : t,
+        )
+
+        after(async () => {
+          try {
+            await req.payload.update({
+              collection: 'songs',
+              where: { id: { in: trackIds } },
+              data: dataToSync,
+            })
+            req.payload.logger.info(
+              `[Releases] Post-commit sync: updated ${trackIds.length} song(s) for release "${doc.title}" (id=${doc.id}).`,
+            )
+          } catch (err) {
+            req.payload.logger.error({
+              err,
+              msg: `[Releases] Post-commit sync failed for release id=${doc.id}`,
+            })
+          }
+        })
+
         return doc
       },
     ],

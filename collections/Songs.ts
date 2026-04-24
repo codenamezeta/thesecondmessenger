@@ -70,6 +70,7 @@ export const Songs: CollectionConfig = {
           const mediaFile = await req.payload.findByID({
             collection: 'media',
             id: audioId,
+            req,
           })
 
           if (!mediaFile || !mediaFile.url) {
@@ -182,6 +183,7 @@ export const Songs: CollectionConfig = {
               },
               limit: 1,
               depth: 0,
+              req,
             })
 
             if (releases.length > 0) {
