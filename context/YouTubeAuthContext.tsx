@@ -242,7 +242,12 @@ export const YouTubeAuthProvider = ({ children }: { children: ReactNode }) => {
 
       return new Promise<string | null>((resolve) => {
         pendingResolversRef.current.push(resolve)
-        client.requestAccessToken({ prompt: 'consent' })
+        // `select_account` forces the account-picker UI so a user with
+        // multiple Google accounts can explicitly pick the one that owns their
+        // YouTube channel. Without it, GIS silently reuses whichever account
+        // Chrome last authenticated with, which causes the infamous
+        // "not connected to Google+" error when that account has no channel.
+        client.requestAccessToken({ prompt: 'select_account' })
       })
     },
     [token, initTokenClient],

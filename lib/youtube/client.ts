@@ -23,16 +23,66 @@ async function callYouTubeApi(
   return res
 }
 
+type YouTubeErrorBody = {
+  error?: {
+    message?: string
+    errors?: Array<{ reason?: string; message?: string }>
+  }
+}
+
+/**
+ * Map YouTube Data API error `reason` codes to messages our users can act on.
+ * Google's raw `error.message` strings are frequently outdated (e.g. they
+ * still reference Google+, which was shut down in 2019) so we rewrite the
+ * well-known cases. Falls back to the raw Google message for unknown reasons.
+ */
+function humanizeYouTubeError(
+  body: YouTubeErrorBody | null,
+  fallback: string,
+  status?: number,
+): Error {
+  const reason = body?.error?.errors?.[0]?.reason
+  const googleMessage = body?.error?.message
+
+  switch (reason) {
+    case 'accountNotConnectedToGooglePlus':
+      return new Error(
+        "Your Google account doesn't have a YouTube channel that can post comments. Open youtube.com, sign in, and create a channel (or pick a different Google account on the next sign-in prompt).",
+      )
+    case 'commentsDisabled':
+      return new Error('Comments are disabled on this video.')
+    case 'ineligibleAccount':
+      return new Error(
+        'This Google account can’t be used with the YouTube API. Try signing in with a different account or merge your brand channel at youtube.com/account.',
+      )
+    case 'forbidden':
+    case 'insufficientPermissions':
+      return new Error(
+        'YouTube rejected the request due to missing permissions. Try signing out and reconnecting YouTube.',
+      )
+    case 'quotaExceeded':
+    case 'rateLimitExceeded':
+      return new Error('YouTube is rate-limiting this account right now. Try again in a moment.')
+    case 'subscriptionDuplicate':
+      // Callers handle this as success; surface a message just in case it
+      // bubbles up somewhere.
+      return new Error('You are already subscribed to this channel.')
+    default:
+      if (googleMessage) return new Error(googleMessage)
+      if (status) return new Error(`${fallback} (${status})`)
+      return new Error(fallback)
+  }
+}
+
 async function throwIfNotOk(res: Response, defaultMessage: string) {
   if (res.ok) return
-  let message = defaultMessage
+  let body: YouTubeErrorBody | null = null
   try {
-    const body = await res.json()
-    message = body?.error?.message || message
+    body = (await res.json()) as YouTubeErrorBody
   } catch {
-    message = `${defaultMessage} (${res.status} ${res.statusText})`
+    // non-JSON error body; fall through to status-based message
   }
-  throw new Error(message)
+  throw humanizeYouTubeError(body, defaultMessage, res.status)
 }
 
 export async function likeVideo(videoId: string, accessToken: string) {
@@ -63,9 +113,9 @@ export async function subscribeToChannel(
   })
 
   if (!res.ok) {
-    let body: { error?: { errors?: Array<{ reason?: string }>; message?: string } } | null = null
+    let body: YouTubeErrorBody | null = null
     try {
-      body = await res.json()
+      body = (await res.json()) as YouTubeErrorBody
     } catch {
       // fall through
     }
@@ -73,7 +123,7 @@ export async function subscribeToChannel(
     if (body?.error?.errors?.[0]?.reason === 'subscriptionDuplicate') {
       return { alreadySubscribed: true }
     }
-    throw new Error(body?.error?.message || 'Failed to subscribe on YouTube')
+    throw humanizeYouTubeError(body, 'Failed to subscribe on YouTube', res.status)
   }
 
   return { alreadySubscribed: false }

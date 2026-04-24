@@ -49,7 +49,9 @@ export function YouTubeLikeButton({
       disabled={status === 'loading'}
       className={cn(className)}
       aria-live="polite"
-      aria-label={status === 'error' ? (errorMessage ?? 'Like failed') : undefined}
+      aria-label={
+        status === 'error' ? (errorMessage ?? 'Like failed') : undefined
+      }
     >
       {status === 'loading' ? (
         <Loader2 size={20} className="animate-spin" />
