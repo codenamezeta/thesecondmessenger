@@ -8,6 +8,12 @@
 !.yarn/releases
 !.yarn/versions
 
+# pnpm content-addressable store. Sometimes created locally (instead of
+# in the shared global store at ~/.local/share/pnpm/store) when pnpm
+# detects a cross-filesystem boundary — common on WSL. It's a rebuildable
+# cache; never commit it.
+/.pnpm-store
+
 # testing
 /coverage
 

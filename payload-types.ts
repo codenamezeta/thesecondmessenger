@@ -135,6 +135,7 @@ export interface Config {
   user: User;
   jobs: {
     tasks: {
+      syncAudioTags: TaskSyncAudioTags;
       schedulePublish: TaskSchedulePublish;
       inline: {
         input: unknown;
@@ -378,6 +379,9 @@ export interface Playlist {
  */
 export interface Song {
   id: number;
+  /**
+   * Exact song name in title case. Drives the TIT2 (title) frame written to the audio file. Parenthetical version qualifiers like "(Acoustic)" or "(Demo)" are OK; do NOT include "feat. X" — guest artists go in Featured Artists in the sidebar.
+   */
   title: string;
   /**
    * Auto-synced from the related Release.
@@ -404,6 +408,38 @@ export interface Song {
     hasNextPage?: boolean;
     totalDocs?: number;
   };
+  /**
+   * Guest artists. Composed into the ID3 ARTIST (TPE1) frame at sync time as "The Second Messenger feat. [Names]". Leave empty for solo tracks. Album Artist (TPE2) is always "The Second Messenger" regardless.
+   */
+  featuredArtists?:
+    | {
+        /**
+         * Stage / display name as you want it to read after "feat.".
+         */
+        name: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * The canonical Release this song belongs to for tagging purposes. Drives ALBUM (TALB), TRACK (TRCK), and DISC (TPOS). If the song appears on multiple releases, this is the "original" / authoritative one. Use Tracklist on the Release itself to set track order.
+   */
+  primaryRelease?: (number | null) | Release;
+  /**
+   * Updated automatically by the sync job.
+   */
+  tagSyncStatus?: ('idle' | 'queued' | 'syncing' | 'synced' | 'error') | null;
+  /**
+   * Timestamp of the last successful tag write.
+   */
+  tagsSyncedAt?: string | null;
+  /**
+   * Error message from the most recent failed sync attempt. Cleared on successful sync.
+   */
+  tagSyncError?: string | null;
+  tagsSyncedHash?: string | null;
+  /**
+   * The canonical audio file for this song. After every save, a background job rewrites this file's ID3v2.3 / Vorbis tags to match the CMS fields below. See "Tag Sync Status" in the sidebar for the latest run.
+   */
   masterAudio?: (number | null) | Media;
   /**
    * The 11-character ID (e.g., dQw4w9WgXcQ). Required for the Global Player.
@@ -460,15 +496,48 @@ export interface Song {
   recordingType: 'Studio' | 'Live' | 'Demo' | 'Other';
   isExplicit?: boolean | null;
   isrc?: string | null;
+  /**
+   * International Standard Musical Work Code (composition). No native ID3 frame — written as TXXX:ISWC for MP3 and as ISWC Vorbis comment for FLAC.
+   */
   iswc?: string | null;
   durationText?: string | null;
   duration?: number | null;
+  /**
+   * Initial tempo as a whole integer. Drives the TBPM frame. For songs that change tempo, this is the starting BPM; the range is added separately as TXXX:Tempo Range.
+   */
   bpm?: number | null;
   bpmEnd?: number | null;
+  /**
+   * Initial musical key. Long forms like "A# minor" or "Bb major" are normalized to ≤3 chars (`A#m`, `Bb`) before being written to the TKEY frame. Lowercase `m` indicates minor.
+   */
   key?: string | null;
   keyEnd?: string | null;
   changesTempo?: boolean | null;
   changesKey?: boolean | null;
+  /**
+   * For multi-disc releases. Defaults to 1 (almost always correct). Drives the first half of TPOS (e.g. 1/2 for disc 1 of a 2-disc set).
+   */
+  discNumber?: number | null;
+  /**
+   * Owner of the master sound recording. Combined with the release year as `℗ {year} {owner}` to form TCOP.
+   */
+  phonogramCopyrightOwner?: string | null;
+  /**
+   * Owner of the underlying composition. Combined with year as `© {year} {owner}`. Automatically suppressed for Cover songs (where you do not own the composition).
+   */
+  compositionCopyrightOwner?: string | null;
+  /**
+   * Publishing entity. Until a separate publishing company is registered, leave as "Michael Zeta" — it reinforces ownership.
+   */
+  publisher?: string | null;
+  /**
+   * Embedded in the file as the USER frame. Most players ignore it, but tag editors will display it.
+   */
+  termsOfUse?: ('all-rights' | 'cc-attrib-nc' | 'custom') | null;
+  /**
+   * Free-form usage terms written verbatim to the USER frame.
+   */
+  termsOfUseCustom?: string | null;
   /**
    * Used for sorting "Popular" lists. 1000 = Biggest Hit.
    */
@@ -483,7 +552,14 @@ export interface Song {
   otherTags?: (number | Tag)[] | null;
   credits?:
     | {
+        /**
+         * Display name (stage name, band name, or known professional name).
+         */
         name: string;
+        /**
+         * Optional. Required for accurate publishing credits — Songwriter credits write the legal name (or fall back to display name) into the COMPOSER (TCOM) frame.
+         */
+        legalName?: string | null;
         category: 'Songwriter' | 'Performer' | 'Producer/Engineer' | 'Visuals' | 'Special Thanks';
         /**
          * Add multiple roles (e.g. "Guitar", "Backing Vocals")
@@ -520,9 +596,13 @@ export interface Song {
     [k: string]: unknown;
   } | null;
   /**
-   * Plain text version for search indexing and quick view.
+   * Plain text version for search indexing and quick view. Written to the USLT (Unsynchronized Lyrics) frame in the audio file.
    */
   lyrics?: string | null;
+  /**
+   * Short message embedded into the file's COMM frame. Defaults to a "thank you" note. Visible to anyone who inspects the file in a tag editor or some media players.
+   */
+  comment?: string | null;
   /**
    * Files that point to this song from the Gated Content collection.
    */
@@ -549,9 +629,13 @@ export interface Release {
   upc?: string | null;
   coverArt: number | Media;
   /**
-   * Drag and drop to reorder tracks.
+   * Drag and drop to reorder tracks. The order here drives the TRCK frame written to each track's audio file (track number out of total).
    */
   tracks?: (number | Song)[] | null;
+  /**
+   * Total number of discs/sides in this release. Defaults to 1. Used as the second half of TPOS (e.g. 1/2 for disc 1 of a 2-disc set).
+   */
+  discCount?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -949,7 +1033,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'schedulePublish';
+        taskSlug: 'inline' | 'syncAudioTags' | 'schedulePublish';
         taskID: string;
         input?:
           | {
@@ -982,7 +1066,7 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'schedulePublish') | null;
+  taskSlug?: ('inline' | 'syncAudioTags' | 'schedulePublish') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
@@ -1222,6 +1306,7 @@ export interface ReleasesSelect<T extends boolean = true> {
   upc?: T;
   coverArt?: T;
   tracks?: T;
+  discCount?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1236,6 +1321,17 @@ export interface SongsSelect<T extends boolean = true> {
   releaseDate?: T;
   relatedReleases?: T;
   inPlaylists?: T;
+  featuredArtists?:
+    | T
+    | {
+        name?: T;
+        id?: T;
+      };
+  primaryRelease?: T;
+  tagSyncStatus?: T;
+  tagsSyncedAt?: T;
+  tagSyncError?: T;
+  tagsSyncedHash?: T;
   masterAudio?: T;
   youtubeId?: T;
   spotifyId?: T;
@@ -1268,6 +1364,12 @@ export interface SongsSelect<T extends boolean = true> {
   keyEnd?: T;
   changesTempo?: T;
   changesKey?: T;
+  discNumber?: T;
+  phonogramCopyrightOwner?: T;
+  compositionCopyrightOwner?: T;
+  publisher?: T;
+  termsOfUse?: T;
+  termsOfUseCustom?: T;
   popularity?: T;
   genres?: T;
   styles?: T;
@@ -1281,6 +1383,7 @@ export interface SongsSelect<T extends boolean = true> {
     | T
     | {
         name?: T;
+        legalName?: T;
         category?: T;
         roles?:
           | T
@@ -1293,6 +1396,7 @@ export interface SongsSelect<T extends boolean = true> {
   tagline?: T;
   about?: T;
   lyrics?: T;
+  comment?: T;
   linkedGatedContent?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1653,6 +1757,22 @@ export interface CollectionsWidget {
     [k: string]: unknown;
   };
   width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskSyncAudioTags".
+ */
+export interface TaskSyncAudioTags {
+  input: {
+    /**
+     * ID of the Song whose master audio should be re-tagged.
+     */
+    songId: number;
+  };
+  output: {
+    status?: string | null;
+    detail?: string | null;
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
