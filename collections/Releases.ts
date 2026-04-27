@@ -114,7 +114,20 @@ export const Releases: CollectionConfig = {
       required: false,
       label: 'Tracklist',
       admin: {
-        description: 'Drag and drop to reorder tracks.',
+        description:
+          'Drag and drop to reorder tracks. The order here drives the TRCK frame written to each track\'s audio file (track number out of total).',
+      },
+    },
+    {
+      name: 'discCount',
+      type: 'number',
+      label: 'Total Discs',
+      defaultValue: 1,
+      min: 1,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Total number of discs/sides in this release. Defaults to 1. Used as the second half of TPOS (e.g. 1/2 for disc 1 of a 2-disc set).',
       },
     },
   ],

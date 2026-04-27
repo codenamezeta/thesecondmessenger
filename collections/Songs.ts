@@ -1,8 +1,6 @@
 //* src/collections/Songs.ts
 import { CollectionConfig } from 'payload'
 import { formatSlug } from './utils/formatSlug'
-import { parseStream } from 'music-metadata'
-import { getServerSideURL } from '../utilities/getURL'
 import {
   lexicalEditor,
   HeadingFeature,
@@ -20,6 +18,7 @@ import { Content } from '@/blocks/Content/config'
 import { FormBlock } from '@/blocks/Form/config'
 import { MediaBlock } from '@/blocks/MediaBlock/config'
 import type { Release } from '@/payload-types'
+import { queueAudioTagSync } from '@/lib/audio-tags/queueAudioTagSync'
 
 export const Songs: CollectionConfig = {
   slug: 'songs',
@@ -35,128 +34,6 @@ export const Songs: CollectionConfig = {
   },
   hooks: {
     beforeValidate: [
-      // Uses the master recording's MP3 ID3 tags to prepopulate CMS fields.
-      async ({ data, req, operation }) => {
-        console.log(
-          '🎵 [Songs Hook] beforeValidate triggered for operation:',
-          operation,
-        )
-
-        // Only run if masterAudio is present and we are creating or updating
-        if (!data?.masterAudio) {
-          console.log('🎵 [Songs Hook] No masterAudio in data, skipping.')
-          return data
-        }
-
-        // Check if we need to fill data (don't overwrite if there is already something typed)
-        const needsTitle = !data.title
-        const needsCredits = !data.credits || data.credits.length === 0
-        const needsGenres = !data.genres
-        const needsDuration = !data.duration
-
-        if (!needsTitle && !needsCredits && !needsGenres && !needsDuration) {
-          console.log('🎵 [Songs Hook] All fields already populated, skipping.')
-          return data
-        }
-
-        try {
-          // 1. Get the File Object from Payload
-          // Handle case where masterAudio might be an object (populated) or string (ID)
-          const audioId =
-            typeof data.masterAudio === 'object'
-              ? data.masterAudio.id
-              : data.masterAudio
-
-          const mediaFile = await req.payload.findByID({
-            collection: 'media',
-            id: audioId,
-            req,
-          })
-
-          if (!mediaFile || !mediaFile.url) {
-            console.warn('🎵 [Songs Hook] Media file not found or has no URL.')
-            return data
-          }
-
-          // 2. Fetch the stream (Works for Local or Vercel Blob/S3)
-          let fileUrl = mediaFile.url
-          if (fileUrl.startsWith('/')) {
-            fileUrl = `${getServerSideURL()}${fileUrl}`
-          }
-
-          console.log('🎵 [Songs Hook] Fetching URL:', fileUrl)
-          const response = await fetch(fileUrl)
-
-          if (!response.ok) {
-            console.error(
-              `🎵 [Songs Hook] Failed to fetch media file: ${response.status} ${response.statusText}`,
-            )
-            return data
-          }
-
-          if (!response.body) {
-            console.warn('🎵 [Songs Hook] Fetch response has no body.')
-            return data
-          }
-
-          // 3. Parse Metadata using music-metadata stream
-          // We stream directly from the Fetch response, avoiding loading the whole file into RAM
-          // but newer versions often handle web streams or we might need a tiny adapter if it strictly requires Node stream.
-          // However, for many environments, this just works or we can use a small utility if it fails.
-          // Let's try passing the body first. If it fails, we might need to cast/transform.
-          // Actually, music-metadata `parseStream` takes a Node.js Readable stream.
-          // Fetch body is a Web ReadableStream. We can use `Readable.fromWeb(response.body)` if Node 16+
-
-          const { Readable } = await import('stream')
-          // @ts-expect-error - response.body is a ReadableStream, music-metadata expects Node stream or similar
-          const nodeStream = Readable.fromWeb(response.body)
-
-          const metadata = await parseStream(nodeStream, {
-            mimeType: mediaFile.mimeType || undefined,
-          })
-
-          console.log('🎵 [Songs Hook] Metadata extracted:', {
-            title: metadata.common.title,
-            composers: metadata.common.composer,
-            genres: metadata.common.genre,
-          })
-
-          // 4. Auto-Populate Fields
-          if (metadata.common.title && needsTitle) {
-            data.title = metadata.common.title
-          }
-
-          if (
-            metadata.common.composer &&
-            metadata.common.composer.length > 0 &&
-            needsCredits
-          ) {
-            const newCredits = metadata.common.composer.map((name) => ({
-              name,
-              category: 'Songwriter',
-              roles: [],
-            }))
-            data.credits = [...(data.credits || []), ...newCredits]
-          }
-
-          if (
-            metadata.common.genre &&
-            metadata.common.genre.length > 0 &&
-            needsGenres
-          ) {
-            data.genres = metadata.common.genre.join(', ')
-          }
-
-          if (metadata.format.duration && needsDuration) {
-            data.duration = Math.round(metadata.format.duration)
-          }
-        } catch (error) {
-          console.error('🎵 [Songs Hook] Error extracting metadata:', error)
-          // Ensure we don't crash the upload even if metadata fails
-        }
-
-        return data
-      },
       // --- HOOK: PULL PARENT RELEASE DATA ---
       // If the song is being saved and lacks a date/cover, try to find its parent Release and copy them.
       async ({ data, req, originalDoc }) => {
@@ -220,13 +97,40 @@ export const Songs: CollectionConfig = {
         return data
       },
     ],
-    afterChange: [],
+    afterChange: [
+      // --- HOOK: QUEUE AUDIO TAG SYNC ---
+      // After a song is saved, write the CMS-canonical metadata back into the
+      // master audio file's ID3v2.3 / Vorbis tags. We delegate to a Payload
+      // job so the admin save returns immediately; the actual download →
+      // mutate → upload happens later via Vercel Cron hitting the queue.
+      async ({ doc, previousDoc, req, operation }) => {
+        if (operation !== 'create' && operation !== 'update') return doc
+        try {
+          await queueAudioTagSync({
+            payload: req.payload,
+            doc,
+            previousDoc,
+            req,
+          })
+        } catch (err) {
+          req.payload.logger.error({
+            err,
+            msg: `🎵 [Songs Hook] Failed to enqueue audio tag sync for song id=${doc?.id}`,
+          })
+        }
+        return doc
+      },
+    ],
   },
   fields: [
     {
       name: 'title',
       type: 'text',
       required: true,
+      admin: {
+        description:
+          'Exact song name in title case. Drives the TIT2 (title) frame written to the audio file. Parenthetical version qualifiers like "(Acoustic)" or "(Demo)" are OK; do NOT include "feat. X" — guest artists go in Featured Artists in the sidebar.',
+      },
     },
     {
       name: 'coverArt',
@@ -281,6 +185,98 @@ export const Songs: CollectionConfig = {
       },
     },
     {
+      name: 'featuredArtists',
+      type: 'array',
+      label: 'Featured Artists',
+      admin: {
+        position: 'sidebar',
+        initCollapsed: true,
+        description:
+          'Guest artists. Composed into the ID3 ARTIST (TPE1) frame at sync time as "The Second Messenger feat. [Names]". Leave empty for solo tracks. Album Artist (TPE2) is always "The Second Messenger" regardless.',
+      },
+      fields: [
+        {
+          name: 'name',
+          type: 'text',
+          required: true,
+          admin: {
+            description:
+              'Stage / display name as you want it to read after "feat.".',
+          },
+        },
+      ],
+    },
+    {
+      name: 'primaryRelease',
+      type: 'relationship',
+      relationTo: 'releases',
+      hasMany: false,
+      label: 'Primary Release',
+      admin: {
+        position: 'sidebar',
+        description:
+          'The canonical Release this song belongs to for tagging purposes. Drives ALBUM (TALB), TRACK (TRCK), and DISC (TPOS). If the song appears on multiple releases, this is the "original" / authoritative one. Use Tracklist on the Release itself to set track order.',
+      },
+    },
+    {
+      type: 'collapsible',
+      label: 'Tag Sync Status',
+      admin: {
+        position: 'sidebar',
+        initCollapsed: true,
+        description:
+          'Background sync of CMS fields → MP3/FLAC ID3 tags. Runs after every save via Vercel Cron.',
+      },
+      fields: [
+        {
+          name: 'tagSyncStatus',
+          type: 'select',
+          options: [
+            { label: 'Idle', value: 'idle' },
+            { label: 'Queued', value: 'queued' },
+            { label: 'Syncing', value: 'syncing' },
+            { label: 'Synced', value: 'synced' },
+            { label: 'Error', value: 'error' },
+          ],
+          defaultValue: 'idle',
+          admin: {
+            readOnly: true,
+            description: 'Updated automatically by the sync job.',
+          },
+        },
+        {
+          name: 'tagsSyncedAt',
+          type: 'date',
+          label: 'Last Synced',
+          admin: {
+            readOnly: true,
+            date: { pickerAppearance: 'dayAndTime' },
+            description: 'Timestamp of the last successful tag write.',
+          },
+        },
+        {
+          name: 'tagSyncError',
+          type: 'textarea',
+          label: 'Last Error',
+          admin: {
+            readOnly: true,
+            condition: (_data, siblingData) =>
+              siblingData?.tagSyncStatus === 'error',
+            description:
+              'Error message from the most recent failed sync attempt. Cleared on successful sync.',
+          },
+        },
+      ],
+    },
+    {
+      name: 'tagsSyncedHash',
+      type: 'text',
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
+    },
+    {
       type: 'tabs',
       tabs: [
         // --- TAB 1: MEDIA & PLAYBACK ---
@@ -291,7 +287,11 @@ export const Songs: CollectionConfig = {
               name: 'masterAudio',
               type: 'upload',
               relationTo: 'media',
-              label: 'Master Recording (MP3/WAV)',
+              label: 'Master Recording (MP3/FLAC/WAV)',
+              admin: {
+                description:
+                  'The canonical audio file for this song. After every save, a background job rewrites this file\'s ID3v2.3 / Vorbis tags to match the CMS fields below. See "Tag Sync Status" in the sidebar for the latest run.',
+              },
             },
             {
               name: 'youtubeId',
@@ -473,7 +473,15 @@ export const Songs: CollectionConfig = {
                         )
                       },
                     },
-                    { name: 'iswc', type: 'text', label: 'ISWC Code' },
+                    {
+                      name: 'iswc',
+                      type: 'text',
+                      label: 'ISWC Code',
+                      admin: {
+                        description:
+                          'International Standard Musical Work Code (composition). No native ID3 frame — written as TXXX:ISWC for MP3 and as ISWC Vorbis comment for FLAC.',
+                      },
+                    },
                   ],
                 },
                 {
@@ -531,6 +539,10 @@ export const Songs: CollectionConfig = {
                       type: 'number',
                       label: 'BPM',
                       required: false,
+                      admin: {
+                        description:
+                          'Initial tempo as a whole integer. Drives the TBPM frame. For songs that change tempo, this is the starting BPM; the range is added separately as TXXX:Tempo Range.',
+                      },
                     },
                     {
                       name: 'bpmEnd',
@@ -546,7 +558,15 @@ export const Songs: CollectionConfig = {
                 {
                   type: 'row',
                   fields: [
-                    { name: 'key', type: 'text', label: 'Key' },
+                    {
+                      name: 'key',
+                      type: 'text',
+                      label: 'Key',
+                      admin: {
+                        description:
+                          'Initial musical key. Long forms like "A# minor" or "Bb major" are normalized to ≤3 chars (`A#m`, `Bb`) before being written to the TKEY frame. Lowercase `m` indicates minor.',
+                      },
+                    },
                     {
                       name: 'keyEnd',
                       type: 'text',
@@ -569,6 +589,93 @@ export const Songs: CollectionConfig = {
                   type: 'checkbox',
                   label: 'Song changes Key?',
                   defaultValue: false,
+                },
+                {
+                  name: 'discNumber',
+                  type: 'number',
+                  label: 'Disc Number',
+                  defaultValue: 1,
+                  min: 1,
+                  admin: {
+                    description:
+                      'For multi-disc releases. Defaults to 1 (almost always correct). Drives the first half of TPOS (e.g. 1/2 for disc 1 of a 2-disc set).',
+                  },
+                },
+              ],
+            },
+            {
+              type: 'group',
+              label: 'Rights & Publishing',
+              admin: {
+                description:
+                  'Drives the COPYRIGHT (TCOP), PUBLISHER (TPUB), and TERMS OF USE (USER) frames written to the audio file.',
+              },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'phonogramCopyrightOwner',
+                      type: 'text',
+                      label: 'Phonogram (℗) Owner',
+                      defaultValue: 'Michael Zeta',
+                      admin: {
+                        description:
+                          'Owner of the master sound recording. Combined with the release year as `℗ {year} {owner}` to form TCOP.',
+                      },
+                    },
+                    {
+                      name: 'compositionCopyrightOwner',
+                      type: 'text',
+                      label: 'Composition (©) Owner',
+                      defaultValue: 'Michael Zeta',
+                      admin: {
+                        description:
+                          'Owner of the underlying composition. Combined with year as `© {year} {owner}`. Automatically suppressed for Cover songs (where you do not own the composition).',
+                      },
+                    },
+                  ],
+                },
+                {
+                  name: 'publisher',
+                  type: 'text',
+                  label: 'Publisher (TPUB)',
+                  defaultValue: 'Michael Zeta',
+                  admin: {
+                    description:
+                      'Publishing entity. Until a separate publishing company is registered, leave as "Michael Zeta" — it reinforces ownership.',
+                  },
+                },
+                {
+                  name: 'termsOfUse',
+                  type: 'select',
+                  label: 'Terms of Use (USER)',
+                  options: [
+                    { label: 'All rights reserved', value: 'all-rights' },
+                    {
+                      label:
+                        'Free for non-commercial use with attribution',
+                      value: 'cc-attrib-nc',
+                    },
+                    { label: 'Custom (specify below)', value: 'custom' },
+                  ],
+                  defaultValue: 'all-rights',
+                  admin: {
+                    description:
+                      'Embedded in the file as the USER frame. Most players ignore it, but tag editors will display it.',
+                  },
+                },
+                {
+                  name: 'termsOfUseCustom',
+                  type: 'textarea',
+                  label: 'Custom Terms of Use',
+                  admin: {
+                    condition: (_data, siblingData) =>
+                      siblingData?.termsOfUse === 'custom',
+                    rows: 3,
+                    description:
+                      'Free-form usage terms written verbatim to the USER frame.',
+                  },
                 },
               ],
             },
@@ -691,9 +798,27 @@ export const Songs: CollectionConfig = {
               // },
               fields: [
                 {
-                  name: 'name',
-                  type: 'text',
-                  required: true,
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'name',
+                      type: 'text',
+                      required: true,
+                      admin: {
+                        description:
+                          'Display name (stage name, band name, or known professional name).',
+                      },
+                    },
+                    {
+                      name: 'legalName',
+                      type: 'text',
+                      label: 'Legal Name',
+                      admin: {
+                        description:
+                          'Optional. Required for accurate publishing credits — Songwriter credits write the legal name (or fall back to display name) into the COMPOSER (TCOM) frame.',
+                      },
+                    },
+                  ],
                 },
                 {
                   name: 'category',
@@ -790,7 +915,18 @@ export const Songs: CollectionConfig = {
               label: 'Lyrics',
               admin: {
                 description:
-                  'Plain text version for search indexing and quick view.',
+                  'Plain text version for search indexing and quick view. Written to the USLT (Unsynchronized Lyrics) frame in the audio file.',
+              },
+            },
+            {
+              name: 'comment',
+              type: 'textarea',
+              label: 'Embedded Comment (COMM)',
+              defaultValue: 'Thank you for being a fan',
+              admin: {
+                rows: 2,
+                description:
+                  'Short message embedded into the file\'s COMM frame. Defaults to a "thank you" note. Visible to anyone who inspects the file in a tag editor or some media players.',
               },
             },
           ],

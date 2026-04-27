@@ -19,6 +19,7 @@ import { Songs } from './collections/Songs'
 import { GatedContent } from './collections/GatedContent'
 import { Tags } from './collections/Tags'
 import { Users } from './collections/Users'
+import { syncAudioTagsTask } from './lib/audio-tags/syncAudioTagsTask'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -51,6 +52,14 @@ export default buildConfig({
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
+  },
+  jobs: {
+    // Background tasks. Triggered from collection hooks via
+    // `req.payload.jobs.queue(...)` and processed by the Vercel Cron
+    // sweep at /api/cron/sync-audio-tags (which calls
+    // `payload.jobs.run(...)`). On long-running deployments you can
+    // alternatively run `pnpm payload jobs:run` as a worker process.
+    tasks: [syncAudioTagsTask],
   },
   db: vercelPostgresAdapter({
     pool: {

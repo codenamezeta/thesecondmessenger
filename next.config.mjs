@@ -18,6 +18,10 @@ const nextConfig = {
     ],
   },
   allowedDevOrigins: ['127.0.0.1'],
+  // taglib-wasm ships a .wasm binary that Turbopack/webpack can't bundle.
+  // Keep it out of the client/server bundles so Node's loader resolves it
+  // from node_modules at runtime instead.
+  serverExternalPackages: ['taglib-wasm'],
 }
 
 export default withPayload(nextConfig)
