@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 
-// Vercel Cron is configured to hit this route every 10 minutes (see
-// vercel.json). It's the worker side of the audio-tag sync pipeline:
+// Vercel Cron hits this route on a schedule in vercel.json (daily on
+// Hobby; upgrade or use an external pinger to hit this URL for faster
+// production syncs). It's the worker side of the audio-tag sync:
 // for each Song in `tagSyncStatus = queued`, run the full
 // download → mutate → upload flow.
 //
