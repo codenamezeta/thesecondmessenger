@@ -4,6 +4,7 @@ import { Metadata } from 'next'
 import { MusicGroupSchema } from '@/schema/MusicGroup'
 import { HomeSections } from '@/components/home/HomeSections'
 import type { SongPreview } from '@/components/home/HomeSections'
+import { getChannelVideos, YoutubeChannelVideo } from '@/actions/youtube'
 
 export const metadata: Metadata = {
   title: 'The Second Messenger • Melodic Modern Rock',
@@ -41,10 +42,12 @@ export default async function HomePage() {
     },
   })
 
+  const videos = (await getChannelVideos(3)) as YoutubeChannelVideo[]
+
   return (
     <>
       <MusicGroupSchema />
-      <HomeSections songs={songs as unknown as SongPreview[]} />
+      <HomeSections songs={songs as unknown as SongPreview[]} videos={videos} />
     </>
   )
 }

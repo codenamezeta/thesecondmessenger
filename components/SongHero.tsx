@@ -27,6 +27,7 @@ export const SongHero = ({ song }: { song: Song }) => {
             src={coverArtUrl}
             alt="bg"
             fill
+            sizes="(max-width: 768px) 100vw, 100vw"
             className="scale-110 object-cover blur-[6px]"
           />
         )}
@@ -83,12 +84,12 @@ export const SongHero = ({ song }: { song: Song }) => {
             <h1 className="font-heading text-4xl leading-[0.75] font-bold tracking-wide text-foreground uppercase drop-shadow-lg md:text-6xl">
               {song.title}
             </h1>
-            <span className="font-heading text-xl tracking-widest text-primary uppercase opacity-80 md:text-2xl">
+            <span className="font-mono text-2xl font-black tracking-widest text-muted-foreground uppercase opacity-80 md:text-2xl">
               The Second Messenger
             </span>
             {song.tagline && (
-              <p className="max-w-4xl font-mono text-base leading-tight text-pretty text-muted-foreground italic">
-                &quot;{song.tagline}&quot;
+              <p className="max-w-4xl font-body text-base leading-tight text-pretty text-muted-foreground italic">
+                {song.tagline}
               </p>
             )}
 

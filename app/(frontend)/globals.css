@@ -101,7 +101,7 @@
   --font-heading:
     var(--font-heading-source), ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-body-source), ui-serif, Georgia, serif;
-  --font-sans: var(--font-body-source), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-heading-source), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono-source), ui-monospace, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -295,6 +295,14 @@
   /* color: rgb(248 113 113 / 0.85); */
   color: var(--primary);
   animation: glitch-flicker 6s steps(1, end) infinite;
+}
+
+.glitch-text-2 {
+  position: relative;
+  display: inline-block;
+  /* color: rgb(248 113 113 / 0.85); */
+  color: var(--primary);
+  animation: glitch-flicker 12s steps(1, end) infinite;
 }
 
 @layer components {

@@ -20,11 +20,21 @@ import { GatedContent } from './collections/GatedContent'
 import { Tags } from './collections/Tags'
 import { Users } from './collections/Users'
 import { syncAudioTagsTask } from './lib/audio-tags/syncAudioTagsTask'
+import { patchGatedContentDisableTransactions } from './lib/payload-gated-content-transactions'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
+  onInit: async (payload) => {
+    patchGatedContentDisableTransactions(payload)
+  },
+  /** Used by S3 presigned PUT (client uploads) for Content-Length alignment. */
+  upload: {
+    limits: {
+      fileSize: 1024 * 1024 * 1024, // 1 GiB — raise if you ship larger masters
+    },
+  },
   admin: {
     user: Users.slug,
     suppressHydrationWarning: true,
@@ -85,18 +95,33 @@ export default buildConfig({
       clientUploads: process.env.R2_DISABLE_CLIENT_UPLOADS !== 'true',
       collections: {
         'gated-content': {
+          /**
+           * Do not set `disablePayloadAccessControl: true` here. With `clientUploads`
+           * enabled, that mode only attaches `staticHandler` for client-upload
+           * requests — normal GETs to `/api/gated-content/file/...` skip R2 and
+           * Payload falls back to local disk. Leaving this option unset installs
+           * the full R2 proxy handler. Vault tier checks still run via
+           * `gatedContentReadAccess` + `checkFileAccess(isReadingStaticFile: true)`.
+           */
           prefix: process.env.R2_PREFIX || 'gated-content',
+          /** Keep admin + API `url` on the same-origin file route (not raw R2). */
+          generateFileURL: ({ filename, prefix }) => {
+            const path = `/api/gated-content/file/${encodeURIComponent(filename)}`
+            return prefix
+              ? `${path}?prefix=${encodeURIComponent(prefix)}`
+              : path
+          },
+          // Signed GET redirects only affect *delivery*, not upload. Keeping this
+          // narrow avoids divergent code paths vs MP3/PNG (which were stable here).
+          // Vault access is still enforced on `/api/gated-content/file/...` routes.
           signedDownloads: {
             expiresIn: 3600,
             shouldUseSignedURL: ({ filename }) => {
               const lower = filename.toLowerCase()
               return (
                 lower.endsWith('.zip') ||
-                lower.endsWith('.flac') ||
-                lower.endsWith('.wav') ||
-                lower.endsWith('.mp4') ||
-                lower.endsWith('.mov') ||
-                lower.endsWith('.webm')
+                lower.endsWith('.7z') ||
+                lower.endsWith('.rar')
               )
             },
           },

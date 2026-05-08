@@ -4,7 +4,7 @@ export const PAID_CREW_RANKS = ['lieutenant', 'commander', 'captain'] as const
 
 export type PaidCrewRank = (typeof PAID_CREW_RANKS)[number]
 
-const STRIPE_API_VERSION = '2026-03-25.dahlia'
+const STRIPE_API_VERSION = '2026-04-22.dahlia'
 
 let stripeClient: Stripe | null = null
 

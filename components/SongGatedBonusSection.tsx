@@ -6,7 +6,7 @@ import {
   userMeetsVaultFloor,
   type GatedTierRequired,
 } from '@/access/crewRanks'
-import { getMediaUrl } from '@/utilities/getMediaUrl'
+import { getGatedContentFileUrl } from '@/utilities/getGatedContentFileUrl'
 import { gatedContentKindFromMimeType } from '@/utilities/gatedContentKindFromMimeType'
 import AudioFilePlayer from '@/components/AudioFilePlayer'
 import { Lock } from 'lucide-react'
@@ -43,7 +43,7 @@ function DownloadAssetButton({ href, title }: { href: string; title: string }) {
 }
 
 function GatedAssetRenderer({ gated }: { gated: GatedContent }) {
-  const src = getMediaUrl(gated.url)
+  const src = getGatedContentFileUrl(gated)
   if (!src) {
     return (
       <p className="font-body text-sm text-muted-foreground">

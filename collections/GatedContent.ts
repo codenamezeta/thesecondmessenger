@@ -1,5 +1,9 @@
-import type { CollectionConfig } from 'payload'
+import type { Access, CollectionConfig } from 'payload'
 import { gatedContentReadAccess } from '@/access/gatedContentRead'
+
+// Transaction skipping for uploads is applied in `onInit` via
+// `patchGatedContentDisableTransactions` — Payload initializes DB transactions
+// before `beforeOperation`, so hooks cannot set `disableTransaction` in time.
 
 const gatedContentUsesR2 = Boolean(
   process.env.R2_BUCKET && process.env.R2_ENDPOINT,
@@ -11,6 +15,16 @@ const tierRequiredOptions = [
   { label: 'Captain (Tier 3) and up', value: 'captain' },
 ] as const
 
+const isAdminUser: Access = ({ req }) => {
+  const user = req.user
+  return Boolean(user && 'role' in user && user.role === 'admin')
+}
+
+const adminOrCloudStorageInternal: Access = ({ req }) => {
+  if (req.context?.skipCloudStorage) return true
+  return isAdminUser({ req })
+}
+
 export const GatedContent: CollectionConfig = {
   slug: 'gated-content',
   admin: {
@@ -20,6 +34,9 @@ export const GatedContent: CollectionConfig = {
   },
   access: {
     read: gatedContentReadAccess,
+    create: isAdminUser,
+    update: adminOrCloudStorageInternal,
+    delete: isAdminUser,
   },
   upload: {
     ...(gatedContentUsesR2
@@ -30,6 +47,7 @@ export const GatedContent: CollectionConfig = {
       'audio/mpeg',
       'audio/wav',
       'audio/flac',
+      'audio/x-flac',
       'audio/aac',
       'audio/aiff',
       'audio/x-aiff',

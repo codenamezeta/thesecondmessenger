@@ -19,11 +19,12 @@ import {
   Users,
   Disc,
   ExternalLink,
-  Youtube,
-  Loader2,
+  YoutubeIcon,
   ThumbsUpIcon,
+  Info,
+  CalendarClock,
 } from 'lucide-react'
-import type { GatedContent, Media } from '@/payload-types'
+import type { GatedContent, Media, Release } from '@/payload-types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -43,7 +44,6 @@ import { PayloadRedirects } from '@/components/PayloadRedirects'
 import { getMeUser } from '@/utilities/getMeUser'
 import { SongGatedBonusSection } from '@/components/SongGatedBonusSection'
 import { userMeetsGatedFileAccess } from '@/access/crewRanks'
-import { cn } from '@/lib/utils'
 
 // --- Types ---
 type Args = {
@@ -64,6 +64,7 @@ type CreditItem = {
   roles: CreditRole[]
 }
 type PlaylistItem = { id: string | number; slug: string; title: string }
+type ReleaseDoc = Release
 
 // --- Data Fetching ---
 const querySongBySlug = cache(async (slug: string) => {
@@ -114,14 +115,16 @@ function SidebarCard({
   children: ReactNode
 }) {
   return (
-    <Card className="border-border/70 bg-card/80 backdrop-blur-sm">
+    <Card className="border-border/70 bg-transparent backdrop-blur-sm">
       <CardHeader className="gap-2">
-        <CardTitle className="flex items-center gap-2 font-heading tracking-wider uppercase">
+        <CardTitle className="flex items-center gap-2 font-body text-xl font-bold tracking-widest uppercase">
           {icon}
           {title}
         </CardTitle>
         {description && (
-          <CardDescription className="font-body">{description}</CardDescription>
+          <CardDescription className="font-mono text-sm tracking-wider text-muted-foreground">
+            {description}
+          </CardDescription>
         )}
       </CardHeader>
       <CardContent>{children}</CardContent>
@@ -143,14 +146,14 @@ function StreamingLinksCard({ song }: { song: SongDoc }) {
           <Button
             key={link.id}
             asChild
-            variant="secondary"
-            className="h-12 w-full justify-between px-4 text-left"
+            variant="outline"
+            className="h-12 w-full justify-between bg-background px-4 text-left"
           >
             <a
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:underline"
+              className="bg-background font-body text-sm tracking-wider text-foreground/75 hover:text-primary hover:underline"
             >
               <span className="truncate font-body text-sm">
                 {link.platform}
@@ -178,12 +181,17 @@ function CreditsCard({ song }: { song: SongDoc }) {
         {credits.map((credit, index: number) => (
           <li key={credit.id} className="space-y-2">
             <div className="flex items-start justify-between gap-3">
-              <p className="font-body text-sm text-foreground">{credit.name}</p>
-              <Badge variant="outline" className="shrink-0">
+              <p className="font-heading text-sm text-foreground">
+                {credit.name}
+              </p>
+              <Badge
+                variant="outline"
+                className="shrink-0 rounded-sm p-3 font-mono text-[10px] tracking-widest uppercase"
+              >
                 {credit.category}
               </Badge>
             </div>
-            <p className="font-body text-xs text-muted-foreground">
+            <p className="font-mono text-xs text-muted-foreground">
               {credit.roles.map((role) => role.role).join(', ')}
             </p>
             {index < credits.length - 1 && <Separator className="mt-3" />}
@@ -214,6 +222,188 @@ function FeaturedInCard({ song }: { song: SongDoc }) {
           </Badge>
         ))}
       </div>
+    </SidebarCard>
+  )
+}
+
+function formatReleaseDate(value: string | null | undefined): string | null {
+  if (!value) return null
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return null
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }).format(parsed)
+}
+
+function SongMetadataCard({ song }: { song: SongDoc }) {
+  const keyValue =
+    song.changesKey && song.key && song.keyEnd
+      ? `${song.key} -> ${song.keyEnd}`
+      : song.key
+  const bpmValue =
+    song.changesTempo && song.bpm && song.bpmEnd
+      ? `${song.bpm} -> ${song.bpmEnd}`
+      : song.bpm?.toString()
+
+  const termsOfUseLabel =
+    song.termsOfUse === 'all-rights'
+      ? 'All rights reserved'
+      : song.termsOfUse === 'cc-attrib-nc'
+        ? 'Free non-commercial use with attribution'
+        : song.termsOfUse === 'custom'
+          ? song.termsOfUseCustom || 'Custom terms'
+          : null
+
+  const detailRows: Array<{ label: string; value?: string | null }> = [
+    { label: 'Key', value: keyValue },
+    { label: 'BPM', value: bpmValue },
+    { label: 'Composition', value: song.compositionType },
+    { label: 'Recording', value: song.recordingType },
+    { label: 'ISRC', value: song.isrc },
+    { label: 'ISWC', value: song.iswc },
+    { label: 'Publisher', value: song.publisher },
+    { label: 'Phonogram (P)', value: song.phonogramCopyrightOwner },
+    { label: 'Composition (C)', value: song.compositionCopyrightOwner },
+    { label: 'Terms', value: termsOfUseLabel },
+  ].filter((row) => Boolean(row.value))
+
+  const tagGroups = [
+    {
+      label: 'Genres',
+      tags: resolveTags(song.genres as TagLike[]).slice(0, 3),
+    },
+    {
+      label: 'Styles',
+      tags: resolveTags(song.styles as TagLike[]).slice(0, 3),
+    },
+    { label: 'Moods', tags: resolveTags(song.moods as TagLike[]).slice(0, 3) },
+    {
+      label: 'Themes',
+      tags: resolveTags(song.themes as TagLike[]).slice(0, 3),
+    },
+    {
+      label: 'Instruments',
+      tags: resolveTags(song.instruments as TagLike[]).slice(0, 3),
+    },
+    {
+      label: 'Production',
+      tags: resolveTags(song.production as TagLike[]).slice(0, 3),
+    },
+    {
+      label: 'Arrangements',
+      tags: resolveTags(song.arrangements as TagLike[]).slice(0, 3),
+    },
+    {
+      label: 'Other',
+      tags: resolveTags(song.otherTags as TagLike[]).slice(0, 3),
+    },
+  ].filter((group) => group.tags.length > 0)
+
+  if (detailRows.length === 0 && tagGroups.length === 0) return null
+
+  return (
+    <SidebarCard
+      icon={<Info size={16} className="text-primary" />}
+      title="Song Metadata"
+      description="Technical, publishing, and sonic profile."
+    >
+      <div className="space-y-4">
+        {detailRows.length > 0 && (
+          <dl className="space-y-2">
+            {detailRows.map((row) => (
+              <div
+                key={row.label}
+                className="flex items-start justify-between gap-3 text-sm"
+              >
+                <dt className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+                  {row.label}
+                </dt>
+                <dd className="text-right font-body text-foreground">
+                  {row.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        )}
+
+        {detailRows.length > 0 && tagGroups.length > 0 && <Separator />}
+
+        {tagGroups.length > 0 && (
+          <div className="space-y-3">
+            {tagGroups.map((group) => (
+              <div key={group.label} className="space-y-2">
+                <p className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+                  {group.label}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {group.tags.map((tag) => (
+                    <Badge
+                      key={`${group.label}-${tag}`}
+                      variant="outline"
+                      className="h-7 rounded-sm px-2 font-mono text-[10px] tracking-widest uppercase"
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </SidebarCard>
+  )
+}
+
+function ReleaseDetailsCard({ song }: { song: SongDoc }) {
+  const fromPrimaryRelease =
+    song.primaryRelease && typeof song.primaryRelease === 'object'
+      ? (song.primaryRelease as ReleaseDoc)
+      : null
+  const fromRelatedRelease =
+    song.relatedReleases?.docs?.find(
+      (doc): doc is ReleaseDoc => typeof doc === 'object',
+    ) ?? null
+  const release = fromPrimaryRelease ?? fromRelatedRelease
+
+  if (!release && !song.releaseDate) return null
+
+  const rows: Array<{ label: string; value?: string | null }> = [
+    { label: 'Title', value: release?.title },
+    {
+      label: 'Release Date',
+      value: formatReleaseDate(release?.releaseDate ?? song.releaseDate),
+    },
+    { label: 'Type', value: release?.type },
+    { label: 'Distribution', value: release?.distribution },
+    { label: 'UPC', value: release?.upc },
+  ].filter((row) => Boolean(row.value))
+
+  if (rows.length === 0) return null
+
+  return (
+    <SidebarCard
+      icon={<CalendarClock size={16} className="text-primary" />}
+      title="Release"
+      description="Primary release context for this track."
+    >
+      <dl className="space-y-2">
+        {rows.map((row) => (
+          <div
+            key={row.label}
+            className="flex items-start justify-between gap-3 text-sm"
+          >
+            <dt className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+              {row.label}
+            </dt>
+            <dd className="text-right font-body text-foreground">
+              {row.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
     </SidebarCard>
   )
 }
@@ -394,12 +584,12 @@ export default async function SongPage({ params }: Args) {
   })
 
   return (
-    <article className="min-h-screen pb-12">
+    <article className="min-h-screen bg-transparent pb-12">
       <MusicRecordingSchema song={song} />
       <PayloadRedirects disableNotFound url={`/music/${slug}`} />
       <SongHero song={song} />
 
-      <div className="container py-10 md:py-16">
+      <div className="container bg-transparent py-10 md:py-16">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10">
           <main className="space-y-10 lg:col-span-8">
             {song.youtubeId && (
@@ -424,7 +614,7 @@ export default async function SongPage({ params }: Args) {
 
             {song.youtubeId && (
               <section className="mt-6 px-3 lg:col-span-8">
-                <div className="flex w-full flex-col items-center justify-center gap-2 md:flex-row">
+                <div className="mb-3 flex w-full flex-col items-center justify-center gap-2 md:flex-row">
                   <YouTubeLikeButton
                     videoId={song.youtubeId}
                     className="flex w-full items-center justify-center gap-2 bg-secondary text-pretty text-foreground hover:bg-[#FF0000] hover:text-white md:w-1/2"
@@ -434,11 +624,11 @@ export default async function SongPage({ params }: Args) {
                   </YouTubeLikeButton>
 
                   <YouTubeSubscribeButton className="flex w-full items-center justify-center gap-2 bg-secondary text-pretty text-foreground hover:bg-[#FF0000] hover:text-white md:w-1/2">
-                    <Youtube size={20} />
+                    <YoutubeIcon size={20} />
                     Subscribe to YouTube Channel
                   </YouTubeSubscribeButton>
                 </div>
-                <Separator className="mb-8" />
+                {/* <Separator className="mb-8" /> */}
                 <CommentsYT videoId={song.youtubeId} />
               </section>
             )}
@@ -505,6 +695,8 @@ export default async function SongPage({ params }: Args) {
             )}
 
             <StreamingLinksCard song={song} />
+            <SongMetadataCard song={song} />
+            <ReleaseDetailsCard song={song} />
             <CreditsCard song={song} />
             <FeaturedInCard song={song} />
           </aside>
