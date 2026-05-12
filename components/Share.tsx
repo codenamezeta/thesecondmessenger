@@ -39,7 +39,11 @@ function getClientCanWebShare(): boolean {
 export const Share = ({ url: propUrl, title, className }: ShareProps) => {
   const [copied, setCopied] = useState(false)
 
-  const clientHref = useSyncExternalStore(noopSubscribe, getClientHref, () => '')
+  const clientHref = useSyncExternalStore(
+    noopSubscribe,
+    getClientHref,
+    () => '',
+  )
   const currentUrl = propUrl ?? clientHref
 
   const canWebShare = useSyncExternalStore(
@@ -122,10 +126,10 @@ export const Share = ({ url: propUrl, title, className }: ShareProps) => {
           <Share2 size={20} />
         </div>
         <div>
-          <CardTitle className="font-heading text-lg tracking-wider uppercase">
+          <CardTitle className="flex items-center gap-2 font-body text-xl font-bold tracking-widest uppercase">
             Share
           </CardTitle>
-          <CardDescription className="font-mono text-sm tracking-wide text-muted-foreground uppercase">
+          <CardDescription className="font-mono text-sm tracking-wider text-muted-foreground">
             Amplify this signal
           </CardDescription>
         </div>

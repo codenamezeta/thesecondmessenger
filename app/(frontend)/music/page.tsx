@@ -3,20 +3,25 @@ import configPromise from '@payload-config'
 import { MusicArchive } from '@/components/MusicArchive'
 import { Metadata } from 'next'
 
+// ISR — re-generate the song list at most every 10 minutes. Songs change
+// infrequently and Releases hooks already revalidate via their own paths,
+// so this gives us static-fast page loads with a sane staleness window.
+export const revalidate = 600
+
 export const metadata: Metadata = {
   title: 'Music by The Second Messenger',
   description: 'Full music archive and audio logs.',
   openGraph: {
     images: [
       {
-        url: 'https://thesecondmessenger.com/imgs/michael/michael-today.jpg',
+        url: 'https://thesecondmessenger.com/imgs/michael-today.jpg',
       },
     ],
   },
   twitter: {
     images: [
       {
-        url: 'https://thesecondmessenger.com/imgs/michael/michael-today.jpg',
+        url: 'https://thesecondmessenger.com/imgs/michael-today.jpg',
       },
     ],
   },

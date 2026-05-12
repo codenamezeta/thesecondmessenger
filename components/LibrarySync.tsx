@@ -91,7 +91,9 @@ export const LibrarySync = ({
       setTimeout(() => setStatus('idle'), 3000)
     } catch (err) {
       setStatus('idle')
-      alert(err instanceof Error ? err.message : 'Failed to connect to YouTube.')
+      alert(
+        err instanceof Error ? err.message : 'Failed to connect to YouTube.',
+      )
     }
   }
 
@@ -152,11 +154,11 @@ export const LibrarySync = ({
   return (
     <Card className="group bg-background">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-heading text-lg tracking-wider uppercase">
+        <CardTitle className="flex items-center gap-2 font-body text-xl font-bold tracking-widest uppercase">
           <Save size={24} className="text-primary" />
           {isReleased ? 'Library Sync' : 'Pre-Save Protocol'}
         </CardTitle>
-        <CardDescription className="font-mono text-sm tracking-wide text-muted-foreground uppercase">
+        <CardDescription className="font-mono text-sm tracking-wider text-muted-foreground">
           Save this release and connect your platforms.
         </CardDescription>
       </CardHeader>
@@ -166,7 +168,7 @@ export const LibrarySync = ({
             onClick={handleSpotify}
             disabled={status === 'loading'}
             className={cn(
-              'flex w-full items-center justify-center gap-2 py-6',
+              'flex w-full items-center justify-center gap-2 py-6 font-heading tracking-wider',
               'border border-primary/20 bg-background text-foreground hover:bg-[#1ed760] hover:text-black',
             )}
           >
@@ -182,7 +184,7 @@ export const LibrarySync = ({
               onClick={handleYouTube}
               disabled={status === 'loading'}
               className={cn(
-                'flex w-full items-center justify-center gap-2 py-6',
+                'flex w-full items-center justify-center gap-2 py-6 font-heading tracking-wider',
                 'border border-primary/20 bg-background text-foreground hover:bg-[#FF0000] hover:text-white',
               )}
             >

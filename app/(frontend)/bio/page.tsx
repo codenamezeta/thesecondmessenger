@@ -65,7 +65,7 @@ export default function BioPage() {
         <div className="absolute top-12 right-0 bottom-0 z-10 opacity-50 md:opacity-100 xl:right-[10vw]">
           <Image
             src="/imgs/profile-01.png"
-            className="size-full object-cover"
+            className="z-30 size-full object-cover"
             alt="profile"
             width={786}
             height={786}
@@ -79,10 +79,10 @@ export default function BioPage() {
           opacity={0.75}
           blendMode="screen"
         />
-        <div className="pointer-events-none absolute inset-0 bg-[url('/imgs/scanlines.png')] opacity-10" />
+        <div className="pointer-events-none absolute inset-0 bg-[url('/imgs/backgrounds/scanlines.png')] opacity-10" />
         <div className="absolute inset-0 bg-linear-to-tr from-black to-transparent" />
 
-        <div className="relative z-20 container">
+        <div className="relative z-10 container">
           <div className="max-w-4xl">
             {/* Identification Header */}
             <div className="mb-4 flex items-center gap-3 opacity-70">
@@ -161,7 +161,7 @@ export default function BioPage() {
                   className={cn(
                     'flex w-full items-center gap-3 rounded px-3 py-2 text-left font-mono text-xs tracking-wider uppercase transition-all',
                     activeSection === chapter.id
-                      ? 'bg-primary font-bold text-primary-foreground shadow-[0_0_15px_hsl(var(--primary)/0.85)]'
+                      ? 'bg-accent font-bold text-primary-foreground shadow-[0_0_15px_hsl(var(--primary)/0.85)]'
                       : 'text-foreground/50 hover:bg-card/50 hover:text-foreground hover:shadow-[0_0_15px_hsl(var(--primary)/0.25)]',
                   )}
                 >
@@ -176,21 +176,21 @@ export default function BioPage() {
         {/* --- RIGHT CONTENT (The Story) --- */}
         <main className="relative space-y-24">
           {/* BACKGROUND DECORATION: The Timeline Spine */}
-          <div className="absolute top-0 bottom-0 left-4 w-px bg-linear-to-b from-transparent via-border to-transparent lg:left-0" />
+          <div className="absolute top-0 bottom-0 left-4 w-0.5 bg-linear-to-b from-transparent via-foreground/50 to-transparent lg:left-0" />
 
           {/* INTRO */}
           <section id="intro" className="relative pl-12 lg:pl-16">
-            <div className="absolute top-0 left-4 h-2 w-2 -translate-x-[3px] rounded-full bg-primary lg:left-0" />
+            <div className="absolute top-0 left-4 h-2 w-2 translate-x-[-3px] rounded-full bg-primary lg:left-0" />
 
             <h2 className="glitch-text mb-6 font-heading text-4xl tracking-widest text-foreground uppercase md:text-5xl">
               000: Prologue
             </h2>
 
-            <div className="bg-surface/5 group relative overflow-hidden rounded-r-lg border-l-2 border-primary p-8">
+            <div className="bg-surface/5 group relative overflow-hidden rounded-r-lg border-l-2 border-accent p-8">
               <div className="pointer-events-none absolute inset-0 bg-[url('/imgs/backgrounds/scanlines.png')] opacity-10" />
               <FileText className="absolute top-4 right-4 h-24 w-24 rotate-12 text-foreground/5" />
 
-              <blockquote className="relative z-10 font-heading text-xl leading-relaxed text-foreground/90 italic md:text-2xl">
+              <blockquote className="relative z-10 border-0 font-heading text-xl leading-relaxed text-foreground/90 italic md:text-2xl">
                 &quot;I&apos;ve always believed that a great song is a great
                 song, regardless of the icing you put on top. If the melody and
                 the chords are honest, the song will live forever.&quot;
@@ -366,11 +366,11 @@ export default function BioPage() {
 
           {/* OUTRO */}
           <section id="outro" className="relative pt-12 pl-12 lg:pl-16">
-            <div className="absolute top-12 left-4 size-2 -translate-x-[3px] rounded-full bg-primary lg:left-0" />
+            <div className="absolute top-12 left-4 size-2 translate-x-[-3px] rounded-full bg-special lg:left-0" />
 
-            <div className="rounded-lg border border-primary/30 bg-primary/10 p-8">
+            <div className="rounded-lg border border-special/30 bg-special/10 p-8">
               <div className="mb-6 flex items-center gap-3">
-                <Terminal size={20} className="text-primary" />
+                <Terminal size={20} className="text-special" />
                 <h2 className="font-heading text-xl tracking-wider text-foreground uppercase">
                   Encrypted Message: To My Descendants
                 </h2>
@@ -415,10 +415,12 @@ const BioChapter = ({
   icon,
   imageRight = true,
 }: BioChapterProps) => {
+  const [isRevealed, setIsRevealed] = useState(false)
+
   return (
     <section id={id} className="group relative scroll-mt-32 pl-12 lg:pl-16">
       {/* Timeline Node */}
-      <div className="absolute top-0 left-4 h-2 w-2 -translate-x-[3px] rounded-full bg-secondary lg:left-0" />
+      <div className="absolute top-0 left-4 h-2 w-2 translate-x-[-3px] rounded-full bg-accent lg:left-0" />
 
       <div
         className={cn(
@@ -446,9 +448,14 @@ const BioChapter = ({
         </div>
 
         {/* Visual Placeholder (The "Card") */}
-        <div
+        <button
+          type="button"
+          onClick={() => setIsRevealed((prev) => !prev)}
+          aria-label={isRevealed ? 'Hide bio image' : 'Reveal bio image'}
+          aria-pressed={isRevealed}
+          data-revealed={isRevealed}
           className={cn(
-            'group relative aspect-square overflow-hidden rounded-sm bg-transparent p-1 transition-all hover:border-primary/50',
+            'group relative aspect-square cursor-pointer overflow-hidden rounded-sm border border-transparent bg-transparent p-1 text-left transition-all hover:border-primary/50 focus-visible:border-primary/50 focus-visible:outline-none data-[revealed=true]:border-primary/50',
             !imageRight && 'md:order-1',
           )}
         >
@@ -463,28 +470,46 @@ const BioChapter = ({
             alt="Bio Image"
             width={500}
             height={500}
-            className="h-full w-full object-cover opacity-5 saturate-0 transition-all group-hover:animate-pulse group-hover:opacity-80 group-hover:saturate-100"
+            className={cn(
+              'h-full w-full object-cover saturate-0 transition-all',
+              'opacity-0 group-hover:animate-pulse group-hover:opacity-50 group-hover:saturate-100',
+              isRevealed &&
+                'glitch-text-2 animate-pulse opacity-100 saturate-100',
+            )}
           />
-          <div className="absolute inset-0 flex items-center justify-center transition-colors duration-500 group-hover:opacity-0">
-            <div className="rounded-full bg-primary p-6 shadow-[0_0_30px_rgba(0,255,0,0.4)] transition-transform duration-500 group-hover:opacity-0">
+          <div
+            className={cn(
+              'pointer-events-none absolute inset-0 flex items-center justify-center transition-opacity duration-500 group-hover:opacity-0',
+              isRevealed && 'opacity-0',
+            )}
+          >
+            <div className="rounded-full bg-primary p-6 shadow-[0_0_30px_rgba(0,255,0,0.4)]">
               {icon}
             </div>
           </div>
 
           {/* Scanlines */}
-          {/* <div className="absolute inset-0 scanlines opacity-100 group-hover:opacity-100 pointer-events-none mix-blend-screen" /> */}
+          <div className="scanlines pointer-events-none absolute inset-0 opacity-100 mix-blend-screen" />
 
           {/* Data Overlay */}
-          <div className="absolute right-0 bottom-0 left-0 bg-linear-to-t from-black to-transparent p-4">
+          <div className="pointer-events-none absolute right-0 bottom-0 left-0 flex items-center justify-between gap-2 bg-linear-to-t from-black to-transparent p-4">
             <div className="font-mono text-[10px] tracking-widest text-foreground/50 uppercase">
-              // IMAGE_DATA_MISSING
+              {isRevealed ? '// ACCESS_GRANTED' : '// TAP_TO_DECRYPT'}
             </div>
+            <div
+              className={cn(
+                'size-1.5 rounded-full transition-colors',
+                isRevealed
+                  ? 'animate-pulse bg-primary shadow-[0_0_8px_hsl(var(--primary))]'
+                  : 'bg-foreground/30',
+              )}
+            />
           </div>
 
           {/* Corner Cuts */}
-          <div className="absolute top-0 left-0 h-4 w-4 rounded-tl border-t border-l border-border/50" />
-          <div className="absolute right-0 bottom-0 h-4 w-4 rounded-br border-r border-b border-border/50" />
-        </div>
+          <div className="pointer-events-none absolute top-2 left-2 h-4 w-4 rounded-tl border-t border-l border-primary/50" />
+          <div className="pointer-events-none absolute right-2 bottom-2 h-4 w-4 rounded-br border-r border-b border-primary/50" />
+        </button>
       </div>
     </section>
   )

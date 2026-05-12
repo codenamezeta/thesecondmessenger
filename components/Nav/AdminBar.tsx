@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 
 import type { Media, User } from '@/payload-types'
+import { memberNavItems } from '.'
 import { getClientSideURL } from '@/utilities/getURL'
 import { getMediaUrl } from '@/utilities/getMediaUrl'
 import { cn } from '@/utilities/ui'
@@ -43,7 +44,7 @@ const SessionProfileColumn: React.FC<{ user: User }> = ({ user }) => {
 
   return (
     <Link
-      href="/account"
+      href={`/crew/${user.username}`}
       className="flex max-w-[55%] min-w-0 items-center gap-2 text-foreground transition-colors hover:text-primary sm:max-w-none"
     >
       <Image
@@ -71,25 +72,19 @@ const MemberSessionBar: React.FC<{
       className="flex shrink-0 items-center gap-2 pr-1 text-xs font-medium sm:gap-3"
       aria-label="Member shortcuts"
     >
-      <Link
-        href="/music/unreleased"
-        className="whitespace-nowrap text-foreground/75 transition-colors hover:text-primary"
-      >
-        Vault
-      </Link>
-      <Link
-        href="/crew"
-        className="whitespace-nowrap text-foreground/75 transition-colors hover:text-primary"
-      >
-        Crew
-      </Link>
-      <button
-        type="button"
-        onClick={onSignOut}
-        className="rounded border border-border/85 p-1 whitespace-nowrap text-foreground/75 transition-colors hover:text-primary"
-      >
-        Sign out
-      </button>
+      {memberNavItems.map((item) =>
+        item.type === 'link' ? (
+          <Link
+            key={item.label}
+            href={item.href}
+            className="whitespace-nowrap text-foreground/75 transition-colors hover:text-primary"
+          >
+            {item.label}
+          </Link>
+        ) : (
+          <div key={item.label}>{item.label}</div>
+        ),
+      )}
     </nav>
   </div>
 )

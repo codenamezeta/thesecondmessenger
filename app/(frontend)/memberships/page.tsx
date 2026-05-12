@@ -141,7 +141,7 @@ export default async function MembershipsPage({
         <div className="absolute right-0 bottom-0 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
       </div>
 
-      <div className="container relative z-10 flex flex-col gap-10">
+      <div className="relative z-10 container flex flex-col gap-10">
         {error === 'invalid_tier' && (
           <section className="border border-destructive/50 bg-destructive/10 p-4 backdrop-blur-sm md:p-5">
             <p className="font-mono text-[10px] tracking-[0.2em] text-destructive uppercase">
@@ -211,7 +211,7 @@ export default async function MembershipsPage({
               variant="outline"
               className="rounded-none border-primary/40 bg-background/40 px-3 font-mono text-[10px] tracking-[0.2em] uppercase"
             >
-              Admiral is invite-only
+              Show your support
             </Badge>
             <Badge
               variant="outline"
@@ -304,19 +304,6 @@ export default async function MembershipsPage({
               </CardFooter>
             </Card>
           ))}
-        </section>
-
-        <section className="border border-border/50 bg-card/15 p-5 backdrop-blur-sm md:p-6">
-          <p className="mb-2 font-mono text-[10px] tracking-[0.22em] text-primary uppercase">
-            {'// Stripe Checkout Ready'}
-          </p>
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            Paid tier CTAs route directly to{' '}
-            <code className="bg-background/70 px-1.5 py-0.5 font-mono text-xs">
-              {STRIPE_CHECKOUT_PATH}
-            </code>{' '}
-            with the selected tier query parameter.
-          </p>
         </section>
       </div>
     </main>

@@ -21,34 +21,23 @@ type NavDropdownItem = {
   items: NavLinkItem[]
 }
 
-type NavItem = NavLinkItem | NavDropdownItem
+export type NavItem = NavLinkItem | NavDropdownItem
 
 const navItems: NavItem[] = [
   { type: 'link', label: 'Home', href: '/' },
   { type: 'link', label: 'Music', href: '/music' },
   { type: 'link', label: 'Videos', href: '/videos' },
   { type: 'link', label: 'Bio', href: '/bio' },
-  { type: 'link', label: 'Posts', href: '/posts' },
-  {
-    type: 'dropdown',
-    label: 'Members',
-    items: [
-      { type: 'link', label: 'Memberships', href: '/memberships' },
-      { type: 'link', label: 'Crew', href: '/crew' },
-      { type: 'link', label: 'Account', href: '/account' },
-      { type: 'link', label: 'Unreleased Content', href: '/music/unreleased' },
-      { type: 'link', label: 'Login', href: '/login' },
-    ],
-  },
-  // {
-  //   type: 'dropdown',
-  //   label: 'Dropdown',
-  //   items: [
-  //     { type: 'link', label: 'Item 1', href: '/item1' },
-  //     { type: 'link', label: 'Item 2', href: '/item2' },
-  //     { type: 'link', label: 'Item 3', href: '/item3' },
-  //   ],
-  // },
+  { type: 'link', label: 'Updates', href: '/posts' },
+  { type: 'link', label: 'Login', href: '/login' },
+]
+
+export const memberNavItems: NavItem[] = [
+  // { type: 'link', label: 'Memberships', href: '/memberships' },
+  { type: 'link', label: 'Crew', href: '/crew' },
+  { type: 'link', label: 'Account', href: '/account' },
+  { type: 'link', label: 'Unreleased Content', href: '/music/unreleased' },
+  { type: 'link', label: 'Sign Out', href: '/logout' },
 ]
 
 export const Nav: React.FC = () => {
@@ -59,6 +48,7 @@ export const Nav: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [logoError, setLogoError] = useState(false)
 
+  
   // Dropdown Logic (Desktop)
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -145,7 +135,7 @@ export const Nav: React.FC = () => {
           </Link>
 
           {/* Desktop Links */}
-          <ul className="relative z-40 hidden list-none items-center justify-between gap-x-5 font-heading text-sm tracking-widest uppercase md:flex">
+          <ul className="relative z-40 hidden list-none items-center justify-between gap-x-5 font-mono text-xs tracking-widest uppercase md:flex">
             {/* 1. Render CMS Items */}
             {navItems.map((item, i) => {
               const isDropdown = item.type === 'dropdown'
@@ -175,8 +165,8 @@ export const Nav: React.FC = () => {
                         className={`absolute top-full right-0 w-56 pt-4 transition-all duration-300 ease-out before:absolute before:-top-4 before:left-0 before:h-4 before:w-full before:bg-transparent ${isOpen ? 'pointer-events-auto translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'} `}
                       >
                         <div className="relative overflow-hidden rounded-sm border border-border/10 bg-background/95 p-2 shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
-                          <div className="absolute top-0 right-0 h-4 w-4 border-t border-r border-primary/50"></div>
-                          <div className="absolute bottom-0 left-0 h-4 w-4 border-b border-l border-primary/50"></div>
+                          <div className="absolute top-0 right-0 h-4 w-4 border-t border-r border-accent/50"></div>
+                          <div className="absolute bottom-0 left-0 h-4 w-4 border-b border-l border-accent/50"></div>
                           <div className="relative z-40 flex flex-col gap-1">
                             {item.items.map((subItem, j) => (
                               <Link

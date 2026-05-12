@@ -20,13 +20,16 @@ export const SongHero = ({ song }: { song: Song }) => {
 
   return (
     <section className="backdrop-blur-0 relative w-full overflow-hidden border-b border-white/10 bg-muted/30">
-      {/* Background Ambience */}
+      {/* Background ambience — tiny srcSet + heavy blur; not a second full-viewport decode */}
       <div className="pointer-events-none absolute inset-0 opacity-20">
         {coverArtUrl && (
           <Image
             src={coverArtUrl}
-            alt="bg"
+            alt=""
+            aria-hidden
             fill
+            sizes="96px"
+            quality={40}
             className="scale-110 object-cover blur-[6px]"
           />
         )}
@@ -45,6 +48,7 @@ export const SongHero = ({ song }: { song: Song }) => {
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
                 priority
                 sizes="(max-width: 768px) 100vw, 300px"
+                quality={85}
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center p-6">
@@ -83,12 +87,12 @@ export const SongHero = ({ song }: { song: Song }) => {
             <h1 className="font-heading text-4xl leading-[0.75] font-bold tracking-wide text-foreground uppercase drop-shadow-lg md:text-6xl">
               {song.title}
             </h1>
-            <span className="font-heading text-xl tracking-widest text-primary uppercase opacity-80 md:text-2xl">
+            <span className="font-mono text-2xl font-black tracking-widest text-muted-foreground uppercase opacity-80 md:text-2xl">
               The Second Messenger
             </span>
             {song.tagline && (
-              <p className="max-w-4xl font-mono text-base leading-tight text-pretty text-muted-foreground italic">
-                &quot;{song.tagline}&quot;
+              <p className="max-w-4xl font-body text-base leading-tight text-pretty text-muted-foreground italic">
+                {song.tagline}
               </p>
             )}
 

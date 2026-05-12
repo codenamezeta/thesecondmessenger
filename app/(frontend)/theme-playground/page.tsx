@@ -21,6 +21,21 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
+import {
+  RankBadge,
+  RANK_BADGE_LABELS,
+  type CrewRank,
+} from '@/components/RankBadges'
+
+const CREW_RANKS: CrewRank[] = [
+  'ensign',
+  'lieutenant',
+  'commander',
+  'captain',
+  'admiral',
+]
+
+const RANK_BADGE_SIZES = ['sm', 'md', 'lg'] as const
 
 export default function ThemePlayground() {
   return (
@@ -197,6 +212,94 @@ export default function ThemePlayground() {
           </p>
         </div>
       </section>
+
+      <Separator className="my-4" />
+
+      <section className="space-y-10 py-10">
+        <h2 className="border-b border-border pb-2 font-heading text-2xl tracking-widest uppercase">
+          Rank badges
+        </h2>
+
+        <p className="font-body text-sm text-muted-foreground">
+          Matrix of every tier and badge size — default{' '}
+          <code className="font-mono text-xs text-foreground">
+            showLabel=true
+          </code>
+          .
+        </p>
+
+        <RankBadgePropMatrix showLabel />
+
+        <p className="font-body text-sm text-muted-foreground">
+          Same grid with{' '}
+          <code className="font-mono text-xs text-foreground">
+            showLabel=false
+          </code>{' '}
+          (insignia + stripes only).
+        </p>
+
+        <RankBadgePropMatrix showLabel={false} />
+      </section>
     </main>
+  )
+}
+
+function RankBadgePropMatrix({ showLabel }: { showLabel: boolean }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[min(100%,560px)] border-collapse border border-border">
+        <thead>
+          <tr className="bg-muted/40">
+            <th
+              scope="col"
+              className="border border-border px-3 py-2 text-left font-mono text-[10px] tracking-widest uppercase text-muted-foreground"
+            >
+              Tier (<span className="text-foreground">rank</span>)
+            </th>
+            {RANK_BADGE_SIZES.map((size) => (
+              <th
+                key={size}
+                scope="col"
+                className="border border-border px-3 py-2 text-left font-mono text-[10px] tracking-widest uppercase text-muted-foreground"
+              >
+                size=&quot;{size}&quot;
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {CREW_RANKS.map((rank) => (
+            <tr key={`${rank}-${showLabel}`}>
+              <th
+                scope="row"
+                className="border border-border px-3 py-2 align-middle text-left font-mono text-[10px] tracking-widest text-foreground uppercase"
+              >
+                {RANK_BADGE_LABELS[rank]}
+                <span className="mt-1 block font-normal tracking-normal text-muted-foreground normal-case">
+                  rank=&quot;{rank}&quot;
+                </span>
+              </th>
+              {RANK_BADGE_SIZES.map((size) => (
+                <td
+                  key={size}
+                  className="border border-border px-3 py-4 align-middle"
+                >
+                  <div className="flex flex-col items-start gap-2">
+                    <RankBadge
+                      rank={rank}
+                      size={size}
+                      showLabel={showLabel}
+                    />
+                    <span className="font-mono text-[9px] leading-tight text-muted-foreground">
+                      showLabel={showLabel ? 'true' : 'false'}
+                    </span>
+                  </div>
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

@@ -114,7 +114,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-8 border-t border-border/50 pt-8 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
+        <div className="mt-12 flex flex-col items-center justify-between gap-8 border-t border-border/50 pt-8 md:flex-row md:items-end">
           <p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
             Copyright © {new Date().getFullYear()} The Second Messenger. All
             rights reserved.
@@ -123,7 +123,7 @@ export function Footer() {
             <Link
               href="https://a2zeta.com"
               target="_blank"
-              className="text-primary hover:underline"
+              className="text-primary/50 hover:underline"
             >
               _codenamezeta
             </Link>

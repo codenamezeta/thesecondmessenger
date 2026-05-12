@@ -4,7 +4,9 @@ import type { NextRequest } from 'next/server'
 export async function GET(req: NextRequest) {
   const returnTo = req.nextUrl.searchParams.get('returnTo') || '/account'
   const safeReturnTo =
-    returnTo.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/account'
+    returnTo.startsWith('/') && !returnTo.startsWith('//')
+      ? returnTo
+      : '/account'
   const clientId = process.env.GOOGLE_CLIENT_ID
   const redirectUri = `${process.env.NEXT_PUBLIC_SERVER_URL}/api/auth/callback/google`
 

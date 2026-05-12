@@ -24,16 +24,45 @@ export const gatedContentReadAccess: Access = async ({
 
   if (!userMeetsVaultFloor(user)) return false
 
-  const doc =
-    data ??
-    (id != null
-      ? await req.payload.findByID({
-          collection: 'gated-content',
-          id,
-          depth: 0,
-          overrideAccess: true,
-        })
-      : null)
+  let doc = data
+  if (!doc && id != null) {
+    try {
+      const lookup = await req.payload.find({
+        collection: 'gated-content',
+        depth: 0,
+        limit: 1,
+        overrideAccess: true,
+        pagination: false,
+        where: {
+          id: {
+            equals: id,
+          },
+        },
+      })
+      doc = lookup.docs[0] ?? null
+    } catch {
+      // Some internal upload/storage phases can probe access before the new doc
+      // is fully readable by ID. Treat missing lookup as access denied rather
+      // than throwing and aborting persistence.
+      return false
+    }
+  }
+
+  if (!doc && id != null) {
+    try {
+      doc = await req.payload.findByID({
+        collection: 'gated-content',
+        id,
+        depth: 0,
+        overrideAccess: true,
+      })
+    } catch {
+      // Some internal upload/storage phases can probe access before the new doc
+      // is fully readable by ID. Treat missing lookup as access denied rather
+      // than throwing and aborting persistence.
+      return false
+    }
+  }
 
   if (!doc) return false
 

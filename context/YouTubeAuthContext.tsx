@@ -66,7 +66,7 @@ interface YouTubeAuthContextValue {
 }
 
 const YouTubeAuthContext = createContext<YouTubeAuthContextValue | undefined>(
-  undefined
+  undefined,
 )
 
 const GIS_SCOPE = 'https://www.googleapis.com/auth/youtube.force-ssl'
@@ -135,7 +135,11 @@ export const YouTubeAuthProvider = ({ children }: { children: ReactNode }) => {
   )
 
   const applyToken = useCallback(
-    (accessToken: string, expiresInSeconds: number, nextSource: TokenSource) => {
+    (
+      accessToken: string,
+      expiresInSeconds: number,
+      nextSource: TokenSource,
+    ) => {
       setToken(accessToken)
       setSource(nextSource)
       expiresAtRef.current = Date.now() + expiresInSeconds * 1000
@@ -173,7 +177,9 @@ export const YouTubeAuthProvider = ({ children }: { children: ReactNode }) => {
         const expiresInSeconds = data.expiresAt
           ? Math.max(
               60,
-              Math.floor((new Date(data.expiresAt).getTime() - Date.now()) / 1000),
+              Math.floor(
+                (new Date(data.expiresAt).getTime() - Date.now()) / 1000,
+              ),
             )
           : 3600
         applyToken(data.accessToken, expiresInSeconds, 'server')
@@ -260,21 +266,31 @@ export const YouTubeAuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <YouTubeAuthContext.Provider value={value}>
-      <Script src="https://accounts.google.com/gsi/client" onLoad={handleGsiLoad} />
+      <Script
+        src="https://accounts.google.com/gsi/client"
+        onLoad={handleGsiLoad}
+      />
       {children}
     </YouTubeAuthContext.Provider>
   )
 }
 
-let didWarnMissingProvider = false
-
 export const useYouTubeAuth = (): YouTubeAuthContextValue => {
   const ctx = useContext(YouTubeAuthContext)
-  if (!ctx) {
-    if (process.env.NODE_ENV !== 'production' && !didWarnMissingProvider) {
-      didWarnMissingProvider = true
+  const hasWarnedMissingProviderRef = useRef(false)
+
+  useEffect(() => {
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      !ctx &&
+      !hasWarnedMissingProviderRef.current
+    ) {
+      hasWarnedMissingProviderRef.current = true
       console.warn('useYouTubeAuth must be used within a YouTubeAuthProvider')
     }
+  }, [ctx])
+
+  if (!ctx) {
     return {
       token: null,
       isLoading: false,

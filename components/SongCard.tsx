@@ -140,10 +140,10 @@ function recordingTypePresentation(t: Song['recordingType']): {
 
 const CHART_ACCENT = [
   'from-primary/25 via-chart-1/15 to-transparent',
-  'from-primary/20 via-chart-2/20 to-transparent',
-  'from-primary/22 via-chart-3/18 to-transparent',
-  'from-primary/20 via-chart-4/18 to-transparent',
-  'from-primary/18 via-chart-5/22 to-transparent',
+  'from-primary/20 via-accent/20 to-transparent',
+  'from-special/50 via-special/25 to-transparent',
+  'from-primary/20 via-chart-4/20 to-transparent',
+  'from-primary/30 via-chart-5/25 to-transparent',
 ] as const
 
 export const SongCard = ({ song, className }: SongCardProps) => {
@@ -171,12 +171,12 @@ export const SongCard = ({ song, className }: SongCardProps) => {
     ...(moodTags || []).map((t) => ({
       text: t,
       icon: Zap,
-      color: 'text-chart-1',
+      color: 'text-accent',
     })),
     ...(themeTags || []).map((t) => ({
       text: t,
       icon: Globe,
-      color: 'text-chart-2',
+      color: 'text-special',
     })),
   ].slice(0, 6)
 
@@ -214,7 +214,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
   const cardSurface = (
     <div
       className={cn(
-        'relative flex h-full flex-col overflow-hidden rounded-lg border border-border/60 bg-card/30 shadow-sm backdrop-blur-md transition-[transform,box-shadow,border-color] duration-500 ease-out',
+        'relative flex h-full flex-col overflow-hidden rounded-lg border-t border-r-2 border-b-2 border-l-2 border-border border-r-border/50 border-b-border/60 border-l-border bg-card/30 shadow-sm backdrop-blur-sm transition-[transform,box-shadow,border-color] duration-500 ease-out',
         'group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-[0_20px_50px_-20px] group-hover:shadow-primary/25',
         isCurrent && 'border-primary/50 shadow-[0_0_0_1px] shadow-primary/20',
       )}
@@ -226,36 +226,38 @@ export const SongCard = ({ song, className }: SongCardProps) => {
       >
         <div
           className={cn(
-            'absolute -inset-[40%] bg-linear-to-br mix-blend-soft-light',
+            'absolute inset-[-40%] bg-linear-to-br mix-blend-soft-light',
             accentGradient,
           )}
           style={{ transform: `rotate(${foilSkewDeg}deg)` }}
         />
+        {/* Top specular wash — opacity 0.07; reads mostly as a slight cool/warm bias */}
         <div
-          className="absolute inset-0 opacity-[0.07]"
+          className="absolute inset-0 opacity-5"
           style={{
             background: `radial-gradient(ellipse at ${20 + (meshPhase % 55)}% 0%, color-mix(in oklch, var(--color-primary) 14%, transparent) 0%, transparent 58%)`,
           }}
         />
+        {/* Film grain — feTurbulence + mix-blend-overlay; subtle on busy foil */}
         <div
-          className="absolute inset-0 opacity-[0.35] mix-blend-overlay"
+          className="absolute inset-0 opacity-20 mix-blend-overlay"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.11' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E")`,
           }}
         />
       </div>
 
-      {/* Specular sweep — premium hover */}
+      {/* Specular band — only moves into view on group-hover; starts off-screen left */}
       <div
         className="pointer-events-none absolute inset-0 z-20 overflow-hidden rounded-sm"
         aria-hidden
       >
-        <div className="absolute inset-0 -translate-x-full skew-x-12 bg-linear-to-r from-transparent via-foreground/10 to-transparent opacity-0 transition-[transform,opacity] duration-700 ease-out group-hover:translate-x-full group-hover:opacity-100" />
+        <div className="absolute inset-0 -translate-x-full skew-x-12 bg-linear-to-r from-transparent via-foreground/12 to-transparent opacity-100 transition-[transform,opacity] duration-700 ease-out group-hover:translate-x-full group-hover:opacity-100" />
       </div>
 
-      {/* Background void */}
+      {/* Full-bleed texture under art + data; both sit later in the tree and occlude most of this */}
       <div className="absolute inset-0 bg-transparent">
-        {/* CSS grid pattern */}
+        {/* Blueprint grid — perpendicular 1px guides forming squares (not CRT scanlines) */}
         <div
           className="absolute inset-0"
           style={{
@@ -265,12 +267,12 @@ export const SongCard = ({ song, className }: SongCardProps) => {
             opacity: 0.12,
           }}
         />
-        {/* Scanlines */}
+        {/* Horizontal scanlines — 6% black stripes; easy to miss under cover art and the tinted data panel */}
         <div
           className="pointer-events-none absolute inset-0"
           style={{
             backgroundImage:
-              'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px)',
+              'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.20) 3px, rgba(0,0,0,0.20) 4px)',
           }}
         />
       </div>
@@ -278,7 +280,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
       {/* Art frame */}
       <div
         className={cn(
-          'relative z-10 aspect-square w-full border-b border-border/80 bg-muted/40 transition-colors duration-500 group-hover:border-primary/25',
+          'relative aspect-square w-full bg-transparent transition-colors duration-500 group-hover:border-special',
         )}
       >
         {coverUrl ? (
@@ -289,8 +291,8 @@ export const SongCard = ({ song, className }: SongCardProps) => {
             className={cn(
               'object-cover transition-all duration-700 ease-out',
               isCurrent
-                ? 'scale-105 opacity-50 saturate-75'
-                : 'opacity-95 group-hover:scale-[1.04] group-hover:opacity-100',
+                ? 'glitch-text-2 scale-105 opacity-10 saturate-75'
+                : 'opacity-90 group-hover:scale-[1.04] group-hover:opacity-100',
             )}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
@@ -302,6 +304,8 @@ export const SongCard = ({ song, className }: SongCardProps) => {
 
         <div className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-linear-to-b from-background/90 to-transparent" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-t from-background/95 to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-linear-to-r from-background/50 to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-2 bg-linear-to-l from-background/75 to-transparent" />
 
         <div className="absolute inset-0 z-30 flex items-center justify-center">
           <Button
@@ -327,7 +331,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
           </Button>
         </div>
 
-        <div className="absolute top-2 right-2 left-2 z-20 flex items-start justify-between gap-2">
+        <div className="absolute top-2 right-2 left-2 z-30 flex items-start justify-between gap-2">
           <div className="rounded-sm border border-border/80 bg-background/70 px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-muted-foreground uppercase backdrop-blur-md">
             {serialNumber}
           </div>
@@ -352,9 +356,10 @@ export const SongCard = ({ song, className }: SongCardProps) => {
       </div>
 
       {/* Data panel */}
-      <div className="relative z-10 flex flex-1 flex-col bg-linear-to-b from-card/90 to-card/50 px-4">
+      <div className="relative z-40 flex flex-1 flex-col bg-linear-to-b from-card to-transparent px-4">
+        {/* Horizontal scanlines — this layer is only over the data panel (visible there); card-level scanlines sit under this panel */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+          className="pointer-events-none absolute inset-0 opacity-20"
           style={{
             backgroundImage: `repeating-linear-gradient(
               0deg,
@@ -371,7 +376,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
           <div>
             <h3
               className={cn(
-                'mt-3 mb-1 truncate font-heading text-lg leading-tight tracking-wide uppercase transition-colors md:text-xl',
+                'mt-3 mb-1 font-heading text-lg leading-tight tracking-wide text-pretty uppercase transition-colors md:text-xl',
                 isCurrent
                   ? 'text-primary drop-shadow-[0_0_12px_var(--color-primary)]'
                   : 'text-foreground group-hover:text-primary',
@@ -389,8 +394,8 @@ export const SongCard = ({ song, className }: SongCardProps) => {
             </div>
 
             {song.tagline ? (
-              <p className="line-clamp-2 border-l-2 border-border pl-2 font-body text-xs leading-snug text-muted-foreground italic">
-                &quot;{song.tagline}&quot;
+              <p className="line-clamp-2 border-l-2 border-accent/50 pl-2 font-body text-xs leading-snug text-muted-foreground italic">
+                {song.tagline}
               </p>
             ) : null}
           </div>
