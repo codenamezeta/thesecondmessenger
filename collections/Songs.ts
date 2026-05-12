@@ -20,6 +20,46 @@ import { MediaBlock } from '@/blocks/MediaBlock/config'
 import type { Release } from '@/payload-types'
 import { queueAudioTagSync } from '@/lib/audio-tags/queueAudioTagSync'
 
+/** hasMany → `tags` relationships on Song; duplicate IDs can appear as duplicate `_rels` rows. */
+const SONG_TAG_RELATIONSHIP_KEYS = [
+  'genres',
+  'styles',
+  'moods',
+  'themes',
+  'instruments',
+  'production',
+  'arrangements',
+  'otherTags',
+] as const
+
+function relationEntryId(entry: unknown): string | null {
+  if (entry === null || entry === undefined) return null
+  if (typeof entry === 'number' || typeof entry === 'string') return String(entry)
+  if (typeof entry === 'object' && 'id' in entry) {
+    const id = (entry as { id: unknown }).id
+    if (typeof id === 'number' || typeof id === 'string') return String(id)
+  }
+  return null
+}
+
+/** Drop duplicate tag links by related document id; preserves first occurrence shape (id vs populated). */
+function dedupeManyRelationshipArray(value: unknown): unknown {
+  if (!Array.isArray(value) || value.length < 2) return value
+  const seen = new Set<string>()
+  const out: unknown[] = []
+  for (const entry of value) {
+    const id = relationEntryId(entry)
+    if (!id) {
+      out.push(entry)
+      continue
+    }
+    if (seen.has(id)) continue
+    seen.add(id)
+    out.push(entry)
+  }
+  return out.length === value.length ? value : out
+}
+
 export const Songs: CollectionConfig = {
   slug: 'songs',
   access: {
@@ -97,6 +137,43 @@ export const Songs: CollectionConfig = {
         return data
       },
     ],
+    beforeChange: [
+      async ({ data, originalDoc, operation }) => {
+        if (!data || typeof data !== 'object') return data
+        const d = data as Record<string, unknown>
+        const prev =
+          operation === 'update' && originalDoc && typeof originalDoc === 'object'
+            ? (originalDoc as Record<string, unknown>)
+            : null
+        for (const key of SONG_TAG_RELATIONSHIP_KEYS) {
+          if (d[key] !== undefined) {
+            d[key] = dedupeManyRelationshipArray(d[key])
+            continue
+          }
+          // Partial updates often omit unchanged fields; still collapse duplicate rel rows in DB.
+          if (prev) {
+            const cur = prev[key]
+            if (Array.isArray(cur) && cur.length >= 2) {
+              const deduped = dedupeManyRelationshipArray(cur)
+              if (deduped !== cur) d[key] = deduped
+            }
+          }
+        }
+        return data
+      },
+    ],
+    afterRead: [
+      ({ doc }) => {
+        if (!doc || typeof doc !== 'object') return doc
+        const d = doc as Record<string, unknown>
+        for (const key of SONG_TAG_RELATIONSHIP_KEYS) {
+          const cur = d[key]
+          if (cur === undefined || cur === null) continue
+          d[key] = dedupeManyRelationshipArray(cur)
+        }
+        return doc
+      },
+    ],
     afterChange: [
       // --- HOOK: QUEUE AUDIO TAG SYNC ---
       // After a song is saved, write the CMS-canonical metadata back into the
@@ -168,7 +245,13 @@ export const Songs: CollectionConfig = {
       admin: {
         position: 'sidebar',
         allowCreate: true, // Lets you create a new Release directly from here!
-        description: 'Which Releases include this song?',
+        description:
+          'Releases whose tracklists already include this song (filtered). Empty until the song is on at least one release—use Link existing or edit the release tracklist.',
+        components: {
+          beforeInput: [
+            '@/components/payload-admin/LinkExistingJoinBeforeInput#LinkExistingJoinBeforeInput',
+          ],
+        },
       },
     },
     {
@@ -180,8 +263,14 @@ export const Songs: CollectionConfig = {
       admin: {
         position: 'sidebar',
         allowCreate: true,
-        description: 'Add this song to existing playlists.',
+        description:
+          'Playlists whose tracklists already include this song (filtered). Empty until linked—use Link existing or open a playlist and add this song under Songs.',
         defaultColumns: ['title', 'description'],
+        components: {
+          beforeInput: [
+            '@/components/payload-admin/LinkExistingJoinBeforeInput#LinkExistingJoinBeforeInput',
+          ],
+        },
       },
     },
     {
@@ -653,8 +742,7 @@ export const Songs: CollectionConfig = {
                   options: [
                     { label: 'All rights reserved', value: 'all-rights' },
                     {
-                      label:
-                        'Free for non-commercial use with attribution',
+                      label: 'Free for non-commercial use with attribution',
                       value: 'cc-attrib-nc',
                     },
                     { label: 'Custom (specify below)', value: 'custom' },
@@ -906,7 +994,7 @@ export const Songs: CollectionConfig = {
               label: 'About this song',
               admin: {
                 description:
-                  'The full story, sonic details, and lyrics. Supports embeds and images.',
+                  'The full story, sonic details, and lyrics. Supports embeds and images. Typically best to start at H3 since "Liner Notes" section heading is already H2.',
               },
             },
             {

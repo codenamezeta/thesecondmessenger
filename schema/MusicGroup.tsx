@@ -7,7 +7,7 @@ export const MusicGroupSchema = () => {
     name: 'The Second Messenger',
     url: 'https://thesecondmessenger.com',
     logo: 'https://thesecondmessenger.com/imgs/logos/circle-crow.png', // Update with your actual logo URL
-    image: 'https://thesecondmessenger.com/imgs/michael/michael-today.jpg', // Update with a band photo
+    image: 'https://thesecondmessenger.com/imgs/michael-today.jpg', // Update with a band photo
     sameAs: [
       'https://www.youtube.com/@TheSecondMessenger',
       'https://open.spotify.com/artist/44ueDtWuMKuBOqFE7CS7ax?si=YOxdEKxFQQmmvAs5OpTcng',

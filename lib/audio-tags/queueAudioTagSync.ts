@@ -40,11 +40,16 @@ export async function queueAudioTagSync({
   if (previousDoc && !tagRelevantChange(doc, previousDoc)) return 'skipped'
 
   try {
+    // Must reuse the inbound `req` so this update joins the caller's transaction.
+    // A fresh req (Payload's default when `req` is omitted) opens a separate
+    // transaction that blocks on this song row until afterChange completes —
+    // and afterChange awaits this call, which deadlocks saves in admin UI.
     await payload.update({
       collection: 'songs',
       id: doc.id,
       data: { tagSyncStatus: 'queued' } as Record<string, unknown>,
       overrideAccess: true,
+      req,
       context: { skipAudioTagSync: true },
     })
   } catch (err) {
@@ -57,13 +62,18 @@ export async function queueAudioTagSync({
   // Try Payload's built-in jobs queue. If it's not configured, we fall
   // back to a no-op — the Vercel Cron run will still pick up any songs
   // marked `queued` on its next pass.
-  type QueueFn = (args: { task: string; input: Record<string, unknown> }) => Promise<unknown>
+  type QueueFn = (args: {
+    task: string
+    input: Record<string, unknown>
+    req?: PayloadRequest
+  }) => Promise<unknown>
   const jobs = (payload as unknown as { jobs?: { queue?: QueueFn } }).jobs
   if (jobs?.queue) {
     try {
       await jobs.queue({
         task: 'syncAudioTags',
         input: { songId: doc.id },
+        req,
       })
       return 'queued'
     } catch (err) {

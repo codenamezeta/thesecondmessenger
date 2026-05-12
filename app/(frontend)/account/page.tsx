@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, UserRound } from 'lucide-react'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 
@@ -11,6 +11,7 @@ import { getMeUser } from '@/utilities/getMeUser'
 import { AccountBillingSection } from './account-billing-section'
 import { AccountDataAndPrivacy } from './data-and-privacy'
 import { AccountProfileForm } from './profile-form'
+import { Button } from '@/components/ui/button'
 
 type AccountProfileInitialData = {
   id: number
@@ -59,7 +60,9 @@ function readAvatar(avatar: User['avatar']): {
 }
 
 export default async function AccountPage() {
-  const { user } = await getMeUser({ nullUserRedirect: '/login?redirect=/account' })
+  const { user } = await getMeUser({
+    nullUserRedirect: '/login?redirect=/account',
+  })
 
   if (!user) {
     redirect('/login?redirect=/account')
@@ -75,7 +78,9 @@ export default async function AccountPage() {
   })
   const avatar = readAvatar(userWithAvatar.avatar)
 
-  const billing = await getBillingSummaryForCustomer(userWithAvatar.stripeCustomerId)
+  const billing = await getBillingSummaryForCustomer(
+    userWithAvatar.stripeCustomerId,
+  )
 
   const initialData: AccountProfileInitialData = {
     id: userWithAvatar.id,
@@ -99,18 +104,26 @@ export default async function AccountPage() {
 
   return (
     <article className="min-h-screen">
-      <div className="container py-8 md:py-12">
-        <div className="mb-6">
+      <div className="container py-3 md:py-4">
+        <div className="my-2 flex w-full items-center justify-between">
           <Link
             href="/crew"
-            className="group inline-flex min-h-12 items-center gap-2 px-4 py-3 font-mono text-xs tracking-widest text-muted-foreground uppercase transition-colors hover:text-primary"
+            className="group inline-flex min-h-12 items-center gap-2 px-4 py-3 font-mono text-xs tracking-widest text-muted-foreground uppercase backdrop-blur-sm transition-colors hover:border-primary/50 hover:text-primary"
           >
             <ArrowLeft
               size={14}
               className="transition-transform group-hover:-translate-x-1"
               aria-hidden
             />
-            Crew Dashboard
+            Dashboard
+          </Link>
+
+          <Link
+            href={`/crew/${userWithAvatar.username}`}
+            className="my-6 inline-flex min-h-12 items-center border border-border/50 bg-card/50 px-4 py-3 font-mono text-xs tracking-widest text-muted-foreground uppercase transition-colors hover:border-primary/50 hover:text-primary"
+          >
+            <UserRound className="mr-2" aria-hidden />
+            View Profile
           </Link>
         </div>
 
@@ -122,14 +135,18 @@ export default async function AccountPage() {
             Edit Your Profile
           </h1>
           <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Public profile fields are visible to other Crew members. Account details are private and
-            used by The Second Messenger team to personalize updates and experiences.
+            Public profile fields are visible to other Crew members. Account
+            details are private and used by The Second Messenger team to
+            personalize updates and experiences.
           </p>
         </header>
 
         <AccountProfileForm initialData={initialData} />
 
-        <AccountBillingSection crewRank={userWithAvatar.crewRank} billing={billing} />
+        <AccountBillingSection
+          crewRank={userWithAvatar.crewRank}
+          billing={billing}
+        />
 
         <AccountDataAndPrivacy
           youtubeConnected={Boolean(userWithAvatar.youtubeConnected)}

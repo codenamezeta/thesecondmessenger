@@ -168,14 +168,15 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
               src={(song.coverArt as Media).url!}
               fill
               alt={song.title}
-              className="object-cover"
+              className="object-cover saturate-[0.67] transition-all duration-500 group-hover:scale-110 group-hover:saturate-100"
+              sizes="96px"
             />
           ) : (
             <Disc size={24} />
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-bold text-foreground group-hover:text-primary">
+          <h3 className="text-base font-bold text-pretty text-foreground group-hover:text-primary">
             {song.title}
           </h3>
           <p className="truncate font-mono text-xs text-muted-foreground group-hover:text-card-foreground">
@@ -214,7 +215,7 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
         <div
           className={cn(
             'absolute left-0 h-3 w-3 translate-y-6 rounded-full border-2 border-accent bg-background md:left-1/2',
-            'md:-ml-[6px]',
+            'md:ml-[-6px]',
           )}
         ></div>
 

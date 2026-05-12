@@ -6,13 +6,11 @@ import {
   userMeetsVaultFloor,
   type GatedTierRequired,
 } from '@/access/crewRanks'
-import { getGatedContentFileUrl } from '@/utilities/getGatedContentFileUrl'
-import { gatedContentKindFromMimeType } from '@/utilities/gatedContentKindFromMimeType'
-import AudioFilePlayer from '@/components/AudioFilePlayer'
 import { Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
+import { UnlockableGatedAsset } from '@/components/UnlockableGatedAsset'
 
 export type SongGatedBonusRow = {
   rowId: string
@@ -28,81 +26,6 @@ const TIER_LABEL: Record<GatedTierRequired, string> = {
 
 function tierLabel(tier: GatedTierRequired): string {
   return TIER_LABEL[tier]
-}
-
-function DownloadAssetButton({ href, title }: { href: string; title: string }) {
-  return (
-    <div className="my-4">
-      <Button asChild variant="secondary" className="rounded-none">
-        <a href={href} download>
-          Download — {title}
-        </a>
-      </Button>
-    </div>
-  )
-}
-
-function GatedAssetRenderer({ gated }: { gated: GatedContent }) {
-  const src = getGatedContentFileUrl(gated)
-  if (!src) {
-    return (
-      <p className="font-body text-sm text-muted-foreground">
-        This asset is not available with your current clearance.
-      </p>
-    )
-  }
-
-  const kind = gatedContentKindFromMimeType(gated.mimeType)
-
-  if (kind === null) {
-    return (
-      <div className="space-y-3">
-        <p className="font-body text-sm text-muted-foreground">
-          This file type is not previewed in the Vault UI.
-        </p>
-        <DownloadAssetButton href={src} title={gated.title} />
-      </div>
-    )
-  }
-
-  switch (kind) {
-    case 'audio':
-      return (
-        <AudioFilePlayer
-          title={gated.title}
-          src={src}
-          description={gated.description ?? null}
-        />
-      )
-    case 'download':
-      return <DownloadAssetButton href={src} title={gated.title} />
-    case 'video':
-      return (
-        <video
-          controls
-          className="mt-4 w-full border border-border/50"
-          src={src}
-          preload="metadata"
-        />
-      )
-    case 'image':
-      return (
-        // eslint-disable-next-line @next/next/no-img-element -- CMS asset URL
-        <img
-          src={src}
-          alt={gated.title}
-          className="mt-4 max-h-[min(70vh,720px)] w-auto border border-border/50 object-contain"
-        />
-      )
-    case 'pdf':
-      return <DownloadAssetButton href={src} title={gated.title} />
-    case 'text':
-      return <DownloadAssetButton href={src} title={gated.title} />
-    default: {
-      const _exhaustive: never = kind
-      return _exhaustive
-    }
-  }
 }
 
 function LockedBonusRow({
@@ -311,7 +234,7 @@ export function SongGatedBonusSection({
                   </span>
                 </span>
               </div>
-              <GatedAssetRenderer gated={asset} />
+              <UnlockableGatedAsset gated={asset} />
             </div>
           ))}
 

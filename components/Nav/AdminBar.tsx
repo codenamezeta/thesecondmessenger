@@ -44,7 +44,7 @@ const SessionProfileColumn: React.FC<{ user: User }> = ({ user }) => {
 
   return (
     <Link
-      href="/account"
+      href={`/crew/${user.username}`}
       className="flex max-w-[55%] min-w-0 items-center gap-2 text-foreground transition-colors hover:text-primary sm:max-w-none"
     >
       <Image

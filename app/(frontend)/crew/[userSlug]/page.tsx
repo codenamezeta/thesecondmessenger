@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -7,14 +8,18 @@ import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 
 import { Badge } from '@/components/ui/badge'
-import type { Media, User } from '@/payload-types'
+import type { User } from '@/payload-types'
 import { getMeUser } from '@/utilities/getMeUser'
+import { getServerSideURL } from '@/utilities/getURL'
+import { mapUserToPublicProfile } from '@/utilities/publicProfile'
+import { RankBadge } from '@/components/RankBadges'
 
 type Args = {
   params: Promise<{ userSlug: string }>
 }
 
 type SafeViewer = User | null
+export const revalidate = 120
 
 const RANK_LABELS: Record<User['crewRank'], string> = {
   ensign: 'Ensign',
@@ -32,21 +37,12 @@ function formatDate(dateString: string): string {
   })
 }
 
-function readAvatar(avatar: User['avatar']): { src: string; alt: string } {
-  if (avatar && typeof avatar === 'object') {
-    const media = avatar as Media
-    if (media.url) {
-      return {
-        src: media.url,
-        alt: media.alt || 'Crew profile avatar',
-      }
-    }
+function resolveMetadataImageUrl(pathOrUrl: string): string {
+  if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) {
+    return pathOrUrl
   }
 
-  return {
-    src: '/imgs/placeholder-avatar.png',
-    alt: 'Crew profile placeholder avatar',
-  }
+  return `${getServerSideURL()}${pathOrUrl}`
 }
 
 function InfoRow({ label, value }: { label: string; value: ReactNode }) {
@@ -69,11 +65,7 @@ async function getViewer(): Promise<SafeViewer> {
   }
 }
 
-export default async function CrewProfilePage({ params }: Args) {
-  const { userSlug } = await params
-  const decodedSlug = decodeURIComponent(userSlug)
-  const viewer = await getViewer()
-
+async function getPublicProfileBySlug(decodedSlug: string, viewer: SafeViewer) {
   const payload = await getPayload({ config: configPromise })
 
   const profileQuery = await payload.find({
@@ -89,18 +81,61 @@ export default async function CrewProfilePage({ params }: Args) {
     },
   })
 
-  const profile = profileQuery.docs[0]
+  const profileDoc = profileQuery.docs[0]
+  if (!profileDoc) return null
+
+  return mapUserToPublicProfile(profileDoc)
+}
+
+export async function generateMetadata({ params }: Args): Promise<Metadata> {
+  const { userSlug } = await params
+  const decodedSlug = decodeURIComponent(userSlug)
+  const profile = await getPublicProfileBySlug(decodedSlug, null)
+
+  if (!profile) {
+    return {
+      title: 'Crew Profile Not Found',
+      description:
+        'This Crew profile does not exist or is no longer available.',
+    }
+  }
+
+  const title = `${profile.displayName} (@${profile.username})`
+  const description =
+    profile.bio ?? `${RANK_LABELS[profile.crewRank]} member of the Crew.`
+  const image = resolveMetadataImageUrl(
+    profile.avatarUrl ?? '/imgs/placeholder-avatar.png',
+  )
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: image }],
+      url: `/crew/${profile.username}`,
+    },
+  }
+}
+
+export default async function CrewProfilePage({ params }: Args) {
+  const { userSlug } = await params
+  const decodedSlug = decodeURIComponent(userSlug)
+  const viewer = await getViewer()
+  const profile = await getPublicProfileBySlug(decodedSlug, viewer)
   if (!profile) notFound()
 
-  const { src: avatarSrc, alt: avatarAlt } = readAvatar(profile.avatar)
-  const bioLabel = profile.bio?.trim() ? profile.bio : 'No bio added yet.'
-  const displayName = profile.displayName?.trim() || profile.username
+  const avatarSrc = profile.avatarUrl ?? '/imgs/placeholder-avatar.png'
+  const avatarAlt = profile.avatarAlt
+  const bioLabel = profile.bio ?? 'No bio added yet.'
+  const displayName = profile.displayName
   const isOwner = Boolean(viewer && viewer.id === profile.id)
 
   return (
     <article className="min-h-screen">
-      <div className="container py-6 md:py-8">
-        <div className="my-6">
+      <div className="container py-3 md:py-4">
+        <div className="my-2 flex w-full items-center justify-between">
           <Link
             href="/crew"
             className="group inline-flex min-h-12 items-center gap-2 px-4 py-3 font-mono text-xs tracking-widest text-muted-foreground uppercase backdrop-blur-sm transition-colors hover:border-primary/50 hover:text-primary"
@@ -112,6 +147,14 @@ export default async function CrewProfilePage({ params }: Args) {
             />
             Dashboard
           </Link>
+          {isOwner && (
+            <Link
+              href="/account"
+              className="my-6 inline-flex min-h-12 items-center border border-border/50 bg-card/50 px-4 py-3 font-mono text-xs tracking-widest text-muted-foreground uppercase transition-colors hover:border-primary/50 hover:text-primary"
+            >
+              Edit Profile
+            </Link>
+          )}
         </div>
         <section className="relative overflow-hidden border border-border/50 bg-card/20 p-6 backdrop-blur-sm md:p-8">
           <div
@@ -151,14 +194,7 @@ export default async function CrewProfilePage({ params }: Args) {
               </p>
 
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="default" className="rounded-none">
-                  {RANK_LABELS[profile.crewRank].toUpperCase()}
-                </Badge>
-                {profile.role !== 'user' && (
-                  <Badge variant="secondary" className="rounded-none">
-                    {profile.role.toUpperCase()}
-                  </Badge>
-                )}
+                <RankBadge rank={profile.crewRank} size="md" />
               </div>
 
               <div className="border-l border-primary/40 pl-4">
@@ -168,16 +204,6 @@ export default async function CrewProfilePage({ params }: Args) {
               </div>
             </div>
           </div>
-          {isOwner && (
-            <div>
-              <Link
-                href="/account"
-                className="my-6 inline-flex min-h-12 items-center border border-border/50 bg-card/50 px-4 py-3 font-mono text-xs tracking-widest text-muted-foreground uppercase transition-colors hover:border-primary/50 hover:text-primary"
-              >
-                Edit Profile
-              </Link>
-            </div>
-          )}
         </section>
 
         <section className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -202,16 +228,16 @@ export default async function CrewProfilePage({ params }: Args) {
             <div className="mb-3 flex items-center gap-2">
               <Shield size={14} className="text-primary" aria-hidden />
               <h2 className="font-mono text-[11px] tracking-[0.2em] text-primary uppercase">
-                Account + Crew Status
+                Crew Status
               </h2>
             </div>
-            <InfoRow label="Crew Rank" value={RANK_LABELS[profile.crewRank]} />
-            <InfoRow label="Role" value={profile.role} />
-            {/* <InfoRow label="Email" value={emailLabel} /> */}
-            {/* <InfoRow label="ZIP Code" value={zipLabel} /> */}
+            {/* <InfoRow label="Crew Rank" value={RANK_LABELS[profile.crewRank]} /> */}
+            {/* <RankBadge rank={profile.crewRank} showLabel={false} size="lg" /> */}
             <InfoRow
-              label="YouTube Linked"
-              value={profile.youtubeConnected ? 'Connected' : 'Not connected'}
+              label="Crew Rank"
+              value={
+                <RankBadge rank={profile.crewRank} showLabel={true} size="lg" />
+              }
             />
           </div>
         </section>

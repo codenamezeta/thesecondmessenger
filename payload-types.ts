@@ -232,6 +232,40 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    card?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    feature?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    feature_avif?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -393,7 +427,7 @@ export interface Song {
    */
   releaseDate?: string | null;
   /**
-   * Which Releases include this song?
+   * Releases whose tracklists already include this song (filtered). Empty until the song is on at least one release—use Link existing or edit the release tracklist.
    */
   relatedReleases?: {
     docs?: (number | Release)[];
@@ -401,7 +435,7 @@ export interface Song {
     totalDocs?: number;
   };
   /**
-   * Add this song to existing playlists.
+   * Playlists whose tracklists already include this song (filtered). Empty until linked—use Link existing or open a playlist and add this song under Songs.
    */
   inPlaylists?: {
     docs?: (number | Playlist)[];
@@ -578,7 +612,7 @@ export interface Song {
    */
   tagline?: string | null;
   /**
-   * The full story, sonic details, and lyrics. Supports embeds and images.
+   * The full story, sonic details, and lyrics. Supports embeds and images. Typically best to start at H3 since "Liner Notes" section heading is already H2.
    */
   about?: {
     root: {
@@ -1266,6 +1300,50 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+  sizes?:
+    | T
+    | {
+        thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        card?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        feature?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        feature_avif?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

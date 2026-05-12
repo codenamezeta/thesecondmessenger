@@ -1,17 +1,13 @@
 // app/(frontend)/crew/page.tsx
 import { getMeUser } from '@/utilities/getMeUser'
 import { redirect } from 'next/navigation'
-// Import your custom rank badge components (e.g., Star Trek style insignia)
-import { Badge } from '@/components/ui/badge'
+import { RankBadge } from '@/components/RankBadges'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 
 type SearchParams = Record<string, string | string[] | undefined>
-
-const EnsignBadge = () => <Badge variant="default">Ensign</Badge>
-const LieutenantBadge = () => <Badge variant="outline">Lieutenant</Badge>
-const CommanderBadge = () => <Badge variant="outline">Commander</Badge>
-const CaptainBadge = () => <Badge variant="outline">Captain</Badge>
 
 function getFirstParam(value: string | string[] | undefined): string | null {
   if (!value) return null
@@ -28,7 +24,9 @@ function normalizeTier(
   return null
 }
 
-function formatTier(value: 'lieutenant' | 'commander' | 'captain' | null): string {
+function formatTier(
+  value: 'lieutenant' | 'commander' | 'captain' | null,
+): string {
   if (!value) return 'membership'
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
@@ -81,13 +79,12 @@ export default async function CrewDashboard({
       <h1 className="font-mono text-4xl font-bold text-primary">
         Welcome to the Fleet, {user.username}
       </h1>
-
+      <Button asChild>
+        <Link href={`/crew/${user.username}`}>View Your Profile</Link>
+      </Button>
       <div className="mt-6 flex items-center gap-4">
         <span className="text-xl">Current Rank:</span>
-        {user.crewRank === 'ensign' && <EnsignBadge />}
-        {user.crewRank === 'lieutenant' && <LieutenantBadge />}
-        {user.crewRank === 'commander' && <CommanderBadge />}
-        {user.crewRank === 'captain' && <CaptainBadge />}
+        <RankBadge rank={user.crewRank} />
       </div>
 
       {/* Conditionally Render Perks */}

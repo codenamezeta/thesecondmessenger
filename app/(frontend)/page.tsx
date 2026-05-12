@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   openGraph: {
     images: [
       {
-        url: 'https://thesecondmessenger.com/imgs/michael/michael-today.jpg',
+        url: 'https://thesecondmessenger.com/imgs/michael-today.jpg',
       },
     ],
     title: 'The Second Messenger • Melodic Modern Rock',

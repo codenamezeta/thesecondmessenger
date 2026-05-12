@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import Link from 'next/link'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 
@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import Image from 'next/image'
 import type { User } from '@/payload-types'
 import { getMediaUrl } from '@/utilities/getMediaUrl'
 
@@ -43,7 +44,10 @@ const DISPLAY_NAME_OPTIONS: Array<{
   label: string
 }> = [
   { value: 'username', label: 'Username (e.g. "spacedrifter")' },
-  { value: 'rank_username', label: 'Rank + Username (e.g. "Commander spacedrifter")' },
+  {
+    value: 'rank_username',
+    label: 'Rank + Username (e.g. "Commander spacedrifter")',
+  },
   { value: 'firstName', label: 'First name' },
   { value: 'lastName', label: 'Last name' },
   { value: 'fullName', label: 'Full name' },
@@ -52,20 +56,62 @@ const DISPLAY_NAME_OPTIONS: Array<{
   { value: 'rank_fullName', label: 'Rank + Full name' },
 ]
 
-const RANK_LABELS: Record<User['crewRank'], string> = {
-  ensign: 'Ensign',
-  lieutenant: 'Lieutenant',
-  commander: 'Commander',
-  captain: 'Captain',
-  admiral: 'Admiral',
-}
-
 type ValidationErrors = Partial<
   Record<
     'username' | 'email' | 'zipCode' | 'bio' | 'displayNameFormat' | 'avatar',
     string
   >
 >
+
+type ProfileFormBaseline = Pick<
+  AccountProfileInitialData,
+  | 'username'
+  | 'firstName'
+  | 'lastName'
+  | 'email'
+  | 'zipCode'
+  | 'bio'
+  | 'displayNameFormat'
+  | 'avatarId'
+>
+
+function baselineFromInitial(
+  data: AccountProfileInitialData,
+): ProfileFormBaseline {
+  return {
+    username: data.username,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    email: data.email,
+    zipCode: data.zipCode,
+    bio: data.bio,
+    displayNameFormat: data.displayNameFormat,
+    avatarId: data.avatarId,
+  }
+}
+
+function SaveProfileSubmitButton({
+  isSaving,
+  disabled,
+  className,
+}: {
+  isSaving: boolean
+  disabled: boolean
+  className?: string
+}) {
+  return (
+    <Button type="submit" disabled={disabled || isSaving} className={className}>
+      {isSaving ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Saving...
+        </>
+      ) : (
+        'Save Changes'
+      )}
+    </Button>
+  )
+}
 
 function parsePayloadError(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object') return null
@@ -99,11 +145,13 @@ function validateForm(values: {
   if (!values.username) {
     errors.username = 'Username is required.'
   } else if (!/^[a-z0-9_]{3,24}$/i.test(values.username)) {
-    errors.username = 'Username must be 3-24 characters and use only letters, numbers, or underscores.'
+    errors.username =
+      'Username must be 3-24 characters and use only letters, numbers, or underscores.'
   }
 
   if (!values.email) {
-    errors.email = 'Email is required so you can log in and receive account notices.'
+    errors.email =
+      'Email is required so you can log in and receive account notices.'
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
     errors.email = 'Enter a valid email address (example: you@example.com).'
   }
@@ -123,26 +171,58 @@ function validateForm(values: {
   return errors
 }
 
-export function AccountProfileForm({ initialData }: { initialData: AccountProfileInitialData }) {
+export function AccountProfileForm({
+  initialData,
+}: {
+  initialData: AccountProfileInitialData
+}) {
   const [username, setUsername] = useState(initialData.username)
   const [firstName, setFirstName] = useState(initialData.firstName)
   const [lastName, setLastName] = useState(initialData.lastName)
   const [email, setEmail] = useState(initialData.email)
   const [zipCode, setZipCode] = useState(initialData.zipCode)
   const [bio, setBio] = useState(initialData.bio)
-  const [displayNameFormat, setDisplayNameFormat] = useState<User['displayNameFormat']>(
-    initialData.displayNameFormat,
-  )
+  const [displayNameFormat, setDisplayNameFormat] = useState<
+    User['displayNameFormat']
+  >(initialData.displayNameFormat)
   const [isSaving, setIsSaving] = useState(false)
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [profilePath, setProfilePath] = useState(`/crew/${initialData.username}`)
-  const [currentAvatarId, setCurrentAvatarId] = useState<number | null>(initialData.avatarId)
+  const [currentAvatarId, setCurrentAvatarId] = useState<number | null>(
+    initialData.avatarId,
+  )
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(
     initialData.avatarUrl ? getMediaUrl(initialData.avatarUrl) : null,
   )
+  const [baseline, setBaseline] = useState<ProfileFormBaseline>(() =>
+    baselineFromInitial(initialData),
+  )
+
+  const isDirty = useMemo(() => {
+    if (avatarFile !== null) return true
+    if (username.trim() !== baseline.username.trim()) return true
+    if (firstName.trim() !== baseline.firstName.trim()) return true
+    if (lastName.trim() !== baseline.lastName.trim()) return true
+    if (email.trim() !== baseline.email.trim()) return true
+    if (zipCode.trim() !== baseline.zipCode.trim()) return true
+    if (bio.trim() !== baseline.bio.trim()) return true
+    if (displayNameFormat !== baseline.displayNameFormat) return true
+    if (currentAvatarId !== baseline.avatarId) return true
+    return false
+  }, [
+    avatarFile,
+    username,
+    firstName,
+    lastName,
+    email,
+    zipCode,
+    bio,
+    displayNameFormat,
+    currentAvatarId,
+    baseline,
+  ])
 
   useEffect(() => {
     if (!avatarFile) return undefined
@@ -163,7 +243,10 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
     }
 
     if (file.size > MAX_AVATAR_BYTES) {
-      setValidationErrors((prev) => ({ ...prev, avatar: 'Avatar must be 1MB or smaller.' }))
+      setValidationErrors((prev) => ({
+        ...prev,
+        avatar: 'Avatar must be 1MB or smaller.',
+      }))
       event.target.value = ''
       return
     }
@@ -174,6 +257,7 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
 
   const handleSave = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!isDirty) return
     setError(null)
     setSuccess(null)
     setValidationErrors({})
@@ -208,7 +292,10 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
     if (firstNameFormats.includes(displayNameFormat) && !trimmedFirstName) {
       formatErrors.displayNameFormat =
         'Selected display format needs first name. Add it in private account details.'
-    } else if (lastNameFormats.includes(displayNameFormat) && !trimmedLastName) {
+    } else if (
+      lastNameFormats.includes(displayNameFormat) &&
+      !trimmedLastName
+    ) {
       formatErrors.displayNameFormat =
         'Selected display format needs last name. Add it in private account details.'
     }
@@ -235,13 +322,19 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
         })
 
         if (!uploadResponse.ok) {
-          const payloadError = parsePayloadError(await uploadResponse.json().catch(() => null))
+          const payloadError = parsePayloadError(
+            await uploadResponse.json().catch(() => null),
+          )
           throw new Error(payloadError ?? 'Avatar upload failed.')
         }
 
-        const uploadPayload = (await uploadResponse.json().catch(() => null)) as
-          | { id?: number; url?: string; doc?: { id?: number; url?: string } }
-          | null
+        const uploadPayload = (await uploadResponse
+          .json()
+          .catch(() => null)) as {
+          id?: number
+          url?: string
+          doc?: { id?: number; url?: string }
+        } | null
         const mediaId = uploadPayload?.id ?? uploadPayload?.doc?.id
         const mediaUrl = uploadPayload?.url ?? uploadPayload?.doc?.url
 
@@ -272,19 +365,45 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
       })
 
       if (!response.ok) {
-        const payloadError = parsePayloadError(await response.json().catch(() => null))
+        const payloadError = parsePayloadError(
+          await response.json().catch(() => null),
+        )
         throw new Error(payloadError ?? 'Could not save profile updates.')
       }
 
       setUsername(trimmedUsername)
-      setProfilePath(`/crew/${trimmedUsername}`)
+
+      await fetch('/api/profile/revalidate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          usernames: [initialData.username, trimmedUsername],
+        }),
+      }).catch(() => {
+        // Best effort cache refresh; profile save already succeeded.
+      })
+
       if (uploadedAvatarUrl) {
         setAvatarPreviewUrl(uploadedAvatarUrl)
       }
       setAvatarFile(null)
+      setBaseline({
+        username: trimmedUsername,
+        firstName: trimmedFirstName,
+        lastName: trimmedLastName,
+        email: trimmedEmail,
+        zipCode: trimmedZipCode,
+        bio: trimmedBio,
+        displayNameFormat,
+        avatarId: uploadedAvatarId,
+      })
       setSuccess('Account settings saved successfully.')
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong while saving.')
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Something went wrong while saving.',
+      )
     } finally {
       setIsSaving(false)
     }
@@ -295,6 +414,27 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
       onSubmit={handleSave}
       className="space-y-6 border border-border/50 bg-card/20 p-6 backdrop-blur-sm md:p-8"
     >
+      {isDirty && (
+        <div
+          className="space-y-3 border border-primary/40 bg-primary/5 p-4 md:p-5"
+          role="status"
+          aria-live="polite"
+        >
+          <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">
+            Unsaved changes
+          </p>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Your edits are not live until you save. This updates your public
+            profile and private account details together.
+          </p>
+          <SaveProfileSubmitButton
+            isSaving={isSaving}
+            disabled={false}
+            className="w-full rounded-none"
+          />
+        </div>
+      )}
+
       <section className="grid gap-4 border border-border/50 bg-background/30 p-4 md:grid-cols-2">
         <div>
           <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">
@@ -305,12 +445,12 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
           </p>
         </div>
         <div>
-          <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">
+          <p className="font-mono text-[10px] tracking-[0.2em] text-accent uppercase">
             Account Information
           </p>
           <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-            Private to admins and The Second Messenger. Use this for personalized updates and local
-            event relevance.
+            Private to admins and The Second Messenger. Use this for
+            personalized updates and local event relevance.
           </p>
         </div>
       </section>
@@ -342,18 +482,27 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
               Required. Used in your profile URL and @handle.
             </p>
             {validationErrors.username && (
-              <p className="text-xs font-semibold text-destructive">{validationErrors.username}</p>
+              <p className="text-xs font-semibold text-destructive">
+                {validationErrors.username}
+              </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="account-display-name-format">Display Name Format *</Label>
+            <Label htmlFor="account-display-name-format">
+              Display Name Format *
+            </Label>
             <Select
               value={displayNameFormat}
-              onValueChange={(value) => setDisplayNameFormat(value as User['displayNameFormat'])}
+              onValueChange={(value) =>
+                setDisplayNameFormat(value as User['displayNameFormat'])
+              }
               disabled={isSaving}
             >
-              <SelectTrigger id="account-display-name-format" className="w-full rounded-none">
+              <SelectTrigger
+                id="account-display-name-format"
+                className="w-full rounded-none"
+              >
                 <SelectValue placeholder="Select display format" />
               </SelectTrigger>
               <SelectContent>
@@ -381,10 +530,12 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
             <div className="border border-border/50 bg-background/40 p-2">
               <div className="relative aspect-square overflow-hidden border border-border/40 bg-card/30">
                 {avatarPreviewUrl ? (
-                  <img
+                  <Image
                     src={avatarPreviewUrl}
                     alt={initialData.avatarAlt}
                     className="size-full object-cover"
+                    width={160}
+                    height={160}
                   />
                 ) : (
                   <div className="flex size-full items-center justify-center px-3 text-center font-mono text-[10px] tracking-[0.15em] text-muted-foreground uppercase">
@@ -404,10 +555,13 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
                 className="rounded-none"
               />
               <p className="text-xs text-muted-foreground">
-                Optional. Max 1MB. Uploading a file replaces your current avatar after save.
+                Optional. Max 1MB. Uploading a file replaces your current avatar
+                after save.
               </p>
               {validationErrors.avatar && (
-                <p className="text-xs font-semibold text-destructive">{validationErrors.avatar}</p>
+                <p className="text-xs font-semibold text-destructive">
+                  {validationErrors.avatar}
+                </p>
               )}
             </div>
           </div>
@@ -426,17 +580,20 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
             disabled={isSaving}
           />
           <p className="text-xs text-muted-foreground">
-            Optional. Visible to members. Keep it under {MAX_BIO_LENGTH} characters.
+            Optional. Visible to members. Must be under {MAX_BIO_LENGTH}{' '}
+            characters.
           </p>
           {validationErrors.bio && (
-            <p className="text-xs font-semibold text-destructive">{validationErrors.bio}</p>
+            <p className="text-xs font-semibold text-destructive">
+              {validationErrors.bio}
+            </p>
           )}
         </div>
       </section>
 
       <section className="space-y-4 border border-border/50 bg-background/20 p-5">
         <div className="flex items-center gap-2">
-          <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">
+          <p className="font-mono text-[10px] tracking-[0.2em] text-accent uppercase">
             Account Information
           </p>
           <span className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
@@ -459,10 +616,13 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
               disabled={isSaving}
             />
             <p className="text-xs text-muted-foreground">
-              Required. Used for login, security, and direct account communication.
+              Required. Used for login, security, and direct account
+              communication.
             </p>
             {validationErrors.email && (
-              <p className="text-xs font-semibold text-destructive">{validationErrors.email}</p>
+              <p className="text-xs font-semibold text-destructive">
+                {validationErrors.email}
+              </p>
             )}
           </div>
 
@@ -484,7 +644,9 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
               Optional. Helps promote local shows and relevant updates.
             </p>
             {validationErrors.zipCode && (
-              <p className="text-xs font-semibold text-destructive">{validationErrors.zipCode}</p>
+              <p className="text-xs font-semibold text-destructive">
+                {validationErrors.zipCode}
+              </p>
             )}
           </div>
         </div>
@@ -518,7 +680,8 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
               disabled={isSaving}
             />
             <p className="text-xs text-muted-foreground">
-              Optional. Helps with personal outreach and full-name display formats.
+              Optional. Helps with personal outreach and full-name display
+              formats.
             </p>
           </div>
         </div>
@@ -535,10 +698,21 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
               YouTube is connected
             </div>
           )}
-          <Button asChild variant="secondary" className="rounded-none" disabled={isSaving}>
-            <a href="/api/auth/youtube/connect?returnTo=/account">
-              {initialData.youtubeConnected ? 'Reconnect YouTube' : 'Connect YouTube'}
-            </a>
+          <Button
+            asChild
+            variant="secondary"
+            className="rounded-none"
+            disabled={isSaving}
+          >
+            <Link
+              href="/api/auth/youtube/connect?returnTo=/account"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {initialData.youtubeConnected
+                ? 'Reconnect YouTube'
+                : 'Connect YouTube'}
+            </Link>
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
@@ -548,39 +722,34 @@ export function AccountProfileForm({ initialData }: { initialData: AccountProfil
         </p>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <div className="border border-border/50 bg-background/40 p-4">
-          <p className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-            Crew Rank
+      <section className="space-y-3 border border-border/50 bg-background/30 p-4 md:p-5">
+        <h2 className="text-sm font-semibold text-foreground">
+          {isDirty ? 'Save your profile' : 'Profile status'}
+        </h2>
+        {isDirty ? (
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Save once to apply updates to your public Crew profile and private
+            account details.
           </p>
-          <p className="mt-2 text-sm text-foreground">{RANK_LABELS[initialData.crewRank]}</p>
-        </div>
-        <div className="border border-border/50 bg-background/40 p-4">
-          <p className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-            Account Role
+        ) : (
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Nothing pending. Edit any field above to enable saving.
           </p>
-          <p className="mt-2 text-sm text-foreground">{initialData.role}</p>
-        </div>
+        )}
+        {error && (
+          <p className="text-sm font-semibold text-destructive">{error}</p>
+        )}
+        {success && (
+          <p className="text-sm font-semibold text-primary">{success}</p>
+        )}
+        {isDirty && (
+          <SaveProfileSubmitButton
+            isSaving={isSaving}
+            disabled={false}
+            className="w-full rounded-none"
+          />
+        )}
       </section>
-
-      {error && <p className="text-sm font-semibold text-destructive">{error}</p>}
-      {success && <p className="text-sm font-semibold text-primary">{success}</p>}
-
-      <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" disabled={isSaving} className="rounded-none">
-          {isSaving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            'Save Changes'
-          )}
-        </Button>
-        <Button asChild variant="secondary" className="rounded-none" disabled={isSaving}>
-          <Link href={profilePath}>View Public Profile</Link>
-        </Button>
-      </div>
     </form>
   )
 }

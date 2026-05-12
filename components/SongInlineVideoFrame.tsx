@@ -11,7 +11,10 @@ import placeholderArt from '@/public/imgs/placeholder-art.png'
 /**
  * The Song page's in-flow "viewscreen" frame.
  *
- * - Always renders a standby UI (thumbnail + play/pause button).
+ * - Renders a **single** low-resolution blurred standby layer (cover or
+ *   placeholder) plus the play/pause control. Sharp album art is not
+ *   duplicated here — it already appears in `SongHero`, which avoided three
+ *   separate full-width `next/image` optimizer requests for the same asset.
  * - Registers its own DOM element with `PlayerContext` as an inline target.
  * - When `currentSong.youtubeId === song.youtubeId` and `videoEnabled === false`,
  *   the Global Player's `VideoStage` overlays the real YouTube iframe on top of
@@ -69,30 +72,19 @@ export const SongInlineVideoFrame = ({
         className,
       )}
     >
+      {/* One low-res ambient layer only. Sharp cover art already lives in SongHero
+          above; duplicating it here caused a third full-width optimized fetch. */}
       <Image
         src={coverArtUrl || placeholderArt}
         alt=""
-        aria-hidden="true"
+        aria-hidden
         fill
         loading="eager"
-        sizes="(min-width: 1024px) 66vw, 100vw"
+        sizes="128px"
+        quality={40}
         className="scale-110 object-cover opacity-40 blur-sm"
       />
       <div className="absolute inset-0 bg-linear-to-br from-background/40 via-transparent to-background/60" />
-
-      {coverArtUrl && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative aspect-square h-[70%] overflow-hidden rounded-md border border-primary/25 shadow-[0_0_30px_rgba(0,0,0,0.6)]">
-            <Image
-              src={coverArtUrl}
-              alt={song.title}
-              fill
-              sizes="(min-width: 1024px) 40vw, 60vw"
-              className="object-cover"
-            />
-          </div>
-        </div>
-      )}
 
       {youtubeId ? (
         <button
