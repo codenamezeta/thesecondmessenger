@@ -161,7 +161,7 @@ export default function BioPage() {
                   className={cn(
                     'flex w-full items-center gap-3 rounded px-3 py-2 text-left font-mono text-xs tracking-wider uppercase transition-all',
                     activeSection === chapter.id
-                      ? 'bg-accent font-bold text-primary-foreground shadow-[0_0_15px_hsl(var(--primary)/0.85)]'
+                      ? 'border border-accent/75 bg-accent/50 font-bold text-primary-foreground shadow-[0_0_15px_hsl(var(--primary)/0.85)]'
                       : 'text-foreground/50 hover:bg-card/50 hover:text-foreground hover:shadow-[0_0_15px_hsl(var(--primary)/0.25)]',
                   )}
                 >
@@ -186,7 +186,7 @@ export default function BioPage() {
               000: Prologue
             </h2>
 
-            <div className="bg-surface/5 group relative overflow-hidden rounded-r-lg border-l-2 border-accent p-8">
+            <div className="bg-surface/5 group relative overflow-hidden rounded-r-lg border-l-2 border-accent/50 p-8">
               <div className="pointer-events-none absolute inset-0 bg-[url('/imgs/backgrounds/scanlines.png')] opacity-10" />
               <FileText className="absolute top-4 right-4 h-24 w-24 rotate-12 text-foreground/5" />
 
