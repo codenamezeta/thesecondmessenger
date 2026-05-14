@@ -21,7 +21,10 @@ type Props = {
   hasActiveSubscription: boolean
 }
 
-export function AccountDataAndPrivacy({ youtubeConnected, hasActiveSubscription }: Props) {
+export function AccountDataAndPrivacy({
+  youtubeConnected,
+  hasActiveSubscription,
+}: Props) {
   const router = useRouter()
 
   const [disconnecting, setDisconnecting] = useState(false)
@@ -40,7 +43,9 @@ export function AccountDataAndPrivacy({ youtubeConnected, hasActiveSubscription 
     setDisconnectMessage(null)
     setDisconnecting(true)
     try {
-      const res = await fetch('/api/auth/youtube/disconnect', { method: 'POST' })
+      const res = await fetch('/api/auth/youtube/disconnect', {
+        method: 'POST',
+      })
       const data = await res.json().catch(() => null)
       if (!res.ok) {
         throw new Error(parseError(data) ?? 'Could not disconnect YouTube.')
@@ -102,8 +107,8 @@ export function AccountDataAndPrivacy({ youtubeConnected, hasActiveSubscription 
           Your data, your controls
         </h2>
         <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          Disconnect connected services or permanently delete your Crew
-          account. See the{' '}
+          Disconnect connected services or permanently delete your Crew account.
+          See the{' '}
           <Link
             href="/privacy-policy#deletion"
             className="text-primary underline-offset-4 hover:underline"
@@ -118,12 +123,12 @@ export function AccountDataAndPrivacy({ youtubeConnected, hasActiveSubscription 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">
             <p className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-              Google / YouTube connection
+              YouTube / Google connection
             </p>
             <p className="text-sm text-foreground">
               {youtubeConnected
                 ? 'YouTube is connected. Disconnecting revokes our access token with Google and deletes it from our database.'
-                : 'No Google tokens stored. You can reconnect YouTube from the section above at any time.'}
+                : 'No YouTube / Google tokens stored. You can reconnect YouTube from the section above at any time.'}
             </p>
           </div>
           <Button
@@ -216,9 +221,9 @@ export function AccountDataAndPrivacy({ youtubeConnected, hasActiveSubscription 
                 />
                 <span className="text-muted-foreground">
                   Cancel my paid subscription <strong>immediately</strong>. If
-                  unchecked, the subscription is scheduled to cancel at the
-                  end of the current billing period and you keep paid access
-                  until then.
+                  unchecked, the subscription is scheduled to cancel at the end
+                  of the current billing period and you keep paid access until
+                  then.
                 </span>
               </label>
             )}
@@ -240,7 +245,9 @@ export function AccountDataAndPrivacy({ youtubeConnected, hasActiveSubscription 
             </div>
 
             {deleteError && (
-              <p className="text-sm font-semibold text-destructive">{deleteError}</p>
+              <p className="text-sm font-semibold text-destructive">
+                {deleteError}
+              </p>
             )}
 
             <div className="flex flex-wrap gap-3">
