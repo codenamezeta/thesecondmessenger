@@ -8,7 +8,6 @@ import {
   Loader2,
   Send,
   Reply as ReplyIcon,
-  Link,
 } from 'lucide-react'
 import { useYouTubeAuth } from '@/context/YouTubeAuthContext'
 import { postComment, replyToComment } from '@/lib/youtube/client'
@@ -55,7 +54,7 @@ interface CommentThread {
 const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
 
 export default function CommentsYT({ videoId }: { videoId: string }) {
-  const { ensureToken, profile, source } = useYouTubeAuth()
+  const { ensureToken, profile } = useYouTubeAuth()
 
   const [comments, setComments] = useState<CommentThread[]>([])
   const [isLoading, setIsLoading] = useState(true)

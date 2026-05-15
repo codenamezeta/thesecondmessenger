@@ -1,5 +1,6 @@
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
+import { Header } from '@/components/Header'
 import { MusicArchive } from '@/components/MusicArchive'
 import { Metadata } from 'next'
 
@@ -45,20 +46,20 @@ export default async function MusicPage() {
   })
 
   return (
-    <main className="container bg-transparent pb-24">
-      {/* Header */}
-      <div className="my-12 text-center sm:my-24">
-        <h1 className="mb-4 text-center font-heading text-7xl tracking-widest text-foreground uppercase md:text-6xl">
-          Music Archive
-        </h1>
-        <p className="mx-auto max-w-2xl font-mono text-muted-foreground">
-          Accessing complete music archive. Select a song to initiate playback
-          or retrieve song data.
-        </p>
-      </div>
+    <article className="space-y-12 bg-transparent">
+      <Header
+        eyebrow="// ACCESSING AUDIO ARCHIVE"
+        title="Music"
+        description="Accessing complete music archive. Select a song to initiate playback or retrieve song data."
+        highlightStat={{
+          value: songs.docs.length,
+          label: 'Songs Released... so far',
+        }}
+      />
 
-      {/* The Interactive Component */}
-      <MusicArchive initialSongs={songs.docs} />
-    </main>
+      <main className="container">
+        <MusicArchive initialSongs={songs.docs} />
+      </main>
+    </article>
   )
 }

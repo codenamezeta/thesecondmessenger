@@ -61,7 +61,7 @@ export default function BioPage() {
     <article className="relative z-0 min-h-screen pb-20">
       {/* <VideoBackground src="/vids/glitch-vid-01.mp4" fixed opacity={0.02} blendMode="screen" /> */}
       {/* --- HERO SECTION (NEW) --- */}
-      <section className="relative isolate mb-20 flex h-[60vh] min-h-[500px] items-end overflow-hidden border-b border-border bg-transparent pb-20">
+      <section className="relative isolate mb-20 flex h-[60vh] min-h-[600px] items-end overflow-hidden border-b border-border bg-transparent pb-20">
         <div className="absolute top-12 right-0 bottom-0 z-10 opacity-50 md:opacity-100 xl:right-[10vw]">
           <Image
             src="/imgs/profile-01.png"
@@ -94,7 +94,7 @@ export default function BioPage() {
               </div>
             </div>
 
-            <h1 className="mb-6 font-heading text-5xl leading-none tracking-widest text-foreground uppercase md:text-8xl">
+            <h1 className="mb-6 font-heading text-4xl leading-none tracking-widest text-foreground uppercase sm:text-5xl md:text-8xl">
               <span className="mb-2 block text-2xl tracking-[0.5em] text-primary/80 md:text-4xl">
                 Identity:
               </span>
