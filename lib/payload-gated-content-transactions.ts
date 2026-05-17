@@ -2,7 +2,10 @@ import type { Payload, PayloadRequest } from 'payload'
 import { NotFound } from 'payload'
 
 const GATED_CONTENT_SLUG = 'gated-content'
+const POSTS_SLUG = 'posts'
 const PATCH_FLAG = '__gatedContentDisableTransactionsPatched' as const
+
+const DISABLE_TRANSACTION_COLLECTIONS = new Set([GATED_CONTENT_SLUG, POSTS_SLUG])
 
 /** Retries for normal admin updates (rare NotFound). */
 const RETRY_DEFAULT_ATTEMPTS = 25
@@ -67,7 +70,7 @@ export function patchGatedContentDisableTransactions(payload: Payload): void {
 
   const origCreate = payload.create.bind(payload)
   payload.create = ((options) => {
-    if (options.collection === GATED_CONTENT_SLUG) {
+    if (DISABLE_TRANSACTION_COLLECTIONS.has(options.collection)) {
       return origCreate({ ...options, disableTransaction: true })
     }
     return origCreate(options)
@@ -77,6 +80,13 @@ export function patchGatedContentDisableTransactions(payload: Payload): void {
   payload.update = (async (
     options: Parameters<Payload['update']>[0],
   ): Promise<Awaited<ReturnType<Payload['update']>>> => {
+    if (options.collection === POSTS_SLUG) {
+      return origUpdate({
+        ...(options as Parameters<Payload['update']>[0]),
+        disableTransaction: true,
+      })
+    }
+
     if (options.collection !== GATED_CONTENT_SLUG) {
       return origUpdate(options as Parameters<Payload['update']>[0])
     }

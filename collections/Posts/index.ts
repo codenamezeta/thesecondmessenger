@@ -74,7 +74,7 @@ export const Posts: CollectionConfig<'posts'> = {
                 features: ({ rootFeatures }) => {
                   return [
                     ...rootFeatures,
-                    HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
+                    HeadingFeature({ enabledHeadingSizes: ['h2', 'h3', 'h4'] }),
                     BlocksFeature({ blocks: [Banner, Code, MediaBlock] }),
                     FixedToolbarFeature(),
                     InlineToolbarFeature(),
@@ -209,9 +209,9 @@ export const Posts: CollectionConfig<'posts'> = {
   },
   versions: {
     drafts: {
-      autosave: {
-        interval: 100, // We set this interval for optimal live preview
-      },
+      // Default interval (~800ms). A 100ms interval raced with "Publish changes" on
+      // Neon/Vercel Postgres and left posts stuck as draft after a successful-looking save.
+      autosave: true,
       schedulePublish: true,
     },
     maxPerDoc: 50,

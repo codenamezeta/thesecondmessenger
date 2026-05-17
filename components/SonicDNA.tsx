@@ -4,7 +4,8 @@ import { Fingerprint, Zap, Globe, Cpu, Mic2 } from 'lucide-react'
 import type { Song, Tag } from '@/payload-types'
 
 // Helper to check if tag is populated
-const isTag = (tag: any): tag is Tag => typeof tag === 'object' && tag !== null && 'name' in tag
+const isTag = (tag: unknown): tag is Tag =>
+  typeof tag === 'object' && tag !== null && 'name' in tag
 
 export const SonicDNA = ({ song }: { song: Song }) => {
   const groups = [
@@ -26,18 +27,18 @@ export const SonicDNA = ({ song }: { song: Song }) => {
   if (!groups.some((g) => g.data && g.data.length > 0)) return null
 
   return (
-    <div className="bg-card/30 border border-border/50 rounded-lg p-6 mt-8">
-      <h4 className="text-primary font-heading uppercase tracking-widest mb-6 flex items-center gap-2">
+    <div className="mt-8 rounded-lg border border-border/50 bg-card/30 p-6">
+      <h4 className="mb-6 flex items-center gap-2 font-heading tracking-widest text-primary uppercase">
         <Fingerprint size={18} /> Sonic DNA
       </h4>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {groups.map((group) => {
           if (!group.data || group.data.length === 0) return null
 
           return (
             <div key={group.label} className="space-y-2">
-              <div className="flex items-center gap-2 text-[10px] uppercase text-muted-foreground tracking-widest font-mono">
+              <div className="flex items-center gap-2 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
                 {group.icon}
                 <span>{group.label}</span>
               </div>
@@ -48,7 +49,7 @@ export const SonicDNA = ({ song }: { song: Song }) => {
                     <Link key={i} href={`/search?q=${tag.name}`}>
                       <Badge
                         variant="outline"
-                        className="bg-background/50 hover:bg-primary/20 hover:text-primary hover:border-primary/50 transition-all cursor-pointer font-mono text-[10px] tracking-wide"
+                        className="cursor-pointer bg-background/50 font-mono text-[10px] tracking-wide transition-all hover:border-primary/50 hover:bg-primary/20 hover:text-primary"
                       >
                         #{tag.name.toUpperCase()}
                       </Badge>

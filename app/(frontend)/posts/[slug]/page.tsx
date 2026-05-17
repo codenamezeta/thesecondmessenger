@@ -103,21 +103,12 @@ export default async function PostPage({ params: paramsPromise }: Args) {
 
       <PostHero post={post} />
 
-      <div className="container py-12 md:py-16">
+      <div className="container pb-12 md:pb-16">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-16">
           {/* Main content */}
           <main className="lg:col-span-8">
             {/* Article body */}
-            <div className="rounded-none border border-border/50 bg-card/20 p-6 backdrop-blur-sm md:p-10">
-              {/* Scanline texture */}
-              <div
-                className="pointer-events-none absolute inset-0 opacity-[0.03]"
-                style={{
-                  backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 2px, var(--color-border) 2px, var(--color-border) 3px)`,
-                }}
-                aria-hidden
-              />
-
+            <div className="bg-background backdrop-blur-sm">
               <RichText className="rich-text max-w-none" data={post.content} />
             </div>
 
