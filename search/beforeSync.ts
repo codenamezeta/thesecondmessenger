@@ -43,10 +43,11 @@ export const beforeSyncWithSearch: BeforeSync = async ({ req, originalDoc, searc
     console.error('Error extracting search body:', e)
   }
 
+  // `search.body` is btree-indexed; Postgres rejects index entries larger than ~2704 bytes.
   const modifiedDoc: DocToSync = {
     ...searchDoc,
     slug,
-    body: bodyContent.slice(0, 8000), // Limit size just in case
+    body: bodyContent.slice(0, 2000),
     meta: {
       ...meta,
       title: meta?.title || title,

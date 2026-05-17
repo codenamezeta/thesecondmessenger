@@ -26,7 +26,9 @@ function estimateReadTime(post: Post): number {
   }
 }
 
-function getCategoryTitle(cat: number | Category | null | undefined): { title: string; slug: string } | null {
+function getCategoryTitle(
+  cat: number | Category | null | undefined,
+): { title: string; slug: string } | null {
   if (!cat || typeof cat === 'number') return null
   return { title: cat.title, slug: cat.slug }
 }
@@ -35,13 +37,15 @@ export const PostHero = ({ post }: PostHeroProps) => {
   const heroImageUrl = (post.heroImage as Media)?.url
   const publishDate = post.publishedAt ? formatDate(post.publishedAt) : null
   const readTime = estimateReadTime(post)
-  const primaryCategory = post.categories?.[0] ? getCategoryTitle(post.categories[0] as Category) : null
+  const primaryCategory = post.categories?.[0]
+    ? getCategoryTitle(post.categories[0] as Category)
+    : null
   const authors = post.populatedAuthors ?? []
 
   return (
     <section
       className={cn(
-        'relative w-full overflow-hidden border-b border-border/50',
+        'relative w-full overflow-hidden',
         heroImageUrl ? 'min-h-[60vh] md:min-h-[70vh]' : 'pb-12',
       )}
     >
@@ -53,47 +57,34 @@ export const PostHero = ({ post }: PostHeroProps) => {
               src={heroImageUrl}
               alt=""
               fill
-              className="scale-110 object-cover opacity-20 blur-md saturate-75"
+              className="object-cover opacity-50 blur-xs saturate-75"
               priority
               sizes="100vw"
             />
           </div>
           {/* Multi-layer gradient overlay */}
-          <div className="pointer-events-none absolute inset-0 z-1 bg-linear-to-t from-background via-background/60 to-background/20" />
-          <div className="pointer-events-none absolute inset-0 z-1 bg-linear-to-r from-background/50 via-transparent to-background/50" />
+          <div className="pointer-events-none absolute inset-0 z-1 bg-linear-to-t from-background to-transparent" />
+          <div className="pointer-events-none absolute inset-0 z-1 bg-linear-to-r from-background to-transparent" />
         </>
       )}
 
-      {/* Scanline texture */}
-      <div
-        className="pointer-events-none absolute inset-0 z-2 opacity-[0.04]"
-        style={{
-          backgroundImage: `repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 3px,
-            var(--color-border) 3px,
-            var(--color-border) 4px
-          )`,
-        }}
-        aria-hidden
-      />
-
-      {/* Ambient glow */}
-      <div
-        className="pointer-events-none absolute inset-0 z-2 opacity-30"
-        style={{
-          background:
-            'radial-gradient(ellipse at 50% 100%, hsl(var(--primary) / 0.15) 0%, transparent 70%)',
-        }}
-        aria-hidden
-      />
-
       {/* Corner brackets decoration */}
-      <div className="pointer-events-none absolute top-6 left-6 z-3 h-8 w-8 border-t-2 border-l-2 border-primary/30" aria-hidden />
-      <div className="pointer-events-none absolute top-6 right-6 z-3 h-8 w-8 border-t-2 border-r-2 border-primary/30" aria-hidden />
-      <div className="pointer-events-none absolute bottom-0 left-6 z-3 h-8 w-8 border-b-2 border-l-2 border-primary/20" aria-hidden />
-      <div className="pointer-events-none absolute bottom-0 right-6 z-3 h-8 w-8 border-b-2 border-r-2 border-primary/20" aria-hidden />
+      <div
+        className="pointer-events-none absolute top-6 left-6 z-3 h-8 w-8 border-t-2 border-l-2 border-primary/30"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute top-6 right-6 z-3 h-8 w-8 border-t-2 border-r-2 border-primary/30"
+        aria-hidden
+      />
+      {/* <div
+        className="pointer-events-none absolute bottom-0 left-6 z-3 h-8 w-8 border-b-2 border-l-2 border-primary/20"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute right-6 bottom-0 z-3 h-8 w-8 border-r-2 border-b-2 border-primary/20"
+        aria-hidden
+      /> */}
 
       <div className="relative z-10 container flex min-h-[60vh] flex-col justify-end py-12 md:min-h-[70vh] md:py-20">
         <div className="max-w-4xl space-y-6">
@@ -102,7 +93,10 @@ export const PostHero = ({ post }: PostHeroProps) => {
             className="flex items-center gap-1 font-mono text-[10px] tracking-widest text-muted-foreground uppercase"
             aria-label="Breadcrumb"
           >
-            <Link href="/posts" className="transition-colors hover:text-primary">
+            <Link
+              href="/posts"
+              className="transition-colors hover:text-primary"
+            >
               Transmissions
             </Link>
             <ChevronRight size={10} aria-hidden />
@@ -125,12 +119,12 @@ export const PostHero = ({ post }: PostHeroProps) => {
               <span className="font-mono text-[11px] tracking-[0.25em] text-primary uppercase">
                 {primaryCategory.title}
               </span>
-              <div className="h-px flex-1 max-w-[120px] bg-primary/30" />
+              <div className="h-px max-w-[120px] flex-1 bg-primary/30" />
             </div>
           )}
 
           {/* Title */}
-          <h1 className="font-heading text-4xl font-bold leading-none tracking-tight uppercase text-foreground drop-shadow-[0_2px_20px_hsl(var(--primary)/0.2)] md:text-6xl lg:text-7xl">
+          <h1 className="font-heading text-4xl leading-none font-bold tracking-tight text-foreground uppercase drop-shadow-[0_2px_20px_hsl(var(--primary)/0.2)] md:text-5xl lg:text-6xl">
             {post.title}
           </h1>
 
@@ -162,9 +156,6 @@ export const PostHero = ({ post }: PostHeroProps) => {
           </div>
         </div>
       </div>
-
-      {/* Bottom edge glow line */}
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent" />
     </section>
   )
 }

@@ -60,7 +60,7 @@ export const searchFields: Field[] = [
   },
   {
     name: 'body',
-    type: 'textarea', // text is small, textarea is for larger content
-    index: true,
+    type: 'textarea',
+    // Do not index: long post bodies exceed Postgres btree index row limits (~2704 bytes).
   },
 ]

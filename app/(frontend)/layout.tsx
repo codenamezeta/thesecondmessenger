@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { PlayerProvider } from '@/context/PlayerContext'
 import { YouTubeAuthProvider } from '@/context/YouTubeAuthContext'
 import { DynamicGlobalPlayer } from '@/components/GlobalPlayer/DynamicGlobalPlayer'
+import { CollapseTheaterOnRouteChange } from '@/components/GlobalPlayer/CollapseTheaterOnRouteChange'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { Nav } from '@/components/Nav'
 import { Analytics } from '@vercel/analytics/next'
@@ -35,6 +36,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
         <YouTubeAuthProvider>
           <ThemeProvider>
             <PlayerProvider>
+              <CollapseTheaterOnRouteChange />
               <Nav />
               {children}
               <Footer />

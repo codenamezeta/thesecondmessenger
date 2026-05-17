@@ -48,7 +48,6 @@ export const Nav: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [logoError, setLogoError] = useState(false)
 
-  
   // Dropdown Logic (Desktop)
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -75,15 +74,6 @@ export const Nav: React.FC = () => {
     return () => window.clearTimeout(timeoutId)
   }, [pathname])
 
-  // --- THE LOGIC TO PUSH THE NAV DOWN ---
-  useEffect(() => {
-    const heightValue: number = 100 / 20 // 1/12th of the screen height
-    document.documentElement.style.setProperty(
-      '--main-nav-bar-height',
-      `${heightValue}vh`,
-    )
-  }, [])
-
   // Desktop Hover Handlers
   const handleMouseEnter = (index: number) => {
     if (timeoutRef.current) {
@@ -100,18 +90,24 @@ export const Nav: React.FC = () => {
   }
 
   // --- REUSABLE LOGO COMPONENT ---
-  const renderNavLogo = () => (
+  const renderNavLogo = ({
+    className,
+    priority = false,
+  }: {
+    className?: string
+    priority?: boolean
+  }) => (
     <>
       {!logoError ? (
         <Image
           src="/imgs/logos/voyager-white.png"
           alt="The 2nd Messenger Logo"
-          sizes="(max-width: 350px) 100vw, 125px"
+          sizes="(max-width: 767px) 192px, 288px"
           width={350}
           height={125}
-          className="light:invert h-[350px] w-[125px] max-w-none object-contain opacity-75 transition-opacity group-hover:opacity-100 dark:invert-0"
+          className={className ?? ''}
           onError={() => setLogoError(true)}
-          priority
+          priority={priority}
         />
       ) : (
         <div className="h-12 w-40 font-heading text-xl leading-tight font-bold tracking-widest text-foreground transition-colors group-hover:text-primary">
@@ -128,10 +124,17 @@ export const Nav: React.FC = () => {
       {/* --- DESKTOP NAV --- */}
       <nav className="sticky inset-x-0 top-0 z-40 flex w-full flex-col border-b border-border bg-transparent backdrop-blur-3xl">
         <AdminBar />
-        <div className="item-center container flex h-(--main-nav-bar-height) justify-between gap-0">
+        <div className="container flex h-(--main-nav-bar-height) items-center justify-between gap-0">
           {/* Logo */}
-          <Link href="/" className="group z-10 flex flex-col justify-center">
-            {renderNavLogo()}
+          <Link
+            href="/"
+            className="group z-10 flex shrink-0 items-center py-3"
+          >
+            {renderNavLogo({
+              className:
+                'h-12 w-auto object-contain opacity-75 invert transition-opacity group-hover:opacity-100 md:h-14 dark:invert-0',
+              priority: true,
+            })}
           </Link>
 
           {/* Desktop Links */}
@@ -239,19 +242,25 @@ export const Nav: React.FC = () => {
 
       <aside
         className={cn(
-          'fixed top-0 right-0 z-50 flex h-full w-[85vw] max-w-sm transform flex-col border-l border-sidebar-primary/50 bg-sidebar shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-out',
+          'fixed top-0 right-0 z-50 flex h-full w-[85vw] max-w-sm transform flex-col border-l border-sidebar-primary/50 bg-background/75 shadow-[0_0_50px_rgba(0,0,0,0.5)] backdrop-blur-sm transition-transform duration-300 ease-out',
           navOpen ? 'translate-x-0' : 'translate-x-full',
         )}
       >
-        <div className="flex items-center justify-between border-b border-border/20 p-6">
-          <Link href="/" onClick={() => setNavOpen(false)} className="group">
-            {renderNavLogo()}
+        <div className="flex h-24 items-center justify-between border-b border-primary/20 px-6">
+          <Link
+            href="/"
+            onClick={() => setNavOpen(false)}
+            className="group flex items-center"
+          >
+            {renderNavLogo({
+              className: 'max-w-48 max-h-16 object-contain',
+            })}
           </Link>
           <button
             onClick={() => setNavOpen(false)}
             className="text-sidebar-foreground hover:text-sidebar-primary"
           >
-            <X size={28} />
+            <X size={48} />
           </button>
         </div>
 

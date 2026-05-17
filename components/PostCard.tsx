@@ -30,7 +30,9 @@ function estimateReadTime(post: Post): string {
   }
 }
 
-function getCategoryTitle(cat: number | Category | null | undefined): string | null {
+function getCategoryTitle(
+  cat: number | Category | null | undefined,
+): string | null {
   if (!cat || typeof cat === 'number') return null
   return cat.title || null
 }
@@ -53,9 +55,15 @@ const AMBIENT_GRADIENTS = [
   'from-chart-5/20 via-primary/12 to-transparent',
 ] as const
 
-export const PostCard = ({ post, className, featured = false }: PostCardProps) => {
+export const PostCard = ({
+  post,
+  className,
+  featured = false,
+}: PostCardProps) => {
   const heroImageUrl = (post.heroImage as Media)?.url
-  const category = post.categories?.[0] ? getCategoryTitle(post.categories[0] as Category) : null
+  const category = post.categories?.[0]
+    ? getCategoryTitle(post.categories[0] as Category)
+    : null
   const publishDate = post.publishedAt ? formatDate(post.publishedAt) : null
   const readTime = estimateReadTime(post)
   const href = `/posts/${post.slug}`
@@ -81,15 +89,24 @@ export const PostCard = ({ post, className, featured = false }: PostCardProps) =
         )}
       >
         {/* Ambient gradient plane */}
-        <div className="pointer-events-none absolute inset-0 opacity-80" aria-hidden>
+        <div
+          className="pointer-events-none absolute inset-0 opacity-80"
+          aria-hidden
+        >
           <div
-            className={cn('absolute -inset-[40%] bg-linear-to-br mix-blend-soft-light', accentGradient)}
+            className={cn(
+              'absolute inset-[-40%] bg-linear-to-br mix-blend-soft-light',
+              accentGradient,
+            )}
             style={{ transform: `rotate(${foilDeg}deg)` }}
           />
         </div>
 
         {/* Specular sweep on hover */}
-        <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden" aria-hidden>
+        <div
+          className="pointer-events-none absolute inset-0 z-20 overflow-hidden"
+          aria-hidden
+        >
           <div className="absolute inset-0 -translate-x-full skew-x-12 bg-linear-to-r from-transparent via-foreground/8 to-transparent opacity-0 transition-[transform,opacity] duration-700 ease-out group-hover:translate-x-full group-hover:opacity-100" />
         </div>
 
@@ -97,7 +114,9 @@ export const PostCard = ({ post, className, featured = false }: PostCardProps) =
         <div
           className={cn(
             'relative z-10 overflow-hidden border-b border-border/80 bg-muted/40 transition-colors duration-500 group-hover:border-primary/25',
-            featured ? 'aspect-video lg:aspect-auto lg:w-1/2 lg:border-b-0 lg:border-r' : 'aspect-video w-full',
+            featured
+              ? 'aspect-video lg:aspect-auto lg:w-1/2 lg:border-r lg:border-b-0'
+              : 'aspect-video w-full',
           )}
         >
           {heroImageUrl ? (
@@ -106,7 +125,11 @@ export const PostCard = ({ post, className, featured = false }: PostCardProps) =
               alt={post.title}
               fill
               className="object-cover opacity-90 saturate-[0.85] transition-all duration-700 ease-out group-hover:scale-[1.03] group-hover:opacity-100 group-hover:saturate-100"
-              sizes={featured ? '(max-width: 1024px) 100vw, 50vw' : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'}
+              sizes={
+                featured
+                  ? '(max-width: 1024px) 100vw, 50vw'
+                  : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
+              }
             />
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground/20">
@@ -118,7 +141,7 @@ export const PostCard = ({ post, className, featured = false }: PostCardProps) =
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-background/90 to-transparent" />
 
           {/* HUD overlays */}
-          <div className="absolute top-2 left-2 right-2 z-30 flex items-start justify-between gap-2">
+          <div className="absolute top-2 right-2 left-2 z-30 flex items-start justify-between gap-2">
             {category && (
               <div className="rounded-none border border-primary/50 bg-background/75 px-2 py-0.5 font-mono text-[9px] font-bold tracking-widest text-primary uppercase backdrop-blur-md">
                 {category}
@@ -154,14 +177,18 @@ export const PostCard = ({ post, className, featured = false }: PostCardProps) =
             {!heroImageUrl && category && (
               <div className="flex items-center gap-1.5">
                 <Tag className="size-3 text-primary" aria-hidden />
-                <span className="font-mono text-[10px] tracking-widest text-primary uppercase">{category}</span>
+                <span className="font-mono text-[10px] tracking-widest text-primary uppercase">
+                  {category}
+                </span>
               </div>
             )}
 
             <h3
               className={cn(
                 'font-heading leading-tight uppercase transition-colors',
-                featured ? 'text-2xl tracking-wide md:text-3xl' : 'text-lg tracking-wide',
+                featured
+                  ? 'text-2xl tracking-wide md:text-3xl'
+                  : 'text-lg tracking-wide',
                 'text-foreground group-hover:text-primary',
               )}
             >
@@ -177,13 +204,19 @@ export const PostCard = ({ post, className, featured = false }: PostCardProps) =
             <div className="mt-auto flex items-center justify-between gap-2 border-t border-border/50 pt-3">
               <div className="flex flex-wrap items-center gap-2 font-mono text-[9px] tracking-widest text-muted-foreground uppercase">
                 {post.populatedAuthors?.[0]?.name && (
-                  <span className="text-foreground/70">{post.populatedAuthors[0].name}</span>
+                  <span className="text-foreground/70">
+                    {post.populatedAuthors[0].name}
+                  </span>
                 )}
                 {post.populatedAuthors?.[0]?.name && publishDate && (
-                  <span className="text-border" aria-hidden>|</span>
+                  <span className="text-border" aria-hidden>
+                    |
+                  </span>
                 )}
                 {publishDate && <span>{publishDate}</span>}
-                <span className="text-border" aria-hidden>|</span>
+                <span className="text-border" aria-hidden>
+                  |
+                </span>
                 <span className="text-primary/80">{readTime}</span>
               </div>
               <ArrowRight
