@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import Link from 'next/link'
+// import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'motion/react'
 import { Play, ArrowRight, ChevronDown, Zap } from 'lucide-react'
@@ -32,7 +32,7 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
   const { playMedia } = usePlayer()
 
   return (
-    <main className="relative h-[calc(100vh-var(--main-nav-bar-height))] overflow-hidden">
+    <main className="relative h-[calc(100vh-var(--main-nav-bar-height))] min-h-[calc(100vh-var(--main-nav-bar-height))] overflow-hidden">
       {/* Background void */}
       <div className="absolute inset-0 bg-background">
         {/* Primary radial glow — blooms from top-center behind the title */}
@@ -86,18 +86,15 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
       <div className="absolute right-6 bottom-[12%] h-8 w-8 border-r border-b border-primary/30" />
 
       {/* Content */}
-      <div className="container grid h-full grid-cols-12 items-center">
+      <div className="container flex h-full flex-col items-center justify-center xl:flex-row xl:justify-between">
         <motion.div
-          className="relative z-10 col-span-7 mb-24 flex flex-col justify-center"
+          className="relative z-10 flex flex-col justify-center space-y-4"
           initial="hidden"
           animate="visible"
           variants={stagger}
         >
           {/* HUD status line */}
-          <motion.div
-            variants={fadeUp}
-            className="mb-8 flex items-center gap-3"
-          >
+          <motion.div variants={fadeUp} className="flex items-center gap-3">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
@@ -107,7 +104,7 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
               animateOn="view"
               sequential
               revealDirection="start"
-              speed={25}
+              speed={75}
               characters="XYZ01234!@#$%^&*()"
               className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase"
               encryptedClassName="font-mono text-[10px] tracking-[0.25em] text-primary/30 uppercase"
@@ -118,28 +115,28 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
           <motion.h1
             variants={fadeUp}
             className="font-body leading-[0.75] font-black tracking-tighter text-foreground uppercase"
-            style={{ fontSize: 'clamp(3rem, 4vw, 12rem)' }}
+            style={{ fontSize: 'clamp(3rem, 6vw, 12rem)' }}
           >
             <SplitText
               text="Cosmic Scales"
               tag="span"
               className=""
               textAlign="left"
-            />
+            />{' '}
             <SplitText
               text="Pop-Punk"
               tag="span"
-              delay={0.75}
+              delay={200}
               className="glitch-text"
               textAlign="left"
-            />
+            />{' '}
             <SplitText text=" Heart" tag="span" className="" textAlign="left" />
           </motion.h1>
 
           {/* Tagline */}
           <motion.p
             variants={fadeUp}
-            className="mt-10 border-l-2 border-primary/40 pl-4 text-left font-mono text-[11px] tracking-[0.35em] text-muted-foreground uppercase"
+            className="border-l-2 border-primary/40 pl-4 text-left font-mono text-[11px] tracking-[0.35em] text-muted-foreground uppercase"
           >
             Cinematic narratives of stellar evolution, vast distances, and
             grounded human emotion, driven by massive choruses and relentless
@@ -149,7 +146,7 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
           {/* Primary CTA */}
           <motion.div
             variants={fadeUp}
-            className="mt-10 flex flex-col items-center sm:flex-row"
+            className="flex flex-col items-center sm:flex-row"
           >
             {featuredSong?.youtubeId ? (
               <MagneticCta
@@ -176,7 +173,7 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
           {/* Meta tags */}
           <motion.div
             variants={fadeUp}
-            className="mt-14 flex flex-wrap justify-center gap-4 font-mono text-[9px] tracking-widest text-muted-foreground/50 uppercase"
+            className="flex flex-wrap justify-center gap-4 font-mono text-[9px] tracking-widest text-muted-foreground/50 uppercase"
           >
             {[
               'INDEPENDENT',
@@ -190,22 +187,25 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
             ))}
           </motion.div>
         </motion.div>
+
+        {/* Image Div */}
         <motion.div
           variants={fadeUp}
-          className="pointer-events-none relative col-span-5 flex size-full flex-col items-end"
+          className="glitch-text-2 pointer-events-none relative flex flex-col md:mx-[-36px] xl:last:self-end"
         >
-          {/* Tech Circle behind head */}
-          <div className="absolute top-2 right-0 size-96 animate-pulse rounded-full border border-white/10 lg:right-10" />
+          {/* Tech & Circles behind head */}
+          <div className="absolute inset-x-0 top-36 size-[800px] animate-pulse rounded-full border border-white/20 lg:right-10" />
+          <div className="absolute inset-x-0 top-48 size-[750px] rounded-full border border-dashed border-white/20 lg:right-10" />
 
           {/* The Image (Assumed Transparent PNG) */}
-          <div className="relative h-full w-full max-w-[1200px]">
-            <div className="absolute right-0 bottom-0 z-10 h-[67%] w-full contrast-125 drop-shadow-[0_0_50px_rgba(0,0,0,0.8)] grayscale-30 filter transition-all duration-700 hover:grayscale-0 lg:-right-10">
+          <div className="relative min-h-[360px] min-w-[300px] xl:min-h-[1000px] xl:min-w-[800px]">
+            <div className="absolute inset-0 z-10 contrast-125 drop-shadow-[0_0_50px_rgba(0,0,0,0.8)] grayscale-30 filter transition-all duration-700 hover:grayscale-0 lg:-right-10">
               <Image
                 src="/imgs/michael-01.png" // CHANGE THIS TO YOUR TRANSPARENT PNG
                 alt="Michael Zeta"
                 fill
                 sizes="(max-width: 768px) 100vw, 60vw"
-                className="glitch-text-2 object-cover object-top"
+                className="object-cover object-top"
                 priority
               />
             </div>
@@ -247,7 +247,7 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
 
 export function HomeSections({ songs, videos }: HomeProps) {
   return (
-    <article className="relative bg-background">
+    <article className="relative bg-transparent">
       <HeroSection featuredSong={songs[0]} />
       <HomeSectionsBelowHeroDynamic songs={songs} videos={videos} />
     </article>

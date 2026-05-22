@@ -5,6 +5,10 @@ import type { CollectionConfig } from 'payload'
  *
  * Storage: Vercel Blob (configured via plugin in payload.config.ts).
  *
+ * Also stores song masters and stems (`Songs.masterAudio`, stem `audioFile`)
+ * via `relationTo: 'media'`. Audio MIME types are whitelisted; `imageSizes`
+ * only run for images.
+ *
  * Optimization workflow:
  * - The original master file is uploaded as-is (no top-level `formatOptions`),
  *   so 3000x3000 album-art masters are preserved at full fidelity for
@@ -33,6 +37,7 @@ export const Media: CollectionConfig = {
   upload: {
     disableLocalStorage: true,
     mimeTypes: [
+      // Images & video (cover art, promos)
       'image/png',
       'image/jpeg',
       'image/webp',
@@ -42,6 +47,19 @@ export const Media: CollectionConfig = {
       'video/mp4',
       'video/webm',
       'video/quicktime',
+      // Audio — Songs.masterAudio and stems use relationTo: 'media'
+      'audio/mpeg',
+      'audio/mp3',
+      'audio/wav',
+      'audio/x-wav',
+      'audio/wave',
+      'audio/flac',
+      'audio/x-flac',
+      'audio/aac',
+      'audio/aiff',
+      'audio/x-aiff',
+      'audio/ogg',
+      'audio/mp4',
     ],
     imageSizes: [
       {
@@ -77,3 +95,4 @@ export const Media: CollectionConfig = {
     ],
   },
 }
+
