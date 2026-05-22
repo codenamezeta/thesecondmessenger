@@ -52,7 +52,7 @@ export function MagneticCta({
             href={href ?? ''}
             onClick={onClick}
             className={cn(
-              'group relative inline-flex items-center gap-3 border px-8 py-4 font-mono text-xs tracking-[0.3em] uppercase transition-all duration-300',
+              'group relative inline-flex items-center gap-3 border p-4 font-mono text-xs tracking-[0.3em] uppercase transition-all duration-300',
               variant === 'primary'
                 ? 'border-primary bg-primary/10 text-primary hover:bg-primary hover:text-background'
                 : 'border-border/50 bg-card/10 text-foreground backdrop-blur-sm hover:border-primary/50 hover:text-primary',
