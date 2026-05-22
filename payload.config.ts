@@ -75,6 +75,9 @@ export default buildConfig({
     pool: {
       connectionString: process.env.POSTGRES_URL || '',
     },
+    // Migrations live in /migrations at the repo root. Generate new ones with
+    // `pnpm migrate:create <name>`; apply pending ones with `pnpm migrate`.
+    migrationDir: path.resolve(dirname, 'migrations'),
   }),
   sharp,
   plugins: [
