@@ -32,7 +32,7 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
   const { playMedia } = usePlayer()
 
   return (
-    <main className="relative h-[calc(100vh-var(--main-nav-bar-height))] min-h-[calc(100vh-var(--main-nav-bar-height))] overflow-hidden">
+    <main className="relative overflow-hidden lg:h-[calc(100vh-var(--main-nav-bar-height))] lg:min-h-[calc(100vh-var(--main-nav-bar-height))]">
       {/* Background void */}
       <div className="absolute inset-0 bg-background">
         {/* Primary radial glow — blooms from top-center behind the title */}
@@ -86,7 +86,7 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
       <div className="absolute right-6 bottom-[12%] h-8 w-8 border-r border-b border-primary/30" />
 
       {/* Content */}
-      <div className="container flex h-full flex-col items-center justify-center xl:flex-row xl:justify-between">
+      <div className="lgg:justify-between container flex h-full flex-col items-center justify-center lg:flex-row">
         <motion.div
           className="relative z-10 flex flex-col justify-center space-y-4"
           initial="hidden"
@@ -115,7 +115,7 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
           <motion.h1
             variants={fadeUp}
             className="font-body leading-[0.75] font-black tracking-tighter text-foreground uppercase"
-            style={{ fontSize: 'clamp(3rem, 6vw, 12rem)' }}
+            style={{ fontSize: 'clamp(3rem, 5vw, 12rem)' }}
           >
             <SplitText
               text="Cosmic Scales"
@@ -146,7 +146,7 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
           {/* Primary CTA */}
           <motion.div
             variants={fadeUp}
-            className="flex flex-col items-center sm:flex-row"
+            className="m-0 flex flex-col items-center justify-start p-0 sm:flex-row"
           >
             {featuredSong?.youtubeId ? (
               <MagneticCta
@@ -154,19 +154,20 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
                 onClick={() =>
                   playMedia(featuredSong as Parameters<typeof playMedia>[0])
                 }
+                className="min-w-[200px] bg-black p-4 backdrop-blur-sm"
               >
-                <Play className="h-3 w-3" />
-                Initiate Playback Sequence
+                <Play className="size-6" />
+                Initiate Playback
               </MagneticCta>
             ) : (
               <MagneticCta href="/music" variant="primary">
-                <Play className="h-3 w-3" />
-                Initiate Playback Sequence
+                <Play className="size-6" />
+                Initiate Playback
               </MagneticCta>
             )}
             <MagneticCta href="/music" variant="ghost">
-              Enter the Archive
-              <ArrowRight className="h-3 w-3" />
+              Access the Archive
+              <ArrowRight className="size-6" />
             </MagneticCta>
           </motion.div>
 
@@ -191,14 +192,14 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
         {/* Image Div */}
         <motion.div
           variants={fadeUp}
-          className="glitch-text-2 pointer-events-none relative flex flex-col md:mx-[-36px] xl:last:self-end"
+          className="glitch-text-2 pointer-events-none relative flex flex-col lg:mx-[-60px] lg:last:self-end xl:mx-[-36px]"
         >
           {/* Tech & Circles behind head */}
           <div className="absolute inset-x-0 top-36 size-[800px] animate-pulse rounded-full border border-white/20 lg:right-10" />
           <div className="absolute inset-x-0 top-48 size-[750px] rounded-full border border-dashed border-white/20 lg:right-10" />
 
           {/* The Image (Assumed Transparent PNG) */}
-          <div className="relative min-h-[360px] min-w-[300px] xl:min-h-[1000px] xl:min-w-[800px]">
+          <div className="relative min-h-[360px] min-w-[300px] lg:min-h-[1000px] lg:min-w-[800px]">
             <div className="absolute inset-0 z-10 contrast-125 drop-shadow-[0_0_50px_rgba(0,0,0,0.8)] grayscale-30 filter transition-all duration-700 hover:grayscale-0 lg:-right-10">
               <Image
                 src="/imgs/michael-01.png" // CHANGE THIS TO YOUR TRANSPARENT PNG
