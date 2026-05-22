@@ -133,7 +133,12 @@ export const GlobalPlayer = () => {
   return (
     <aside
       id="media_player"
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex flex-col justify-end md:sticky"
+      className={cn(
+        'pointer-events-none fixed inset-x-0 bottom-0 z-20 flex flex-col justify-end md:sticky',
+        // Below md the expanded stack uses flex-1; the aside must span nav→bottom bar
+        // or the wrapper shrink-wraps to content and the video stage gets 0 height.
+        'max-md:top-[calc(var(--admin-bar-height,0px)+var(--main-nav-bar-height,0px))]',
+      )}
     >
       {/* ================================================================
           Single flex column + one VideoStage instance.

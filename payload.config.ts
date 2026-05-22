@@ -80,6 +80,9 @@ export default buildConfig({
   plugins: [
     ...plugins,
     vercelBlobStorage({
+      // Browser → Blob directly; avoids Vercel's ~4.5 MB serverless request-body
+      // cap on POST /api/media (required for MP3 masters in admin).
+      clientUploads: true,
       collections: {
         media: true,
       },
