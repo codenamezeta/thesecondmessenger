@@ -196,14 +196,18 @@ function classifyCredits(credits: SongCredit[] | null | undefined) {
 function buildGrouping(song: SongForTagging): string | undefined {
   const parts: string[] = []
   const allGenres = tagNames(song.genres)
+  // Aggregation order matches `.cursor/rules/song-tag-mapping.mdc` §4.
   // Secondary genres only — primary lives in TCON.
   parts.push(...allGenres.slice(1))
-  parts.push(...tagNames(song.styles))
-  parts.push(...tagNames(song.moods))
+  parts.push(...tagNames(song.subGenres))
+  parts.push(...tagNames(song.activities))
   parts.push(...tagNames(song.themes))
-  parts.push(...tagNames(song.instruments))
+  parts.push(...tagNames(song.moods))
   parts.push(...tagNames(song.production))
+  parts.push(...tagNames(song.instruments))
+  parts.push(...tagNames(song.gear))
   parts.push(...tagNames(song.arrangements))
+  parts.push(...tagNames(song.influences))
   parts.push(...tagNames(song.otherTags))
 
   if (song.changesTempo && song.bpm && song.bpmEnd) {

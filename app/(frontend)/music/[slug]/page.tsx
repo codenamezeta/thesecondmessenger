@@ -40,6 +40,7 @@ import { MusicRecordingSchema } from '@/schema/MusicRecording'
 import { generateMeta } from '@/utilities/generateMeta'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
+import { buildSongMetaDescription } from '@/lib/seo/songToMetaDescription'
 
 import { getMeUser } from '@/utilities/getMeUser'
 import { SongGatedBonusSection } from '@/components/SongGatedBonusSection'
@@ -79,18 +80,10 @@ const querySongBySlug = cache(async (slug: string) => {
 
 // --- Metadata & SEO ---
 
-// --- HELPER 1: Smart List Formatting (Oxford Comma support) ---
-const formatList = (items: string[]) => {
-  if (!items || items.length === 0) return ''
-  // "Dark, Sad, and Cinematic"
-  const listFormatter = new Intl.ListFormat('en', {
-    style: 'long',
-    type: 'conjunction',
-  })
-  return listFormatter.format(items)
-}
+// Formatter is shared via `lib/seo/formatList.ts`; the meta-description
+// generator lives in `lib/seo/songToMetaDescription.ts`.
 
-// --- HELPER 2: Safety Check for Relations ---
+// --- HELPER: Safety Check for Relations ---
 const resolveTags = (field: TagLike[] | null | undefined): string[] => {
   if (!field || !Array.isArray(field)) return []
   return field
@@ -270,35 +263,17 @@ function SongMetadataCard({ song }: { song: SongDoc }) {
   ].filter((row) => Boolean(row.value))
 
   const tagGroups = [
-    {
-      label: 'Genres',
-      tags: resolveTags(song.genres as TagLike[]).slice(0, 3),
-    },
-    {
-      label: 'Styles',
-      tags: resolveTags(song.styles as TagLike[]).slice(0, 3),
-    },
+    { label: 'Genres', tags: resolveTags(song.genres as TagLike[]).slice(0, 3) },
+    { label: 'Sub-genres', tags: resolveTags(song.subGenres as TagLike[]).slice(0, 3) },
+    { label: 'Activities', tags: resolveTags(song.activities as TagLike[]).slice(0, 3) },
+    { label: 'Themes', tags: resolveTags(song.themes as TagLike[]).slice(0, 3) },
     { label: 'Moods', tags: resolveTags(song.moods as TagLike[]).slice(0, 3) },
-    {
-      label: 'Themes',
-      tags: resolveTags(song.themes as TagLike[]).slice(0, 3),
-    },
-    {
-      label: 'Instruments',
-      tags: resolveTags(song.instruments as TagLike[]).slice(0, 3),
-    },
-    {
-      label: 'Production',
-      tags: resolveTags(song.production as TagLike[]).slice(0, 3),
-    },
-    {
-      label: 'Arrangements',
-      tags: resolveTags(song.arrangements as TagLike[]).slice(0, 3),
-    },
-    {
-      label: 'Other',
-      tags: resolveTags(song.otherTags as TagLike[]).slice(0, 3),
-    },
+    { label: 'Production', tags: resolveTags(song.production as TagLike[]).slice(0, 3) },
+    { label: 'Instruments', tags: resolveTags(song.instruments as TagLike[]).slice(0, 3) },
+    { label: 'Gear', tags: resolveTags(song.gear as TagLike[]).slice(0, 3) },
+    { label: 'Arrangements', tags: resolveTags(song.arrangements as TagLike[]).slice(0, 3) },
+    { label: 'Influences', tags: resolveTags(song.influences as TagLike[]).slice(0, 3) },
+    { label: 'Other', tags: resolveTags(song.otherTags as TagLike[]).slice(0, 3) },
   ].filter((group) => group.tags.length > 0)
 
   if (detailRows.length === 0 && tagGroups.length === 0) return null
@@ -416,53 +391,36 @@ export async function generateMetadata({
 
   if (!song) return generateMeta({ doc: null })
 
-  // 1. EXTRACT & CURATE DATA
-  // We limit the number of tags used in the sentence to prevent "Keyword Stuffing"
-  const moods = resolveTags(song.moods)
-    .slice(0, 2)
-    .map((s) => s.toLowerCase())
-  const genres = resolveTags(song.genres).slice(0, 2)
-  const themes = resolveTags(song.themes)
-    .slice(0, 3)
-    .map((s) => s.toLowerCase())
+  // 1. DESCRIPTION — built from the 11-layer Sonic Tag Ontology by the
+  //    canonical generator. See `lib/seo/songToMetaDescription.ts`.
+  const finalDescription = buildSongMetaDescription({
+    title: song.title,
+    tagline: song.tagline,
+    genres: resolveTags(song.genres),
+    subGenres: resolveTags(song.subGenres),
+    moods: resolveTags(song.moods),
+    themes: resolveTags(song.themes),
+    instruments: resolveTags(song.instruments),
+    activities: resolveTags(song.activities),
+    influences: resolveTags(song.influences),
+  })
 
-  // 2. CONSTRUCT "ROBOT CONTEXT" SENTENCE
-  // Pattern: "A [Mood] and [Mood] [Genre] track by The Second Messenger..."
-  let generatedContext = ''
-
-  const moodString = moods.length > 0 ? `${formatList(moods)} ` : ''
-  const genreString = genres.length > 0 ? formatList(genres) : 'Rock' // Default fallback
-
-  generatedContext = `A ${moodString}${genreString} track by The Second Messenger`
-
-  // "...exploring themes of [Theme], [Theme], and [Theme]."
-  if (themes.length > 0) {
-    generatedContext += `, exploring themes of ${formatList(themes)}`
-  }
-
-  generatedContext += '.'
-
-  // 3. HYBRID DESCRIPTION
-  let finalDescription = ''
-  if (song.tagline) {
-    // Option A: Human Hook + Robot Context
-    finalDescription = `${song.tagline} ${generatedContext}`
-  } else {
-    // Option B: Full Robot
-    finalDescription = `${song.title} is ${generatedContext.toLowerCase()}`
-  }
-
-  // 4. KEYWORDS META (Dump everything here for internal search/crawlers)
+  // 2. KEYWORDS — every layer dumped flat for crawlers + internal search.
+  //    Production, gear, and arrangements live here rather than in the
+  //    sentence because they read awkwardly inside grammatical copy.
   const allKeywords = [
     song.title,
     'The Second Messenger',
     ...resolveTags(song.genres),
-    ...resolveTags(song.moods),
+    ...resolveTags(song.subGenres),
+    ...resolveTags(song.activities),
     ...resolveTags(song.themes),
-    ...resolveTags(song.instruments),
-    ...resolveTags(song.styles),
+    ...resolveTags(song.moods),
     ...resolveTags(song.production),
-    ...resolveTags((song as SongDoc & { artists?: TagLike[] | null }).artists),
+    ...resolveTags(song.instruments),
+    ...resolveTags(song.gear),
+    ...resolveTags(song.arrangements),
+    ...resolveTags(song.influences),
   ].join(', ')
 
   const coverUrl = (song.coverArt as Media | null | undefined)?.url || undefined

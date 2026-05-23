@@ -20,14 +20,20 @@ export const Tags: CollectionConfig = {
       name: 'category',
       type: 'select',
       required: true,
+      // Order matches the 11-layer ontology in `.cursor/rules/sonic-tag-ontology.mdc`.
+      // Each value is consumed by `filterOptions` on the matching Songs.ts relationship
+      // field, so renaming any value here MUST be paired with a data migration.
       options: [
         { label: 'Genre', value: 'genre' },
-        { label: 'Style', value: 'style' },
+        { label: 'Sub-genre', value: 'subgenre' },
+        { label: 'Activities / Actions', value: 'activity' },
+        { label: 'Theme', value: 'theme' },
         { label: 'Mood', value: 'mood' },
         { label: 'Production', value: 'production' },
-        { label: 'Theme', value: 'theme' },
         { label: 'Instrument', value: 'instrument' },
+        { label: 'Gear', value: 'gear' },
         { label: 'Arrangement', value: 'arrangement' },
+        { label: 'Influence', value: 'influence' },
         { label: 'Other', value: 'other' },
       ],
       admin: {
