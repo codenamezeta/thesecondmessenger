@@ -729,6 +729,28 @@ export interface Tag {
     | 'influence'
     | 'other';
   slug?: string | null;
+  /**
+   * Optional. Renders above the song grid on /music/tag/<category>/<slug> landing pages. Use to give context for the tag (e.g. why a sub-genre matters, when a particular activity-tag is appropriate). Leave empty for tags that don’t need editorial framing.
+   */
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Optional. Hero image for the /music/tag landing page. If omitted, the page falls back to a stylized header without imagery.
+   */
+  featuredImage?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
 }
@@ -1560,6 +1582,8 @@ export interface TagsSelect<T extends boolean = true> {
   name?: T;
   category?: T;
   slug?: T;
+  description?: T;
+  featuredImage?: T;
   updatedAt?: T;
   createdAt?: T;
 }

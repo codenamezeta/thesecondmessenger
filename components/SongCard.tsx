@@ -18,6 +18,8 @@ import {
 import { cn } from '@/utilities/ui'
 import type { Song, Media, Tag } from '@/payload-types'
 import { chipCategory, pickCardChips } from '@/lib/songs/pickCardChips'
+import { songToCopyInput } from '@/lib/songs/songCopyInput'
+import { buildSongCardFlavor } from '@/lib/seo/songToCardFlavor'
 import { musicHrefForTag } from '@/lib/music/filterState'
 import { usePlayer } from '@/context/PlayerContext'
 import { Button } from '@/components/ui/button'
@@ -165,6 +167,12 @@ export const SongCard = ({ song, className }: SongCardProps) => {
   // so every card surfaces its most distinguishing tags rather than
   // bunching on moods + themes alone.
   const allFlavorTags = pickCardChips(song, 6)
+
+  // Trading-card flavor caption — tight grammatical sentence derived
+  // from the same 11-layer ontology, capped at ~90 chars. Renders in
+  // a Magic-card lore style below the tagline (when both present) or
+  // in the tagline's spot (when no human tagline is set).
+  const flavorText = buildSongCardFlavor(songToCopyInput(song))
 
   const duration = song.duration
     ? `${Math.floor(song.duration / 60)}:${Math.round(song.duration % 60)
@@ -382,6 +390,18 @@ export const SongCard = ({ song, className }: SongCardProps) => {
             {song.tagline ? (
               <p className="line-clamp-2 border-l-2 border-accent/50 pl-2 font-body text-xs leading-snug text-muted-foreground italic">
                 {song.tagline}
+              </p>
+            ) : null}
+
+            {flavorText ? (
+              <p
+                className={cn(
+                  'line-clamp-2 font-mono text-[10px] leading-snug tracking-wide text-muted-foreground/70 italic',
+                  song.tagline ? 'mt-1.5' : 'mt-0',
+                )}
+                aria-label="Auto-generated tag-derived flavor caption"
+              >
+                {flavorText}
               </p>
             ) : null}
           </div>

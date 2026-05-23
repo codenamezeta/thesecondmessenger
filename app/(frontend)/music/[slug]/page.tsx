@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { SongCard } from '@/components/SongCard'
+import { RelatedSongs } from '@/components/RelatedSongs'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { SongHero } from '@/components/SongHero'
@@ -487,25 +487,10 @@ export default async function SongPage({ params }: Args) {
     }
   }
 
-  // Related Songs
-
-  const moodIds =
-    (song.moods as IdLike[] | null | undefined)?.map(resolveId) || []
-  const genreIds =
-    (song.genres as IdLike[] | null | undefined)?.map(resolveId) || []
-
-  const relatedSongs = await payload.find({
-    collection: 'songs',
-    limit: 3,
-    where: {
-      and: [
-        { id: { not_equals: song.id } }, // Exclude current song
-        {
-          or: [{ moods: { in: moodIds } }, { genres: { in: genreIds } }],
-        },
-      ],
-    },
-  })
+  // Related Songs are now derived by weighted tag-overlap across all
+  // 11 ontology layers — see `<RelatedSongs />` below. The component
+  // is a server-rendered island that runs its own narrowed `find`,
+  // so we no longer need to compute the candidate list here.
 
   const linkedBySongRelation = await payload.find({
     collection: 'gated-content',
@@ -660,19 +645,7 @@ export default async function SongPage({ params }: Args) {
           </aside>
         </div>
 
-        {relatedSongs.docs.length > 0 && (
-          <aside className="mt-12">
-            <Separator className="mb-8" />
-            <h2 className="mb-8 font-heading text-2xl tracking-wider uppercase">
-              Convergent Signals
-            </h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-              {relatedSongs.docs.map((s) => (
-                <SongCard key={s.id} song={s} />
-              ))}
-            </div>
-          </aside>
-        )}
+        <RelatedSongs song={song} />
       </div>
     </article>
   )
