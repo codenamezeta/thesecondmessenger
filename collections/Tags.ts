@@ -1,5 +1,12 @@
 // collections/Tags.ts
 import { CollectionConfig } from 'payload'
+import {
+  HeadingFeature,
+  HorizontalRuleFeature,
+  InlineToolbarFeature,
+  FixedToolbarFeature,
+  lexicalEditor,
+} from '@payloadcms/richtext-lexical'
 import { formatSlug } from './utils/formatSlug'
 
 export const Tags: CollectionConfig = {
@@ -49,6 +56,34 @@ export const Tags: CollectionConfig = {
       },
       hooks: {
         beforeValidate: [formatSlug('name')],
+      },
+    },
+    {
+      name: 'description',
+      type: 'richText',
+      label: 'Editorial intro',
+      admin: {
+        description:
+          'Optional. Renders above the song grid on /music/tag/<category>/<slug> landing pages. Use to give context for the tag (e.g. why a sub-genre matters, when a particular activity-tag is appropriate). Leave empty for tags that don\u2019t need editorial framing.',
+      },
+      editor: lexicalEditor({
+        features: ({ rootFeatures }) => [
+          ...rootFeatures,
+          HeadingFeature({ enabledHeadingSizes: ['h2', 'h3', 'h4'] }),
+          FixedToolbarFeature(),
+          InlineToolbarFeature(),
+          HorizontalRuleFeature(),
+        ],
+      }),
+    },
+    {
+      name: 'featuredImage',
+      type: 'upload',
+      relationTo: 'media',
+      label: 'Hero image',
+      admin: {
+        description:
+          'Optional. Hero image for the /music/tag landing page. If omitted, the page falls back to a stylized header without imagery.',
       },
     },
   ],
