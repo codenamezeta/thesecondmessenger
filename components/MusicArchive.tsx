@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/utilities/ui'
 import type { Song, Media } from '@/payload-types'
+import { songMatchesQuery } from '@/lib/songs/searchableTokens'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -53,40 +54,13 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
   const filteredSongs = useMemo(() => {
     let data = [...initialSongs]
 
-    // 1. Filter by Search (Deep Search)
+    // 1. Filter by Search — single .includes() over the song's full
+    // searchable token string (title, tagline, lyrics, identifiers,
+    // composition/recording type, all 11 tag layers, credit names).
+    // See `lib/songs/searchableTokens.ts`.
     if (search.trim()) {
-      const q = search.toLowerCase()
-      data = data.filter((s) => {
-        // Basic Fields
-        if (s.title.toLowerCase().includes(q)) return true
-        if (s.tagline && s.tagline.toLowerCase().includes(q)) return true
-
-        // Extended Fields
-        if (s.lyrics && s.lyrics.toLowerCase().includes(q)) return true
-        if (
-          s.moods &&
-          s.moods.some(
-            (m) => typeof m !== 'number' && m.name.toLowerCase().includes(q),
-          )
-        )
-          return true
-        if (
-          s.genres &&
-          s.genres.some(
-            (g) => typeof g !== 'number' && g.name.toLowerCase().includes(q),
-          )
-        )
-          return true
-
-        // Credits (Array of objects)
-        if (
-          s.credits &&
-          s.credits.some((c) => c.name.toLowerCase().includes(q))
-        )
-          return true
-
-        return false
-      })
+      const q = search.toLowerCase().trim()
+      data = data.filter((s) => songMatchesQuery(s, q))
     }
 
     // 2. Filter by Composition Type
@@ -292,7 +266,8 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
           {/* Search */}
           <div className="relative w-full min-w-64 flex-auto lg:max-w-1/2">
             <Label htmlFor="music-archive-search" className="sr-only">
-              Search songs by title, lyrics, credits, moods, or genres
+              Search songs by title, lyrics, credits, or any tag (mood,
+              activity, instrument, gear, influence, etc.)
             </Label>
             <Search
               size={16}
@@ -302,7 +277,7 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
             <Input
               id="music-archive-search"
               type="search"
-              placeholder="Search by title, lyrics, credits..."
+              placeholder="Search by title, mood, activity, instrument..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               autoComplete="off"
