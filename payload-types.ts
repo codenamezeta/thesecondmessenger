@@ -576,13 +576,49 @@ export interface Song {
    * Used for sorting "Popular" lists. 1000 = Biggest Hit.
    */
   popularity?: number | null;
+  /**
+   * Broad, record-store-aisle category. Captures wide-net discovery searches like "rock" or "electronic". The first entry is the primary genre written to ID3 TCON; the rest land in GROUPING.
+   */
   genres?: (number | Tag)[] | null;
-  styles?: (number | Tag)[] | null;
-  moods?: (number | Tag)[] | null;
+  /**
+   * The specific cultural movement or stylistic flavor (Pop-punk, Synthwave, Shoegaze). Captures niche-community searches that operate independently of the broad genre.
+   */
+  subGenres?: (number | Tag)[] | null;
+  /**
+   * The use-case or environment where the song is consumed (Workout, Late-night Drive, Vlog Background). High-value for "music for X" long-tail SEO.
+   */
+  activities?: (number | Tag)[] | null;
+  /**
+   * What the song is about — the lyrical subject or narrative (Love, Heartbreak, Revenge). Powers conversational "songs about X" queries.
+   */
   themes?: (number | Tag)[] | null;
-  instruments?: (number | Tag)[] | null;
+  /**
+   * The psychological vibe the song creates for the listener (Energetic, Melancholy, Anthemic). Used for vibe curation and emotional regulation searches.
+   */
+  moods?: (number | Tag)[] | null;
+  /**
+   * Audio fidelity and mixing characteristics (Lo-fi, Wall of Sound, Distorted, Warm). Audiophile / texture queries — keep separate from instruments and gear.
+   */
   production?: (number | Tag)[] | null;
+  /**
+   * General musical voices in the arrangement (Electric Guitar, Synthesizer, Male Vocals). Use generic categories — specific models go in Gear.
+   */
+  instruments?: (number | Tag)[] | null;
+  /**
+   * Specific hardware, software, DAWs, or instrument models (Fender Stratocaster, Studio One, Boss Katana). Engineer / producer reference-track searches.
+   */
+  gear?: (number | Tag)[] | null;
+  /**
+   * Compositional anatomy and structure (Guitar Solo, Instrumental, Odd Time Signature, Vocal Harmonies). For analytical / musician searches.
+   */
   arrangements?: (number | Tag)[] | null;
+  /**
+   * Direct "sounds like" comparisons to other artists, bands, or eras (Blink-182, Early 2000s Era). Powers similar-artist queries; do NOT duplicate as Genres or Sub-genres.
+   */
+  influences?: (number | Tag)[] | null;
+  /**
+   * Internal organization and routing tags (Demo, B-Side, Vault Exclusive, Explicit, Work In Progress). Not primary organic-search targets.
+   */
   otherTags?: (number | Tag)[] | null;
   credits?:
     | {
@@ -680,7 +716,18 @@ export interface Release {
 export interface Tag {
   id: number;
   name: string;
-  category: 'genre' | 'style' | 'mood' | 'production' | 'theme' | 'instrument' | 'arrangement' | 'other';
+  category:
+    | 'genre'
+    | 'subgenre'
+    | 'activity'
+    | 'theme'
+    | 'mood'
+    | 'production'
+    | 'instrument'
+    | 'gear'
+    | 'arrangement'
+    | 'influence'
+    | 'other';
   slug?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1450,12 +1497,15 @@ export interface SongsSelect<T extends boolean = true> {
   termsOfUseCustom?: T;
   popularity?: T;
   genres?: T;
-  styles?: T;
-  moods?: T;
+  subGenres?: T;
+  activities?: T;
   themes?: T;
-  instruments?: T;
+  moods?: T;
   production?: T;
+  instruments?: T;
+  gear?: T;
   arrangements?: T;
+  influences?: T;
   otherTags?: T;
   credits?:
     | T

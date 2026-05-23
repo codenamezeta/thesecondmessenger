@@ -23,12 +23,15 @@ import { queueAudioTagSync } from '@/lib/audio-tags/queueAudioTagSync'
 /** hasMany → `tags` relationships on Song; duplicate IDs can appear as duplicate `_rels` rows. */
 const SONG_TAG_RELATIONSHIP_KEYS = [
   'genres',
-  'styles',
-  'moods',
+  'subGenres',
+  'activities',
   'themes',
-  'instruments',
+  'moods',
   'production',
+  'instruments',
+  'gear',
   'arrangements',
+  'influences',
   'otherTags',
 ] as const
 
@@ -784,9 +787,10 @@ export const Songs: CollectionConfig = {
               label: 'Tags',
               admin: {
                 description:
-                  'Define the DNA of the song for search and filtering.',
+                  'The 11-layer Sonic Tag Ontology. Each row is a distinct semantic surface for search engines, AI chatbots, and the front-end. See `.cursor/rules/sonic-tag-ontology.mdc` for full definitions.',
               },
               fields: [
+                // --- Row 1: Genre + Sub-genre (the broad foundation + cultural movement) ---
                 {
                   type: 'row',
                   fields: [
@@ -797,17 +801,56 @@ export const Songs: CollectionConfig = {
                       relationTo: 'tags',
                       hasMany: true,
                       filterOptions: { category: { equals: 'genre' } },
+                      admin: {
+                        description:
+                          'Broad, record-store-aisle category. Captures wide-net discovery searches like "rock" or "electronic". The first entry is the primary genre written to ID3 TCON; the rest land in GROUPING.',
+                      },
                     },
                     {
-                      name: 'styles',
+                      name: 'subGenres',
                       type: 'relationship',
-                      label: 'Styles',
+                      label: 'Sub-genres',
                       relationTo: 'tags',
                       hasMany: true,
-                      filterOptions: { category: { equals: 'style' } },
+                      filterOptions: { category: { equals: 'subgenre' } },
+                      admin: {
+                        description:
+                          'The specific cultural movement or stylistic flavor (Pop-punk, Synthwave, Shoegaze). Captures niche-community searches that operate independently of the broad genre.',
+                      },
                     },
                   ],
                 },
+                // --- Row 2: Activities + Themes (functional utility + lyrical subject) ---
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'activities',
+                      type: 'relationship',
+                      label: 'Activities / Actions',
+                      relationTo: 'tags',
+                      hasMany: true,
+                      filterOptions: { category: { equals: 'activity' } },
+                      admin: {
+                        description:
+                          'The use-case or environment where the song is consumed (Workout, Late-night Drive, Vlog Background). High-value for "music for X" long-tail SEO.',
+                      },
+                    },
+                    {
+                      name: 'themes',
+                      type: 'relationship',
+                      label: 'Themes',
+                      relationTo: 'tags',
+                      hasMany: true,
+                      filterOptions: { category: { equals: 'theme' } },
+                      admin: {
+                        description:
+                          'What the song is about — the lyrical subject or narrative (Love, Heartbreak, Revenge). Powers conversational "songs about X" queries.',
+                      },
+                    },
+                  ],
+                },
+                // --- Row 3: Moods + Production (emotional resonance + sonic texture) ---
                 {
                   type: 'row',
                   fields: [
@@ -818,17 +861,26 @@ export const Songs: CollectionConfig = {
                       relationTo: 'tags',
                       hasMany: true,
                       filterOptions: { category: { equals: 'mood' } },
+                      admin: {
+                        description:
+                          'The psychological vibe the song creates for the listener (Energetic, Melancholy, Anthemic). Used for vibe curation and emotional regulation searches.',
+                      },
                     },
                     {
-                      name: 'themes',
+                      name: 'production',
                       type: 'relationship',
-                      label: 'Themes',
+                      label: 'Production',
                       relationTo: 'tags',
                       hasMany: true,
-                      filterOptions: { category: { equals: 'theme' } },
+                      filterOptions: { category: { equals: 'production' } },
+                      admin: {
+                        description:
+                          'Audio fidelity and mixing characteristics (Lo-fi, Wall of Sound, Distorted, Warm). Audiophile / texture queries — keep separate from instruments and gear.',
+                      },
                     },
                   ],
                 },
+                // --- Row 4: Instruments + Gear (orchestration + technical specs) ---
                 {
                   type: 'row',
                   fields: [
@@ -839,18 +891,26 @@ export const Songs: CollectionConfig = {
                       relationTo: 'tags',
                       hasMany: true,
                       filterOptions: { category: { equals: 'instrument' } },
+                      admin: {
+                        description:
+                          'General musical voices in the arrangement (Electric Guitar, Synthesizer, Male Vocals). Use generic categories — specific models go in Gear.',
+                      },
                     },
                     {
-                      name: 'production',
+                      name: 'gear',
                       type: 'relationship',
-                      label: 'Production',
+                      label: 'Gear',
                       relationTo: 'tags',
                       hasMany: true,
-                      filterOptions: { category: { equals: 'production' } },
+                      filterOptions: { category: { equals: 'gear' } },
+                      admin: {
+                        description:
+                          'Specific hardware, software, DAWs, or instrument models (Fender Stratocaster, Studio One, Boss Katana). Engineer / producer reference-track searches.',
+                      },
                     },
                   ],
                 },
-                // Extras
+                // --- Row 5: Arrangement + Influences (composition + "sounds like") ---
                 {
                   type: 'row',
                   fields: [
@@ -861,7 +921,29 @@ export const Songs: CollectionConfig = {
                       relationTo: 'tags',
                       hasMany: true,
                       filterOptions: { category: { equals: 'arrangement' } },
+                      admin: {
+                        description:
+                          'Compositional anatomy and structure (Guitar Solo, Instrumental, Odd Time Signature, Vocal Harmonies). For analytical / musician searches.',
+                      },
                     },
+                    {
+                      name: 'influences',
+                      type: 'relationship',
+                      label: 'Influences',
+                      relationTo: 'tags',
+                      hasMany: true,
+                      filterOptions: { category: { equals: 'influence' } },
+                      admin: {
+                        description:
+                          'Direct "sounds like" comparisons to other artists, bands, or eras (Blink-182, Early 2000s Era). Powers similar-artist queries; do NOT duplicate as Genres or Sub-genres.',
+                      },
+                    },
+                  ],
+                },
+                // --- Row 6: Other (CMS catch-all) ---
+                {
+                  type: 'row',
+                  fields: [
                     {
                       name: 'otherTags',
                       type: 'relationship',
@@ -869,6 +951,10 @@ export const Songs: CollectionConfig = {
                       relationTo: 'tags',
                       hasMany: true,
                       filterOptions: { category: { equals: 'other' } },
+                      admin: {
+                        description:
+                          'Internal organization and routing tags (Demo, B-Side, Vault Exclusive, Explicit, Work In Progress). Not primary organic-search targets.',
+                      },
                     },
                   ],
                 },

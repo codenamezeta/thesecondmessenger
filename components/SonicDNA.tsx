@@ -1,25 +1,42 @@
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge' // Assuming you have Shadcn Badge
-import { Fingerprint, Zap, Globe, Cpu, Mic2 } from 'lucide-react'
+import { Fingerprint, Zap, Globe, Cpu, Mic2, Activity, Star } from 'lucide-react'
 import type { Song, Tag } from '@/payload-types'
 
-// Helper to check if tag is populated
 const isTag = (tag: unknown): tag is Tag =>
   typeof tag === 'object' && tag !== null && 'name' in tag
 
 export const SonicDNA = ({ song }: { song: Song }) => {
   const groups = [
-    { label: 'Vibe', icon: <Zap size={14} />, data: song.moods },
-    { label: 'Narrative', icon: <Globe size={14} />, data: song.themes },
-    {
-      label: 'Tech Specs',
-      icon: <Cpu size={14} />,
-      data: [...(song.instruments || []), ...(song.production || [])],
-    },
     {
       label: 'Classification',
       icon: <Mic2 size={14} />,
-      data: [...(song.genres || []), ...(song.styles || [])],
+      data: [...(song.genres || []), ...(song.subGenres || [])],
+    },
+    {
+      label: 'Vibe',
+      icon: <Zap size={14} />,
+      data: song.moods,
+    },
+    {
+      label: 'Narrative',
+      icon: <Globe size={14} />,
+      data: song.themes,
+    },
+    {
+      label: 'Use Case',
+      icon: <Activity size={14} />,
+      data: song.activities,
+    },
+    {
+      label: 'Tech Specs',
+      icon: <Cpu size={14} />,
+      data: [...(song.instruments || []), ...(song.gear || []), ...(song.production || [])],
+    },
+    {
+      label: 'For Fans Of',
+      icon: <Star size={14} />,
+      data: song.influences,
     },
   ]
 

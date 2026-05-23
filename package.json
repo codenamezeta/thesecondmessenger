@@ -10,6 +10,12 @@
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
+    "payload": "payload",
+    "generate:types": "payload generate:types",
+    "migrate": "payload migrate",
+    "migrate:create": "payload migrate:create",
+    "migrate:status": "payload migrate:status",
+    "migrate:fresh": "payload migrate:fresh",
     "compress:images": "node scripts/compress-public-images.mjs",
     "compress:images:apply": "node scripts/compress-public-images.mjs --apply",
     "compress:images:in-place": "node scripts/compress-public-images.mjs --in-place"

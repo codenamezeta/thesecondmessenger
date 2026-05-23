@@ -270,35 +270,17 @@ function SongMetadataCard({ song }: { song: SongDoc }) {
   ].filter((row) => Boolean(row.value))
 
   const tagGroups = [
-    {
-      label: 'Genres',
-      tags: resolveTags(song.genres as TagLike[]).slice(0, 3),
-    },
-    {
-      label: 'Styles',
-      tags: resolveTags(song.styles as TagLike[]).slice(0, 3),
-    },
+    { label: 'Genres', tags: resolveTags(song.genres as TagLike[]).slice(0, 3) },
+    { label: 'Sub-genres', tags: resolveTags(song.subGenres as TagLike[]).slice(0, 3) },
+    { label: 'Activities', tags: resolveTags(song.activities as TagLike[]).slice(0, 3) },
+    { label: 'Themes', tags: resolveTags(song.themes as TagLike[]).slice(0, 3) },
     { label: 'Moods', tags: resolveTags(song.moods as TagLike[]).slice(0, 3) },
-    {
-      label: 'Themes',
-      tags: resolveTags(song.themes as TagLike[]).slice(0, 3),
-    },
-    {
-      label: 'Instruments',
-      tags: resolveTags(song.instruments as TagLike[]).slice(0, 3),
-    },
-    {
-      label: 'Production',
-      tags: resolveTags(song.production as TagLike[]).slice(0, 3),
-    },
-    {
-      label: 'Arrangements',
-      tags: resolveTags(song.arrangements as TagLike[]).slice(0, 3),
-    },
-    {
-      label: 'Other',
-      tags: resolveTags(song.otherTags as TagLike[]).slice(0, 3),
-    },
+    { label: 'Production', tags: resolveTags(song.production as TagLike[]).slice(0, 3) },
+    { label: 'Instruments', tags: resolveTags(song.instruments as TagLike[]).slice(0, 3) },
+    { label: 'Gear', tags: resolveTags(song.gear as TagLike[]).slice(0, 3) },
+    { label: 'Arrangements', tags: resolveTags(song.arrangements as TagLike[]).slice(0, 3) },
+    { label: 'Influences', tags: resolveTags(song.influences as TagLike[]).slice(0, 3) },
+    { label: 'Other', tags: resolveTags(song.otherTags as TagLike[]).slice(0, 3) },
   ].filter((group) => group.tags.length > 0)
 
   if (detailRows.length === 0 && tagGroups.length === 0) return null
@@ -457,12 +439,15 @@ export async function generateMetadata({
     song.title,
     'The Second Messenger',
     ...resolveTags(song.genres),
-    ...resolveTags(song.moods),
+    ...resolveTags(song.subGenres),
+    ...resolveTags(song.activities),
     ...resolveTags(song.themes),
-    ...resolveTags(song.instruments),
-    ...resolveTags(song.styles),
+    ...resolveTags(song.moods),
     ...resolveTags(song.production),
-    ...resolveTags((song as SongDoc & { artists?: TagLike[] | null }).artists),
+    ...resolveTags(song.instruments),
+    ...resolveTags(song.gear),
+    ...resolveTags(song.arrangements),
+    ...resolveTags(song.influences),
   ].join(', ')
 
   const coverUrl = (song.coverArt as Media | null | undefined)?.url || undefined
