@@ -8,9 +8,7 @@ import {
   Disc,
   Activity,
   Clock,
-  Zap,
   Music2,
-  Globe,
   AlertCircle,
   Radio,
   Mic2,
@@ -18,6 +16,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/utilities/ui'
 import type { Song, Media, Tag } from '@/payload-types'
+import { pickCardChips } from '@/lib/songs/pickCardChips'
 import { usePlayer } from '@/context/PlayerContext'
 import { Button } from '@/components/ui/button'
 
@@ -158,27 +157,11 @@ export const SongCard = ({ song, className }: SongCardProps) => {
 
   const genre = song.genres?.[0] ? getTagName(song.genres[0]) : 'Unclassified'
 
-  const moodTags = song.moods
-    ?.slice(0, 3)
-    .map(getTagName)
-    .filter(Boolean) as string[]
-  const themeTags = song.themes
-    ?.slice(0, 3)
-    .map(getTagName)
-    .filter(Boolean) as string[]
-
-  const allFlavorTags = [
-    ...(moodTags || []).map((t) => ({
-      text: t,
-      icon: Zap,
-      color: 'text-accent',
-    })),
-    ...(themeTags || []).map((t) => ({
-      text: t,
-      icon: Globe,
-      color: 'text-special',
-    })),
-  ].slice(0, 6)
+  // Round-robin across sub-genre, mood, activity, instrument, influence,
+  // theme, and genre — one chip per layer before any layer doubles up,
+  // so every card surfaces its most distinguishing tags rather than
+  // bunching on moods + themes alone.
+  const allFlavorTags = pickCardChips(song, 6)
 
   const duration = song.duration
     ? `${Math.floor(song.duration / 60)}:${Math.round(song.duration % 60)
@@ -435,9 +418,9 @@ export const SongCard = ({ song, className }: SongCardProps) => {
 
           {allFlavorTags.length > 0 ? (
             <div className="flex flex-wrap gap-1.5 pt-0.5">
-              {allFlavorTags.map((tag, i) => (
+              {allFlavorTags.map((tag) => (
                 <div
-                  key={`${tag.text}-${i}`}
+                  key={`${tag.field}-${tag.tagId}`}
                   className="flex items-center gap-1 rounded-sm border border-border/60 bg-muted/20 px-1.5 py-0.5 font-mono text-[9px] tracking-wider text-muted-foreground uppercase transition-colors group-hover:border-primary/35"
                 >
                   <tag.icon className={cn('size-2.5', tag.color)} aria-hidden />
