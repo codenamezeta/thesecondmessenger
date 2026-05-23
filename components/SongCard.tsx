@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import {
   Play,
   Pause,
@@ -16,7 +17,8 @@ import {
 } from 'lucide-react'
 import { cn } from '@/utilities/ui'
 import type { Song, Media, Tag } from '@/payload-types'
-import { pickCardChips } from '@/lib/songs/pickCardChips'
+import { chipCategory, pickCardChips } from '@/lib/songs/pickCardChips'
+import { musicHrefForTag } from '@/lib/music/filterState'
 import { usePlayer } from '@/context/PlayerContext'
 import { Button } from '@/components/ui/button'
 
@@ -146,6 +148,7 @@ const CHART_ACCENT = [
 ] as const
 
 export const SongCard = ({ song, className }: SongCardProps) => {
+  const router = useRouter()
   const { playMedia, isPlaying, currentSong } = usePlayer()
 
   const coverUrl = (song.coverArt as Media)?.url
@@ -418,15 +421,41 @@ export const SongCard = ({ song, className }: SongCardProps) => {
 
           {allFlavorTags.length > 0 ? (
             <div className="flex flex-wrap gap-1.5 pt-0.5">
-              {allFlavorTags.map((tag) => (
-                <div
-                  key={`${tag.field}-${tag.tagId}`}
-                  className="flex items-center gap-1 rounded-sm border border-border/60 bg-muted/20 px-1.5 py-0.5 font-mono text-[9px] tracking-wider text-muted-foreground uppercase transition-colors group-hover:border-primary/35"
-                >
-                  <tag.icon className={cn('size-2.5', tag.color)} aria-hidden />
-                  {tag.text}
-                </div>
-              ))}
+              {allFlavorTags.map((tag) => {
+                const filterHref = tag.slug
+                  ? musicHrefForTag(chipCategory(tag), tag.slug)
+                  : null
+                const tagLabel = `${tag.field}: ${tag.text}`
+                return (
+                  <button
+                    key={`${tag.field}-${tag.tagId}`}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      if (filterHref) router.push(filterHref)
+                    }}
+                    aria-label={
+                      filterHref
+                        ? `Browse ${tagLabel} in /music`
+                        : tagLabel
+                    }
+                    disabled={!filterHref}
+                    className={cn(
+                      'flex items-center gap-1 rounded-sm border border-border/60 bg-muted/20 px-1.5 py-0.5 font-mono text-[9px] tracking-wider text-muted-foreground uppercase transition-colors',
+                      filterHref &&
+                        'cursor-pointer hover:border-primary/60 hover:bg-primary/15 hover:text-primary',
+                      'group-hover:border-primary/35',
+                    )}
+                  >
+                    <tag.icon
+                      className={cn('size-2.5', tag.color)}
+                      aria-hidden
+                    />
+                    {tag.text}
+                  </button>
+                )
+              })}
             </div>
           ) : null}
           <div className="flex-1" />
