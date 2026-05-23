@@ -29,6 +29,44 @@ type SongForSeo = Omit<Song, 'credits'> & {
   credits?: SongCredit[] | null
 }
 
+/**
+ * Layers other than `genres` (which feeds `MusicRecording.genre` directly)
+ * are surfaced through schema.org's `keywords` property. Each entry feeds
+ * a distinct search-intent bucket (see `.cursor/rules/sonic-tag-ontology.mdc`)
+ * so chatbots and crawlers can map a song to "music for running",
+ * "synthwave for fans of …", etc. without us re-tagging by hand.
+ *
+ * Order is preserved for readability when keywords are inspected by hand;
+ * deduplication is on by default since "Dark" can legitimately exist in
+ * both `mood` (vibe) and `production` (mix) and we don't want it twice.
+ */
+const KEYWORD_LAYERS: ReadonlyArray<keyof Song> = [
+  'subGenres',
+  'activities',
+  'themes',
+  'moods',
+  'production',
+  'instruments',
+  'gear',
+  'arrangements',
+  'influences',
+]
+
+function buildKeywords(song: SongForSeo): string[] {
+  const collected = new Set<string>()
+  const ordered: string[] = []
+  for (const layer of KEYWORD_LAYERS) {
+    const tags = tagNames(song[layer] as Song['genres'])
+    for (const name of tags) {
+      const key = name.toLowerCase()
+      if (collected.has(key)) continue
+      collected.add(key)
+      ordered.push(name)
+    }
+  }
+  return ordered
+}
+
 type Person = {
   '@type': 'Person'
   name: string
@@ -150,6 +188,7 @@ export function songToStructuredData({
   const url = song.slug ? `${serverUrl}/music/${song.slug}` : undefined
 
   const allGenres = tagNames(song.genres)
+  const keywords = buildKeywords(song)
 
   const data: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -161,6 +200,7 @@ export function songToStructuredData({
     iswcCode: song.iswc ?? undefined,
     duration: isoDuration(song.duration),
     genre: allGenres.length > 0 ? allGenres : undefined,
+    keywords: keywords.length > 0 ? keywords : undefined,
     composer: composers.length > 0 ? composers : undefined,
     producer: producers.length > 0 ? producers : undefined,
     datePublished: song.releaseDate
