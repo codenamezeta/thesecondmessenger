@@ -2,15 +2,14 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import {
   Play,
   Pause,
   Disc,
   Activity,
   Clock,
-  Zap,
   Music2,
-  Globe,
   AlertCircle,
   Radio,
   Mic2,
@@ -18,6 +17,10 @@ import {
 } from 'lucide-react'
 import { cn } from '@/utilities/ui'
 import type { Song, Media, Tag } from '@/payload-types'
+import { chipCategory, pickCardChips } from '@/lib/songs/pickCardChips'
+import { songToCopyInput } from '@/lib/songs/songCopyInput'
+import { buildSongCardFlavor } from '@/lib/seo/songToCardFlavor'
+import { musicHrefForTag } from '@/lib/music/filterState'
 import { usePlayer } from '@/context/PlayerContext'
 import { Button } from '@/components/ui/button'
 
@@ -147,6 +150,7 @@ const CHART_ACCENT = [
 ] as const
 
 export const SongCard = ({ song, className }: SongCardProps) => {
+  const router = useRouter()
   const { playMedia, isPlaying, currentSong } = usePlayer()
 
   const coverUrl = (song.coverArt as Media)?.url
@@ -158,27 +162,17 @@ export const SongCard = ({ song, className }: SongCardProps) => {
 
   const genre = song.genres?.[0] ? getTagName(song.genres[0]) : 'Unclassified'
 
-  const moodTags = song.moods
-    ?.slice(0, 3)
-    .map(getTagName)
-    .filter(Boolean) as string[]
-  const themeTags = song.themes
-    ?.slice(0, 3)
-    .map(getTagName)
-    .filter(Boolean) as string[]
+  // Round-robin across sub-genre, mood, activity, instrument, influence,
+  // theme, and genre — one chip per layer before any layer doubles up,
+  // so every card surfaces its most distinguishing tags rather than
+  // bunching on moods + themes alone.
+  const allFlavorTags = pickCardChips(song, 6)
 
-  const allFlavorTags = [
-    ...(moodTags || []).map((t) => ({
-      text: t,
-      icon: Zap,
-      color: 'text-accent',
-    })),
-    ...(themeTags || []).map((t) => ({
-      text: t,
-      icon: Globe,
-      color: 'text-special',
-    })),
-  ].slice(0, 6)
+  // Trading-card flavor caption — tight grammatical sentence derived
+  // from the same 11-layer ontology, capped at ~90 chars. Renders in
+  // a Magic-card lore style below the tagline (when both present) or
+  // in the tagline's spot (when no human tagline is set).
+  const flavorText = buildSongCardFlavor(songToCopyInput(song))
 
   const duration = song.duration
     ? `${Math.floor(song.duration / 60)}:${Math.round(song.duration % 60)
@@ -398,6 +392,18 @@ export const SongCard = ({ song, className }: SongCardProps) => {
                 {song.tagline}
               </p>
             ) : null}
+
+            {flavorText ? (
+              <p
+                className={cn(
+                  'line-clamp-2 font-mono text-[10px] leading-snug tracking-wide text-muted-foreground/70 italic',
+                  song.tagline ? 'mt-1.5' : 'mt-0',
+                )}
+                aria-label="Auto-generated tag-derived flavor caption"
+              >
+                {flavorText}
+              </p>
+            ) : null}
           </div>
 
           <div className="mt-auto grid grid-cols-3 gap-px overflow-hidden rounded-sm border border-border/80 bg-border/40">
@@ -435,15 +441,41 @@ export const SongCard = ({ song, className }: SongCardProps) => {
 
           {allFlavorTags.length > 0 ? (
             <div className="flex flex-wrap gap-1.5 pt-0.5">
-              {allFlavorTags.map((tag, i) => (
-                <div
-                  key={`${tag.text}-${i}`}
-                  className="flex items-center gap-1 rounded-sm border border-border/60 bg-muted/20 px-1.5 py-0.5 font-mono text-[9px] tracking-wider text-muted-foreground uppercase transition-colors group-hover:border-primary/35"
-                >
-                  <tag.icon className={cn('size-2.5', tag.color)} aria-hidden />
-                  {tag.text}
-                </div>
-              ))}
+              {allFlavorTags.map((tag) => {
+                const filterHref = tag.slug
+                  ? musicHrefForTag(chipCategory(tag), tag.slug)
+                  : null
+                const tagLabel = `${tag.field}: ${tag.text}`
+                return (
+                  <button
+                    key={`${tag.field}-${tag.tagId}`}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      if (filterHref) router.push(filterHref)
+                    }}
+                    aria-label={
+                      filterHref
+                        ? `Browse ${tagLabel} in /music`
+                        : tagLabel
+                    }
+                    disabled={!filterHref}
+                    className={cn(
+                      'flex items-center gap-1 rounded-sm border border-border/60 bg-muted/20 px-1.5 py-0.5 font-mono text-[9px] tracking-wider text-muted-foreground uppercase transition-colors',
+                      filterHref &&
+                        'cursor-pointer hover:border-primary/60 hover:bg-primary/15 hover:text-primary',
+                      'group-hover:border-primary/35',
+                    )}
+                  >
+                    <tag.icon
+                      className={cn('size-2.5', tag.color)}
+                      aria-hidden
+                    />
+                    {tag.text}
+                  </button>
+                )
+              })}
             </div>
           ) : null}
           <div className="flex-1" />

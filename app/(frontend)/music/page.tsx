@@ -2,11 +2,15 @@ import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import { Header } from '@/components/Header'
 import { MusicArchive } from '@/components/MusicArchive'
+import { parseSearchParams } from '@/lib/music/filterState'
 import { Metadata } from 'next'
 
-// ISR — re-generate the song list at most every 10 minutes. Songs change
-// infrequently and Releases hooks already revalidate via their own paths,
-// so this gives us static-fast page loads with a sane staleness window.
+// Reading `searchParams` opts the page into dynamic rendering per
+// request (Next 15 behavior). Filtering is purely client-side from
+// `initialFilters`, so URL changes stay snappy without re-fetching.
+// If catalog growth ever makes the per-request `payload.find` a
+// bottleneck, wrap it in `unstable_cache` keyed on the song list
+// rather than the URL — the song fetch is independent of filters.
 export const revalidate = 600
 
 export const metadata: Metadata = {
@@ -28,8 +32,15 @@ export const metadata: Metadata = {
   },
 }
 
-export default async function MusicPage() {
+interface MusicPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+export default async function MusicPage({ searchParams }: MusicPageProps) {
   const payload = await getPayload({ config: configPromise })
+
+  const resolvedSearchParams = await searchParams
+  const initialFilters = parseSearchParams(resolvedSearchParams)
 
   // Fetch ALL songs (we will handle sorting/filtering on the client for instant feedback)
   const songs = await payload.find({
@@ -58,7 +69,10 @@ export default async function MusicPage() {
       />
 
       <main className="container">
-        <MusicArchive initialSongs={songs.docs} />
+        <MusicArchive
+          initialSongs={songs.docs}
+          initialFilters={initialFilters}
+        />
       </main>
     </article>
   )

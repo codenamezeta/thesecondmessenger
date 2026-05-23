@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -14,6 +14,17 @@ import {
 } from 'lucide-react'
 import { cn } from '@/utilities/ui'
 import type { Song, Media } from '@/payload-types'
+import { applyFilterState } from '@/lib/music/applyFilters'
+import { computeFacetGroups } from '@/lib/music/facetCounts'
+import {
+  DEFAULT_FILTER_STATE,
+  type FilterState,
+  removeTagFilter,
+  toggleTagFilter,
+  clearTagFilters,
+} from '@/lib/music/filterState'
+import { useMusicFilterState } from '@/lib/music/useMusicFilterState'
+import type { SongTagField } from '@/lib/songs/tagFields'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,135 +36,56 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { SongCard } from './SongCard'
+import { MusicFilterDrawer } from './music/MusicFilterDrawer'
+import { ActiveFilterChips } from './music/ActiveFilterChips'
 
-type ViewMode = 'grid' | 'list' | 'timeline'
-type SortMode = 'newest' | 'oldest' | 'az' | 'za' | 'shortest' | 'longest'
-
-type FilterState = {
-  composition: 'all' | 'Original' | 'Cover' | 'Public Domain'
-  recording: 'all' | 'Studio' | 'Live' | 'Demo'
-  explicit: 'show' | 'hide'
-}
+type CompositionFilter = FilterState['composition']
+type RecordingFilter = FilterState['recording']
+type SortMode = FilterState['sort']
 
 interface MusicArchiveProps {
   initialSongs: Song[]
+  initialFilters?: FilterState
 }
 
-export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
-  const [view, setView] = useState<ViewMode>('grid')
-  const [sort, setSort] = useState<SortMode>('newest')
-  const [search, setSearch] = useState('')
-  const [filters, setFilters] = useState<FilterState>({
-    composition: 'all',
-    recording: 'all',
-    explicit: 'show',
-  })
+export const MusicArchive = ({
+  initialSongs,
+  initialFilters,
+}: MusicArchiveProps) => {
+  const [state, setState] = useMusicFilterState(
+    initialFilters ?? DEFAULT_FILTER_STATE,
+  )
 
-  // --- FILTER & SORT LOGIC ---
-  const filteredSongs = useMemo(() => {
-    let data = [...initialSongs]
+  const filteredSongs = useMemo(
+    () => applyFilterState(initialSongs, state),
+    [initialSongs, state],
+  )
 
-    // 1. Filter by Search (Deep Search)
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      data = data.filter((s) => {
-        // Basic Fields
-        if (s.title.toLowerCase().includes(q)) return true
-        if (s.tagline && s.tagline.toLowerCase().includes(q)) return true
+  const facetGroups = useMemo(
+    () => computeFacetGroups(initialSongs, state),
+    [initialSongs, state],
+  )
 
-        // Extended Fields
-        if (s.lyrics && s.lyrics.toLowerCase().includes(q)) return true
-        if (
-          s.moods &&
-          s.moods.some(
-            (m) => typeof m !== 'number' && m.name.toLowerCase().includes(q),
-          )
-        )
-          return true
-        if (
-          s.genres &&
-          s.genres.some(
-            (g) => typeof g !== 'number' && g.name.toLowerCase().includes(q),
-          )
-        )
-          return true
+  const handleToggleTag = (field: SongTagField, slug: string) =>
+    setState((prev) => toggleTagFilter(prev, field, slug))
 
-        // Credits (Array of objects)
-        if (
-          s.credits &&
-          s.credits.some((c) => c.name.toLowerCase().includes(q))
-        )
-          return true
+  const handleRemoveTag = (field: SongTagField, slug: string) =>
+    setState((prev) => removeTagFilter(prev, field, slug))
 
-        return false
-      })
-    }
+  const handleClearLayer = (field: SongTagField) =>
+    setState((prev) => ({
+      ...prev,
+      tags: { ...prev.tags, [field]: [] },
+    }))
 
-    // 2. Filter by Composition Type
-    if (filters.composition !== 'all') {
-      data = data.filter((s) => {
-        // Accessing nested field safely?
-        // Payload types might be tricky if not fully generated or if `classification` is in a tab.
-        // Based on Songs.ts, `compositionType` is inside a collapsible "Classification".
-        // Usually, top-level tabs flatten fields, but collapsibles might not unless name='classification' is set on the collapsible itself.
-        // Looking at Songs.ts: The collapsible has NO name, so fields are at ROOT level of the doc.
-        // Wait, let's verify Songs.ts structure.
-        // Tab 2 -> Collapsible "Classification" -> Row -> compositionType
-        // Collapsible has NO name. Row has NO name.
-        // So `compositionType` is a direct property of `s`.
-        return s.compositionType === filters.composition
-      })
-    }
-
-    // 3. Filter by Recording Type
-    if (filters.recording !== 'all') {
-      data = data.filter((s) => s.recordingType === filters.recording)
-    }
-
-    // 4. Filter by Explicit
-    if (filters.explicit === 'hide') {
-      data = data.filter((s) => !s.isExplicit)
-    }
-
-    // 5. Sort
-    data.sort((a, b) => {
-      // Helper for duration
-      const getDuration = (song: Song) => song.duration ?? 0
-
-      switch (sort) {
-        case 'az':
-          return a.title.localeCompare(b.title)
-        case 'za':
-          return b.title.localeCompare(a.title)
-        case 'shortest':
-          return getDuration(a) - getDuration(b)
-        case 'longest':
-          return getDuration(b) - getDuration(a)
-        case 'oldest': {
-          const dateA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0
-          const dateB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0
-          return dateA - dateB
-        }
-        case 'newest':
-        default: {
-          const dateA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0
-          const dateB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0
-          return dateB - dateA
-        }
-      }
-    })
-
-    return data
-  }, [initialSongs, search, sort, filters])
+  const handleClearAll = () => setState((prev) => clearTagFilters(prev))
 
   //- 1. GRID CARD
-  const GridItem = ({ song }: { song: Song }) => {
-    return (
-      <li className="h-full">
-        <SongCard song={song} />
-      </li>
-    )
-  }
+  const GridItem = ({ song }: { song: Song }) => (
+    <li className="h-full">
+      <SongCard song={song} />
+    </li>
+  )
 
   //- 2. LIST ROW
   const ListItem = ({ song }: { song: Song }) => (
@@ -208,17 +140,13 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
     const isLeft = index % 2 === 0
     return (
       <li className="relative my-0 py-6 pl-8 md:pl-0">
-        {/* Center Line (Desktop) */}
         <div className="absolute top-0 bottom-0 left-[0.38rem] -ml-px w-[2px] bg-foreground/50 md:left-1/2 md:block"></div>
-
-        {/* Node Dot */}
         <div
           className={cn(
             'absolute left-0 h-3 w-3 translate-y-6 rounded-full border-2 border-accent bg-background md:left-1/2',
             'md:ml-[-6px]',
           )}
         ></div>
-
         <div
           className={cn(
             'relative transform transition-all duration-500 hover:-translate-y-1 md:w-1/2',
@@ -231,7 +159,6 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
             href={`/music/${song.slug}`}
             className="group inline-block max-w-lg rounded p-4 hover:border"
           >
-            {/* Artwork Thumbnail */}
             {song.coverArt && (
               <div
                 className={cn(
@@ -248,7 +175,6 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
                 />
               </div>
             )}
-
             <span className="mb-2 block font-mono text-lg font-bold tracking-widest text-primary uppercase">
               {song.releaseDate
                 ? new Date(song.releaseDate).toLocaleDateString(undefined, {
@@ -258,7 +184,6 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
                   })
                 : 'Date Unknown'}
             </span>
-
             <h3 className="font-heading text-3xl leading-[0.9] font-bold tracking-widest text-foreground uppercase transition-colors group-hover:text-accent">
               {song.title}
             </h3>
@@ -267,7 +192,6 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
                 Explicit
               </span>
             )}
-
             <p
               className={cn(
                 'mt-3 font-mono text-sm leading-relaxed text-pretty text-muted-foreground',
@@ -282,17 +206,16 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
     )
   }
 
-  // --- RENDER ---
   return (
-    <section className="space-y-0">
+    <section className="space-y-4">
       {/* CONTROLS TOOLBAR */}
       <div className="space-y-4 rounded-lg border border-border bg-linear-to-b from-secondary to-background p-4">
-        {/* Top Row: Search & View Toggles */}
+        {/* Top Row: Search, Filter Trigger, Existing Type Filters */}
         <div className="flex flex-col items-center justify-between gap-4 sm:items-end lg:flex-row lg:items-center">
-          {/* Search */}
           <div className="relative w-full min-w-64 flex-auto lg:max-w-1/2">
             <Label htmlFor="music-archive-search" className="sr-only">
-              Search songs by title, lyrics, credits, moods, or genres
+              Search songs by title, lyrics, credits, or any tag (mood,
+              activity, instrument, gear, influence, etc.)
             </Label>
             <Search
               size={16}
@@ -302,14 +225,15 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
             <Input
               id="music-archive-search"
               type="search"
-              placeholder="Search by title, lyrics, credits..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by title, mood, activity, instrument..."
+              value={state.q}
+              onChange={(e) =>
+                setState((prev) => ({ ...prev, q: e.target.value }))
+              }
               autoComplete="off"
               className="pl-9"
             />
           </div>
-          {/* Filters */}
           <div className="flex flex-col items-center gap-1 sm:flex-row">
             <span
               className="hidden font-mono text-xs text-muted-foreground uppercase sm:block"
@@ -318,17 +242,26 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
               Filter:
             </span>
 
+            {/* Faceted tag drawer */}
+            <MusicFilterDrawer
+              state={state}
+              groups={facetGroups}
+              onToggleTag={handleToggleTag}
+              onClearLayer={handleClearLayer}
+              onClearAll={handleClearAll}
+            />
+
             {/* Composition Type */}
             <div className="flex gap-1">
               <Label htmlFor="music-archive-composition" className="sr-only">
                 Composition type
               </Label>
               <Select
-                value={filters.composition}
+                value={state.composition}
                 onValueChange={(value) =>
-                  setFilters((prev) => ({
+                  setState((prev) => ({
                     ...prev,
-                    composition: value as FilterState['composition'],
+                    composition: value as CompositionFilter,
                   }))
                 }
               >
@@ -353,11 +286,11 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
                 Recording type
               </Label>
               <Select
-                value={filters.recording}
+                value={state.recording}
                 onValueChange={(value) =>
-                  setFilters((prev) => ({
+                  setState((prev) => ({
                     ...prev,
-                    recording: value as FilterState['recording'],
+                    recording: value as RecordingFilter,
                   }))
                 }
               >
@@ -384,32 +317,31 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
               size="sm"
               className={cn(
                 'text-xs',
-                filters.explicit === 'hide' &&
+                state.explicit === 'hide' &&
                   'text-muted-foreground hover:border-destructive/50 hover:bg-destructive/10 hover:text-destructive',
-                filters.explicit === 'show' &&
+                state.explicit === 'show' &&
                   'text-muted-foreground hover:border-primary/50 hover:bg-primary/10 hover:text-primary',
               )}
-              aria-pressed={filters.explicit === 'show'}
+              aria-pressed={state.explicit === 'show'}
               aria-label={
-                filters.explicit === 'hide'
+                state.explicit === 'hide'
                   ? 'Show songs marked explicit in results'
                   : 'Hide songs marked explicit from results'
               }
               onClick={() =>
-                setFilters((prev) => ({
+                setState((prev) => ({
                   ...prev,
                   explicit: prev.explicit === 'show' ? 'hide' : 'show',
                 }))
               }
             >
-              {filters.explicit === 'hide' ? 'Show Explicit' : 'Hide Explicit'}
+              {state.explicit === 'hide' ? 'Show Explicit' : 'Hide Explicit'}
             </Button>
           </div>
         </div>
 
-        {/* Bottom Row: Filters & Sort */}
+        {/* Bottom Row: View toggle + Sort */}
         <div className="flex flex-col flex-wrap items-center gap-4 border-t border-border/30 pt-4 sm:flex-row">
-          {/* View Toggles */}
           <div
             className="flex items-center gap-1 rounded-lg border border-border/30 bg-input p-1"
             role="group"
@@ -417,34 +349,36 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
           >
             <Button
               type="button"
-              variant={view === 'timeline' ? 'default' : 'ghost'}
+              variant={state.view === 'timeline' ? 'default' : 'ghost'}
               size="icon-sm"
               className="min-h-11 min-w-11 shrink-0"
-              aria-pressed={view === 'timeline'}
+              aria-pressed={state.view === 'timeline'}
               aria-label="Timeline view"
-              onClick={() => setView('timeline')}
+              onClick={() =>
+                setState((prev) => ({ ...prev, view: 'timeline' }))
+              }
             >
               <CalendarArrowDown className="size-4" />
             </Button>
             <Button
               type="button"
-              variant={view === 'grid' ? 'default' : 'ghost'}
+              variant={state.view === 'grid' ? 'default' : 'ghost'}
               size="icon-sm"
               className="min-h-11 min-w-11 shrink-0"
-              aria-pressed={view === 'grid'}
+              aria-pressed={state.view === 'grid'}
               aria-label="Grid view"
-              onClick={() => setView('grid')}
+              onClick={() => setState((prev) => ({ ...prev, view: 'grid' }))}
             >
               <LayoutGrid className="size-4" />
             </Button>
             <Button
               type="button"
-              variant={view === 'list' ? 'default' : 'ghost'}
+              variant={state.view === 'list' ? 'default' : 'ghost'}
               size="icon-sm"
               className="min-h-11 min-w-11 shrink-0"
-              aria-pressed={view === 'list'}
+              aria-pressed={state.view === 'list'}
               aria-label="List view"
-              onClick={() => setView('list')}
+              onClick={() => setState((prev) => ({ ...prev, view: 'list' }))}
             >
               <List className="size-4" />
             </Button>
@@ -452,7 +386,6 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
 
           <div className="hidden flex-1 sm:block" />
 
-          {/* Sort Dropdown */}
           <div className="flex items-center gap-2">
             <ArrowUpDown
               size={14}
@@ -464,8 +397,10 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
                 Sort order
               </Label>
               <Select
-                value={sort}
-                onValueChange={(value) => setSort(value as SortMode)}
+                value={state.sort}
+                onValueChange={(value) =>
+                  setState((prev) => ({ ...prev, sort: value as SortMode }))
+                }
               >
                 <SelectTrigger
                   id="music-archive-sort"
@@ -488,22 +423,48 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
         </div>
       </div>
 
+      {/* ACTIVE FILTER CHIPS */}
+      <ActiveFilterChips
+        state={state}
+        songs={initialSongs}
+        onRemoveTag={handleRemoveTag}
+        onResetComposition={() =>
+          setState((prev) => ({ ...prev, composition: 'all' }))
+        }
+        onResetRecording={() =>
+          setState((prev) => ({ ...prev, recording: 'all' }))
+        }
+        onResetExplicit={() =>
+          setState((prev) => ({ ...prev, explicit: 'show' }))
+        }
+        onClearAll={handleClearAll}
+        onClearQuery={() => setState((prev) => ({ ...prev, q: '' }))}
+      />
+
       {/* CONTENT AREA */}
       <ol
         className={cn(
           'my-0 min-h-[400px] transition-all duration-500',
-          view === 'grid' &&
+          state.view === 'grid' &&
             'grid auto-rows-fr grid-cols-1 gap-6 pt-4 pb-12 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
-          view === 'list' && 'flex flex-col',
-          view === 'timeline' && 'relative',
+          state.view === 'list' && 'flex flex-col',
+          state.view === 'timeline' && 'relative',
         )}
       >
         {filteredSongs.length > 0 ? (
           filteredSongs.map((song, i) => {
-            if (view === 'grid') return <GridItem key={song.id} song={song} />
-            if (view === 'list') return <ListItem key={song.id} song={song} />
-            if (view === 'timeline')
-              return <TimelineItem key={song.id} song={song} index={i} />
+            switch (state.view) {
+              case 'grid':
+                return <GridItem key={song.id} song={song} />
+              case 'list':
+                return <ListItem key={song.id} song={song} />
+              case 'timeline':
+                return <TimelineItem key={song.id} song={song} index={i} />
+              default: {
+                const _exhaustive: never = state.view
+                return _exhaustive
+              }
+            }
           })
         ) : (
           <li className="col-span-full rounded-lg border border-dashed border-border py-20 text-center">
@@ -516,6 +477,17 @@ export const MusicArchive = ({ initialSongs }: MusicArchiveProps) => {
             <p className="mt-2 text-sm text-foreground/75">
               Adjust search parameters to retrieve logs.
             </p>
+            {!filteredSongs.length ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-4 text-xs"
+                onClick={handleClearAll}
+              >
+                Clear all filters
+              </Button>
+            ) : null}
           </li>
         )}
       </ol>

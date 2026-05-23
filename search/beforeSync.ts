@@ -1,4 +1,5 @@
 import { BeforeSync, DocToSync } from '@payloadcms/plugin-search/types'
+import { SONG_TAG_FIELDS } from '@/lib/songs/tagFields'
 
 // Helper to extract text from Lexical JSON
 const extractText = (node: unknown): string => {
@@ -20,6 +21,40 @@ const extractText = (node: unknown): string => {
   return ''
 }
 
+/**
+ * Collect every tag name across the 11 ontology layers on a song doc.
+ *
+ * The search plugin invokes `beforeSync` from an `afterChange` hook
+ * where the originalDoc is fully populated (depth ≥ 1 by default), so
+ * each relationship array contains resolved Tag objects with `name`.
+ * We defensively skip anything that doesn't look like one (older docs,
+ * unresolved IDs) instead of throwing.
+ *
+ * Net effect: a global search for "running" surfaces songs tagged with
+ * the Running activity, even when "running" never appears in the
+ * lyrics or about copy.
+ */
+const collectAllTagNames = (doc: unknown): string => {
+  if (!doc || typeof doc !== 'object') return ''
+  const record = doc as Record<string, unknown>
+  const names: string[] = []
+  for (const field of SONG_TAG_FIELDS) {
+    const value = record[field]
+    if (!Array.isArray(value)) continue
+    for (const entry of value) {
+      if (
+        entry &&
+        typeof entry === 'object' &&
+        'name' in entry &&
+        typeof (entry as { name: unknown }).name === 'string'
+      ) {
+        names.push((entry as { name: string }).name)
+      }
+    }
+  }
+  return names.join(' ')
+}
+
 export const beforeSyncWithSearch: BeforeSync = async ({ req, originalDoc, searchDoc }) => {
   const {
     doc: { relationTo: collection },
@@ -31,10 +66,14 @@ export const beforeSyncWithSearch: BeforeSync = async ({ req, originalDoc, searc
 
   try {
     if (collection === 'songs') {
-      // Index lyrics and about section
+      // Index lyrics, about section, and every tag-name across the
+      // 11-layer Sonic Tag Ontology so faceted long-tail queries
+      // ("running", "stratocaster", "blink-182") hit the global modal
+      // even when those words never appear in lyrics or prose.
       const lyrics = originalDoc.lyrics || ''
       const aboutText = extractText(originalDoc.about)
-      bodyContent = `${lyrics} ${aboutText}`
+      const tagText = collectAllTagNames(originalDoc)
+      bodyContent = `${lyrics} ${aboutText} ${tagText}`
     } else if (collection === 'posts') {
       // Index rich text content
       bodyContent = extractText(originalDoc.content)
