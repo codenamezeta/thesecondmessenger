@@ -64,13 +64,13 @@ export default async function MusicPage({ searchParams }: MusicPageProps) {
         <DotField
           dotRadius={1}
           dotSpacing={20}
-          bulgeStrength={20}
-          glowRadius={200}
+          // bulgeStrength={20}
+          glowRadius={0}
           waveAmplitude={1}
-          cursorRadius={100}
-          cursorForce={0.18}
-          gradientFrom="#55f7e6"
-          gradientTo="#cd5d1a"
+          // cursorRadius={0}
+          // cursorForce={0}
+          gradientFrom="color-mix(in srgb, var(--primary) 33%, transparent)"
+          gradientTo="color-mix(in srgb, var(--accent) 50%, transparent)"
           glowColor="#181e1e"
         />
       </div>

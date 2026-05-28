@@ -1,9 +1,12 @@
+// app/(frontend)/videos/page.tsx
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import { getChannelVideos } from '@/actions/youtube'
 import { Header } from '@/components/Header'
 import { VisualLog } from '@/components/VisualLog'
 import { Metadata } from 'next'
+
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Visual Logs | The Second Messenger',

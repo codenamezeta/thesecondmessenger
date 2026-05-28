@@ -5,6 +5,36 @@ import React, { useEffect, useRef, memo, HTMLAttributes } from 'react';
 
 const TWO_PI = Math.PI * 2;
 
+function resolveCssColor(color: string, element: HTMLElement): string {
+  if (typeof window === 'undefined') return color;
+  if (!color || !color.includes('var(')) return color;
+
+  let current = color.trim();
+  while (current.includes('var(')) {
+    const startIdx = current.lastIndexOf('var(');
+    const endIdx = current.indexOf(')', startIdx);
+    if (startIdx === -1 || endIdx === -1) break;
+
+    const expression = current.substring(startIdx, endIdx + 1);
+    const inner = current.substring(startIdx + 4, endIdx);
+    
+    const commaIdx = inner.indexOf(',');
+    let varName = inner;
+    let fallback = '';
+    if (commaIdx !== -1) {
+      varName = inner.substring(0, commaIdx).trim();
+      fallback = inner.substring(commaIdx + 1).trim();
+    } else {
+      varName = varName.trim();
+    }
+
+    const resolved = getComputedStyle(element).getPropertyValue(varName).trim();
+    const replacement = resolved || fallback;
+    current = current.replace(expression, replacement);
+  }
+  return current;
+}
+
 interface DotFieldProps extends HTMLAttributes<HTMLDivElement> {
   dotRadius?: number;
   dotSpacing?: number;
@@ -170,9 +200,12 @@ const DotField = memo(({
       if (!ctx || !p.gradientFrom || !p.gradientTo || !p.cursorRadius || !p.dotRadius) return;
       ctx.clearRect(0, 0, w, h);
 
+      const colorFrom = resolveCssColor(p.gradientFrom, canvas);
+      const colorTo = resolveCssColor(p.gradientTo, canvas);
+
       const grad = ctx.createLinearGradient(0, 0, w, h);
-      grad.addColorStop(0, p.gradientFrom);
-      grad.addColorStop(1, p.gradientTo);
+      grad.addColorStop(0, colorFrom);
+      grad.addColorStop(1, colorTo);
       ctx.fillStyle = grad;
 
       const cr = p.cursorRadius;

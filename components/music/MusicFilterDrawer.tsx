@@ -39,7 +39,7 @@ const TOP_LAYERS_TO_AUTO_OPEN = 3
  * Faceted filter drawer for `/music`. Renders one collapsible section
  * per ontology layer that has at least one tag in scope.
  *
- * Desktop and mobile both use a left-side `Sheet` for consistency —
+ * Desktop and mobile both use a right-side `Sheet` for consistency —
  * keeps the toolbar uncluttered on small screens and gives the layer
  * list room to breathe on large ones.
  *
@@ -110,7 +110,7 @@ export const MusicFilterDrawer = ({
       </SheetTrigger>
 
       <SheetContent
-        side="left"
+        side="right"
         className="flex w-full max-w-sm flex-col overflow-hidden border-border/60 bg-background/95 backdrop-blur-md sm:max-w-md"
       >
         <SheetHeader className="border-b border-border/40 px-6 py-5">
