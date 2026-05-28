@@ -28,7 +28,9 @@ export type YoutubeChannelVideo = {
 export async function getChannelVideos(
   maxResults = 20,
 ): Promise<YoutubeChannelVideo[]> {
-  const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
+  // Use the secret server key in production, fallback to public key in dev
+  const API_KEY =
+    process.env.YOUTUBE_API_KEY || process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
   const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID
 
   if (!API_KEY || !CHANNEL_ID) return []
@@ -39,11 +41,21 @@ export async function getChannelVideos(
     const res = await fetch(
       `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=${maxResults}&key=${API_KEY}`,
       {
+        headers: {
+          Referer: 'https://thesecondmessenger.com/',
+        },
         next: { revalidate: 3600 },
       },
     )
 
-    if (!res.ok) return []
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error(
+        `YouTube API fetch failed with status ${res.status}:`,
+        errorBody,
+      )
+      return []
+    }
 
     const data = await res.json()
 
