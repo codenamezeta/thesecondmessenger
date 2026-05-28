@@ -79,8 +79,8 @@ function composeCardFlavor(
 ): string | null {
   if (!c.classification) return null
 
-      let head = c.classification
-  if(head) {
+  let head = c.classification
+  if (head) {
     head = head.charAt(0).toUpperCase() + head.slice(1)
   }
   if (!dropped.has('activities') && c.activities) {
@@ -91,7 +91,7 @@ function composeCardFlavor(
 
   const sentences: string[] = [`${head}.`]
   if (!dropped.has('influences') && c.influences) {
-    sentences.push(`Sounds like ${c.influences}.`)
+    sentences.push(`For fans of ${c.influences}.`)
   }
 
   return sentences.join(' ').replace(/\s+/g, ' ').trim()

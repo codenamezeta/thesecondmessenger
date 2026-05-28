@@ -162,15 +162,15 @@ export const SongCard = ({ song, className }: SongCardProps) => {
 
   const subGenre = song.subGenres?.[0] ? getTagName(song.subGenres[0]) : 'Unclassified'
 
-  // Round-robin across sub-subGenre, mood, activity, instrument, influence,
-  // theme, and subGenre — one chip per layer before any layer doubles up,
+  // Round-robin across sub-genre, mood, activity, instrument, influence,
+  // theme, and genre — one chip per layer before any layer doubles up,
   // so every card surfaces its most distinguishing tags rather than
   // bunching on moods + themes alone.
   const allFlavorTags = pickCardChips(song, 6)
 
   // Trading-card flavor caption — tight grammatical sentence derived
   // from the same 11-layer ontology, capped at ~90 chars. Renders in
-  // a Magic-card lore style below the stats.
+  // a Magic-card lore style below the tag chips (when present).
   const flavorText = buildSongCardFlavor(songToCopyInput(song), { maxLength: 160 })
 
   const duration = song.duration
@@ -392,7 +392,6 @@ export const SongCard = ({ song, className }: SongCardProps) => {
               </p>
             ) : null}
 
-            
           </div>
 
           <div className="mt-auto grid grid-cols-3 gap-px overflow-hidden rounded-sm border border-border/80 bg-border/40">

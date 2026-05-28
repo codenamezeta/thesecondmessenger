@@ -207,7 +207,7 @@ export const MusicArchive = ({
   }
 
   return (
-    <main id="music-by-the-second-messenger" className="container space-y-4 py-4">
+    <section id="music-by-the-second-messenger" className="space-y-4 py-4">
       {/* CONTROLS TOOLBAR */}
       <div className="space-y-4 rounded-lg border border-border bg-linear-to-b from-secondary to-background p-4">
         {/* Top Row: Search, Filter Trigger, Existing Type Filters */}
@@ -241,6 +241,15 @@ export const MusicArchive = ({
             >
               Filters:
             </span> */}
+
+            {/* Faceted tag drawer */}
+            <MusicFilterDrawer
+              state={state}
+              groups={facetGroups}
+              onToggleTag={handleToggleTag}
+              onClearLayer={handleClearLayer}
+              onClearAll={handleClearAll}
+            />
 
             {/* Composition Type */}
             {/* <div className="flex gap-1">
@@ -491,6 +500,6 @@ export const MusicArchive = ({
           </li>
         )}
       </ol>
-    </main>
+    </section>
   )
 }

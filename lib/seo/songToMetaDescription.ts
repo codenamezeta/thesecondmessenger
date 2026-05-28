@@ -89,7 +89,10 @@ type Clauses = {
   influences: string
 }
 
-function composeDescription(c: Clauses, dropped: Set<DroppableClause>): string {
+function composeDescription(
+  c: Clauses,
+  dropped: Set<DroppableClause>,
+): string {
   let head = c.subject
   if (!dropped.has('instruments') && c.instruments) {
     head += ` featuring ${c.instruments}`

@@ -148,7 +148,7 @@ export default async function TagLandingPage({ params }: TagLandingParams) {
       <div className="container py-8">
         <Link
           href="/music"
-          className="my-0 inline-flex items-center gap-1 font-mono text-[11px] tracking-widest text-muted-foreground uppercase transition-colors hover:text-primary"
+          className="inline-flex items-center gap-1 font-mono text-[11px] tracking-widest text-muted-foreground uppercase transition-colors hover:text-primary"
         >
           <ChevronLeft className="size-3" aria-hidden />
           All music
@@ -157,7 +157,7 @@ export default async function TagLandingPage({ params }: TagLandingParams) {
 
       {heroUrl ? (
         <div
-          className="relative my-0 h-48 w-full overflow-hidden border-y border-border/40 py-0 md:h-64"
+          className="relative h-48 w-full overflow-hidden border-y border-border/40 md:h-64"
           aria-hidden
         >
           <Image
@@ -239,7 +239,6 @@ function buildTagCollectionJsonLd(args: {
         position: idx + 1,
         item: {
           '@type': 'MusicRecording',
-          name: song.title,
           url: song.slug ? `${ARTIST_HOMEPAGE}/music/${song.slug}` : undefined,
           byArtist: {
             '@type': 'MusicGroup',

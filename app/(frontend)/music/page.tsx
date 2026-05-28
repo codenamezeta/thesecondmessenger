@@ -84,8 +84,13 @@ export default async function MusicPage({ searchParams }: MusicPageProps) {
           label: 'Songs Released... so far',
         }}
       />
-      <MusicArchive initialSongs={songs.docs} initialFilters={initialFilters} />
-      <StreamingPlatformDirectory />
+      <main className="container">
+        <MusicArchive
+          initialSongs={songs.docs}
+          initialFilters={initialFilters}
+        />
+        <StreamingPlatformDirectory />
+      </main>
     </article>
   )
 }
