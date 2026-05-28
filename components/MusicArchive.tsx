@@ -39,8 +39,8 @@ import { SongCard } from './SongCard'
 import { MusicFilterDrawer } from './music/MusicFilterDrawer'
 import { ActiveFilterChips } from './music/ActiveFilterChips'
 
-type CompositionFilter = FilterState['composition']
-type RecordingFilter = FilterState['recording']
+// type CompositionFilter = FilterState['composition']
+// type RecordingFilter = FilterState['recording']
 type SortMode = FilterState['sort']
 
 interface MusicArchiveProps {
@@ -243,13 +243,13 @@ export const MusicArchive = ({
             </span> */}
 
             {/* Faceted tag drawer */}
-            <MusicFilterDrawer
+            {/* <MusicFilterDrawer
               state={state}
               groups={facetGroups}
               onToggleTag={handleToggleTag}
               onClearLayer={handleClearLayer}
               onClearAll={handleClearAll}
-            />
+            /> */}
 
             {/* Composition Type */}
             {/* <div className="flex gap-1">
