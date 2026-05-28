@@ -11,15 +11,30 @@ import './globals.css'
 import { Footer } from '@/components/Footer'
 import { frontendFontVariableClassName } from './frontend-fonts'
 
-const siteUrl =
-  (process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000').replace(
-    /\/$/,
-    '',
-  )
+const siteUrl = (
+  process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+).replace(/\/$/, '')
 
 /** Resolves relative Open Graph / Twitter image URLs across the app. */
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  icons: {
+    icon: [
+      { url: '/imgs/favicons/favicon.ico' },
+      {
+        url: '/imgs/favicons/favicon-16x16.png',
+        sizes: '16x16',
+        type: 'image/png',
+      },
+      {
+        url: '/imgs/favicons/favicon-32x32.png',
+        sizes: '32x32',
+        type: 'image/png',
+      },
+    ],
+    apple: '/imgs/favicons/apple-touch-icon.png',
+  },
+  manifest: '/imgs/favicons/site.webmanifest',
 }
 
 export default async function RootLayout(props: { children: React.ReactNode }) {

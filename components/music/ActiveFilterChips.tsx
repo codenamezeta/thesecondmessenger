@@ -8,10 +8,7 @@ import {
   SONG_TAG_FIELDS,
   type SongTagField,
 } from '@/lib/songs/tagFields'
-import {
-  activeTagFilterCount,
-  type FilterState,
-} from '@/lib/music/filterState'
+import { activeTagFilterCount, type FilterState } from '@/lib/music/filterState'
 import { findTagBySlug } from '@/lib/music/facetCounts'
 
 interface ActiveFilterChipsProps {

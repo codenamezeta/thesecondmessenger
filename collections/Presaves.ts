@@ -3,7 +3,11 @@ import { CollectionConfig } from 'payload'
 // --- THE HOOK LOGIC ---
 import { CollectionAfterChangeHook } from 'payload'
 
-const syncToMailingList: CollectionAfterChangeHook = async ({ doc, req, operation }) => {
+const syncToMailingList: CollectionAfterChangeHook = async ({
+  doc,
+  req,
+  operation,
+}) => {
   // Only run on create or update
   if (operation === 'create' || operation === 'update') {
     const { payload } = req

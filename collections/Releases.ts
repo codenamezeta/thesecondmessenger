@@ -115,7 +115,7 @@ export const Releases: CollectionConfig = {
       label: 'Tracklist',
       admin: {
         description:
-          'Drag and drop to reorder tracks. The order here drives the TRCK frame written to each track\'s audio file (track number out of total).',
+          "Drag and drop to reorder tracks. The order here drives the TRCK frame written to each track's audio file (track number out of total).",
       },
     },
     {

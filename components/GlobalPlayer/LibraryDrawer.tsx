@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Library } from 'lucide-react'
-import { usePlayer } from '@/context/PlayerContext'
+import { usePlayer, PlayableMedia } from '@/context/PlayerContext'
+import { Playlist } from '@/payload-types'
 import { cn } from '@/utilities/ui'
 import {
   Sheet,
@@ -24,7 +25,7 @@ const LibraryContent = () => {
     setActiveLibraryTab,
   } = usePlayer()
 
-  const [playlists, setPlaylists] = useState<any[]>([])
+  const [playlists, setPlaylists] = useState<Playlist[]>([])
 
   useEffect(() => {
     const fetchPlaylists = async () => {
@@ -128,37 +129,51 @@ const LibraryContent = () => {
           </ol>
         ) : (
           <ul className="space-y-2 p-2">
-            {playlists.map((playlist) => (
-              <li
-                key={playlist.id}
-                onClick={() => playPlaylist(playlist.tracks || [], 0)}
-                className="flex cursor-pointer items-center gap-3 rounded-md border border-border/20 bg-card/20 p-3 transition-all hover:border-border/50 hover:bg-card/50"
-              >
-                <div className="relative size-12 shrink-0 overflow-hidden rounded-md bg-primary/20">
-                  {playlist.coverImage?.url ? (
-                    <Image
-                      src={playlist.coverImage.url}
-                      alt={playlist.title}
-                      fill
-                      className="object-cover"
-                      sizes="48px"
-                    />
-                  ) : (
-                    <div className="flex size-full items-center justify-center bg-primary/20 text-primary">
-                      <Library size={20} />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="font-heading text-sm font-bold text-foreground">
-                    {playlist.title}
-                  </p>
-                  <p className="text-xs text-foreground/75">
-                    {playlist.tracks?.length || 0} Tracks
-                  </p>
-                </div>
-              </li>
-            ))}
+            {playlists.map((playlist) => {
+              const coverUrl =
+                playlist.coverArt &&
+                typeof playlist.coverArt === 'object' &&
+                'url' in playlist.coverArt
+                  ? playlist.coverArt.url
+                  : null
+
+              return (
+                <li
+                  key={playlist.id}
+                  onClick={() =>
+                    playPlaylist(
+                      (playlist.tracks || []) as unknown as PlayableMedia[],
+                      0,
+                    )
+                  }
+                  className="flex cursor-pointer items-center gap-3 rounded-md border border-border/20 bg-card/20 p-3 transition-all hover:border-border/50 hover:bg-card/50"
+                >
+                  <div className="relative size-12 shrink-0 overflow-hidden rounded-md bg-primary/20">
+                    {coverUrl ? (
+                      <Image
+                        src={coverUrl}
+                        alt={playlist.title}
+                        fill
+                        className="object-cover"
+                        sizes="48px"
+                      />
+                    ) : (
+                      <div className="flex size-full items-center justify-center bg-primary/20 text-primary">
+                        <Library size={20} />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-heading text-sm font-bold text-foreground">
+                      {playlist.title}
+                    </p>
+                    <p className="text-xs text-foreground/75">
+                      {playlist.tracks?.length || 0} Tracks
+                    </p>
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         )}
       </div>

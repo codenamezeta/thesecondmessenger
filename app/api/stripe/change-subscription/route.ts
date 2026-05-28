@@ -26,7 +26,9 @@ async function getAuthenticatedUser(): Promise<User | null> {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json().catch(() => null)) as { tier?: string } | null
+    const body = (await req.json().catch(() => null)) as {
+      tier?: string
+    } | null
     const tier = parsePaidCrewRank(body?.tier ?? null)
 
     if (!tier) {
@@ -35,13 +37,19 @@ export async function POST(req: NextRequest) {
 
     const user = await getAuthenticatedUser()
     if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 },
+      )
     }
 
     const customerId = user.stripeCustomerId
     if (!customerId?.trim()) {
       return NextResponse.json(
-        { error: 'No active billing account. Use checkout to start a subscription.' },
+        {
+          error:
+            'No active billing account. Use checkout to start a subscription.',
+        },
         { status: 400 },
       )
     }
@@ -54,25 +62,36 @@ export async function POST(req: NextRequest) {
     })
 
     const subscription = subs.data.find((s) =>
-      MANAGEABLE_STATUSES.includes(s.status as (typeof MANAGEABLE_STATUSES)[number]),
+      MANAGEABLE_STATUSES.includes(
+        s.status as (typeof MANAGEABLE_STATUSES)[number],
+      ),
     )
 
     if (!subscription) {
       return NextResponse.json(
-        { error: 'No active subscription to change. Start checkout from Memberships.' },
+        {
+          error:
+            'No active subscription to change. Start checkout from Memberships.',
+        },
         { status: 400 },
       )
     }
 
     const item = subscription.items.data[0]
     if (!item?.id) {
-      return NextResponse.json({ error: 'Subscription has no line items' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Subscription has no line items' },
+        { status: 400 },
+      )
     }
 
     const newPriceId = getPriceIdForRank(tier)
     const currentPriceId = item.price?.id
     if (currentPriceId === newPriceId) {
-      return NextResponse.json({ error: 'You are already on this plan.' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'You are already on this plan.' },
+        { status: 400 },
+      )
     }
 
     await stripe.subscriptions.update(subscription.id, {
@@ -88,6 +107,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, tier }, { status: 200 })
   } catch (error) {
     console.error('Stripe change subscription error:', error)
-    return NextResponse.json({ error: 'Could not update subscription' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Could not update subscription' },
+      { status: 500 },
+    )
   }
 }

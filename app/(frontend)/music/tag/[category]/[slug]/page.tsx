@@ -145,10 +145,10 @@ export default async function TagLandingPage({ params }: TagLandingParams) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div className="container pt-6">
+      <div className="container py-8">
         <Link
           href="/music"
-          className="inline-flex items-center gap-1 font-mono text-[11px] tracking-widest text-muted-foreground uppercase transition-colors hover:text-primary"
+          className="my-0 inline-flex items-center gap-1 font-mono text-[11px] tracking-widest text-muted-foreground uppercase transition-colors hover:text-primary"
         >
           <ChevronLeft className="size-3" aria-hidden />
           All music
@@ -157,13 +157,13 @@ export default async function TagLandingPage({ params }: TagLandingParams) {
 
       {heroUrl ? (
         <div
-          className="relative h-48 w-full overflow-hidden border-y border-border/40 md:h-64"
+          className="relative my-0 h-48 w-full overflow-hidden border-y border-border/40 py-0 md:h-64"
           aria-hidden
         >
           <Image
             src={heroUrl}
             fill
-            alt=""
+            alt={`An image that represents the ${tag.name} tag`}
             className="object-cover opacity-40"
             sizes="100vw"
             priority
@@ -240,9 +240,7 @@ function buildTagCollectionJsonLd(args: {
         item: {
           '@type': 'MusicRecording',
           name: song.title,
-          url: song.slug
-            ? `${ARTIST_HOMEPAGE}/music/${song.slug}`
-            : undefined,
+          url: song.slug ? `${ARTIST_HOMEPAGE}/music/${song.slug}` : undefined,
           byArtist: {
             '@type': 'MusicGroup',
             name: PRIMARY_ARTIST,

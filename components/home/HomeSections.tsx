@@ -7,6 +7,7 @@ import { motion } from 'motion/react'
 import { Play, ArrowRight, ChevronDown, Zap } from 'lucide-react'
 import SplitText from '@/components/SplitText'
 import DecryptedText from '@/components/DecryptedText'
+import DotField from '@/components/DotField'
 import { usePlayer } from '@/context/PlayerContext'
 import { MagneticCta } from './HomeSectionMagneticCta'
 import { fadeUp, stagger } from './homeSectionVariants'
@@ -35,6 +36,19 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
     <main className="relative overflow-hidden lg:h-[calc(100vh-var(--main-nav-bar-height))] lg:min-h-[calc(100vh-var(--main-nav-bar-height))]">
       {/* Background void */}
       <div className="absolute inset-0 bg-background">
+        <DotField
+          dotRadius={0.67}
+          dotSpacing={20}
+          bulgeStrength={20}
+          glowRadius={200}
+          sparkle
+          waveAmplitude={0}
+          cursorRadius={100}
+          cursorForce={0.18}
+          gradientFrom="#55f7e6"
+          gradientTo="#cd5d1a"
+          glowColor="#181e1e"
+        />
         {/* Primary radial glow — blooms from top-center behind the title */}
         <div
           className="absolute inset-0"

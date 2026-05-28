@@ -98,9 +98,6 @@ export function sortSongs(songs: Song[], sort: SortMode): Song[] {
 }
 
 /** Combined filter + sort. */
-export function applyFilterState(
-  songs: Song[],
-  state: FilterState,
-): Song[] {
+export function applyFilterState(songs: Song[], state: FilterState): Song[] {
   return sortSongs(filterSongs(songs, state), state.sort)
 }

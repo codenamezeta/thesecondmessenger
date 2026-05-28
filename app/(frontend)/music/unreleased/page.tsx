@@ -8,7 +8,8 @@ import { getMeUser } from '@/utilities/getMeUser'
 
 export const metadata: Metadata = {
   title: 'Works in Progress | The Second Messenger',
-  description: 'Lieutenant clearance required. Unreleased and in-progress transmissions.',
+  description:
+    'Lieutenant clearance required. Unreleased and in-progress transmissions.',
   robots: { index: false, follow: false },
 }
 

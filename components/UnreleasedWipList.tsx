@@ -1,7 +1,10 @@
 import Link from 'next/link'
 import type { Song } from '@/payload-types'
 
-export type UnreleasedWipSong = Pick<Song, 'id' | 'title' | 'slug' | 'updatedAt'>
+export type UnreleasedWipSong = Pick<
+  Song,
+  'id' | 'title' | 'slug' | 'updatedAt'
+>
 
 function formatUpdatedAt(iso: string): string {
   return new Intl.DateTimeFormat('en-US', {
@@ -20,7 +23,7 @@ export function UnreleasedWipList({ songs }: { songs: UnreleasedWipSong[] }) {
   }
 
   return (
-    <ul className="list-none divide-y divide-border/50 border border-border/50 rounded-none p-0">
+    <ul className="list-none divide-y divide-border/50 rounded-none border border-border/50 p-0">
       {songs.map((song) => {
         const href = song.slug ? `/music/${song.slug}` : null
         const inner = (
@@ -50,7 +53,7 @@ export function UnreleasedWipList({ songs }: { songs: UnreleasedWipSong[] }) {
           <li key={song.id}>
             <Link
               href={href}
-              className="block px-4 py-4 transition-colors hover:bg-card/10 hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+              className="block px-4 py-4 transition-colors hover:bg-card/10 hover:text-primary focus-visible:ring-1 focus-visible:ring-primary focus-visible:outline-none"
             >
               {inner}
             </Link>

@@ -1,14 +1,9 @@
 declare module 'prismjs/components/prism-core.js' {
-  const Prism: any
-  export default Prism
-}
-
-declare module 'prismjs' {
-  const Prism: any
+  import Prism from 'prismjs'
   export default Prism
 }
 
 declare module 'prismjs/components/*.js' {
-  const value: any
+  const value: unknown
   export default value
 }

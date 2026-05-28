@@ -1,6 +1,9 @@
 import type { Access } from 'payload'
 import type { GatedContent } from '@/payload-types'
-import { userMeetsGatedFileAccess, userMeetsVaultFloor } from '@/access/crewRanks'
+import {
+  userMeetsGatedFileAccess,
+  userMeetsVaultFloor,
+} from '@/access/crewRanks'
 
 /**
  * Static file routes enforce tier + Vault floor. Admin and non-file reads use

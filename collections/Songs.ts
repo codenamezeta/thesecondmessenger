@@ -37,7 +37,8 @@ const SONG_TAG_RELATIONSHIP_KEYS = [
 
 function relationEntryId(entry: unknown): string | null {
   if (entry === null || entry === undefined) return null
-  if (typeof entry === 'number' || typeof entry === 'string') return String(entry)
+  if (typeof entry === 'number' || typeof entry === 'string')
+    return String(entry)
   if (typeof entry === 'object' && 'id' in entry) {
     const id = (entry as { id: unknown }).id
     if (typeof id === 'number' || typeof id === 'string') return String(id)
@@ -145,7 +146,9 @@ export const Songs: CollectionConfig = {
         if (!data || typeof data !== 'object') return data
         const d = data as Record<string, unknown>
         const prev =
-          operation === 'update' && originalDoc && typeof originalDoc === 'object'
+          operation === 'update' &&
+          originalDoc &&
+          typeof originalDoc === 'object'
             ? (originalDoc as Record<string, unknown>)
             : null
         for (const key of SONG_TAG_RELATIONSHIP_KEYS) {
@@ -428,12 +431,13 @@ export const Songs: CollectionConfig = {
                       options: [
                         'YouTube Music',
                         'Spotify',
+                        'Tidal',
                         'Apple Music',
                         'Amazon Music',
-                        'Tidal',
-                        'Qobuz',
+                        'iHeartRadio',
                         'Deezer',
                         'Pandora',
+                        'Qobuz',
                         'SoundCloud',
                         'Bandcamp',
                         'Other',
@@ -447,15 +451,15 @@ export const Songs: CollectionConfig = {
                     },
                   ],
                 },
-                {
-                  name: 'description',
-                  type: 'text',
-                  label: 'Tooltip / Note',
-                  admin: {
-                    description:
-                      'Optional text for hover states or extra context.',
-                  },
-                },
+                // {
+                //   name: 'description',
+                //   type: 'text',
+                //   label: 'Tooltip / Note',
+                //   admin: {
+                //     description:
+                //       'Optional text for hover states or extra context.',
+                //   },
+                // },
               ],
             },
             {

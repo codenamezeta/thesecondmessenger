@@ -21,14 +21,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/utilities/ui'
-import {
-  FIELD_LABELS,
-  type SongTagField,
-} from '@/lib/songs/tagFields'
-import {
-  activeTagFilterCount,
-  type FilterState,
-} from '@/lib/music/filterState'
+import { FIELD_LABELS, type SongTagField } from '@/lib/songs/tagFields'
+import { activeTagFilterCount, type FilterState } from '@/lib/music/filterState'
 import type { FacetGroup } from '@/lib/music/facetCounts'
 
 interface MusicFilterDrawerProps {
@@ -45,7 +39,7 @@ const TOP_LAYERS_TO_AUTO_OPEN = 3
  * Faceted filter drawer for `/music`. Renders one collapsible section
  * per ontology layer that has at least one tag in scope.
  *
- * Desktop and mobile both use a left-side `Sheet` for consistency —
+ * Desktop and mobile both use a right-side `Sheet` for consistency —
  * keeps the toolbar uncluttered on small screens and gives the layer
  * list room to breathe on large ones.
  *
@@ -116,17 +110,28 @@ export const MusicFilterDrawer = ({
       </SheetTrigger>
 
       <SheetContent
-        side="left"
+        side="right"
         className="flex w-full max-w-sm flex-col overflow-hidden border-border/60 bg-background/95 backdrop-blur-md sm:max-w-md"
       >
-        <SheetHeader className="border-b border-border/40 px-6 py-5">
+        <SheetHeader className="border-b border-border/40 p-6">
           <SheetTitle className="font-heading text-xl tracking-widest text-primary uppercase">
             Filter Database
           </SheetTitle>
           <SheetDescription className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
-            Combine layers to drill into the catalog. Filters AND across
-            categories; choices within a category OR together.
+            Filter the database by genre, mood, activity, instrument, gear,
+            arrangement, influence, and more.
           </SheetDescription>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onClearAll}
+            disabled={tagCount === 0}
+            className="mt-4 gap-2 text-xs"
+          >
+            <X className="size-3" aria-hidden />
+            Clear all filters
+          </Button>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-4">

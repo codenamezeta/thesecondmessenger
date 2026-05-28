@@ -21,7 +21,10 @@ export type NotFoundViewProps = {
   sectionClassName?: string
 }
 
-export function NotFoundView({ linkMode, sectionClassName }: NotFoundViewProps) {
+export function NotFoundView({
+  linkMode,
+  sectionClassName,
+}: NotFoundViewProps) {
   return (
     <section
       className={cn(

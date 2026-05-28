@@ -488,20 +488,17 @@ export interface Song {
         platform:
           | 'YouTube Music'
           | 'Spotify'
+          | 'Tidal'
           | 'Apple Music'
           | 'Amazon Music'
-          | 'Tidal'
-          | 'Qobuz'
+          | 'iHeartRadio'
           | 'Deezer'
           | 'Pandora'
+          | 'Qobuz'
           | 'SoundCloud'
           | 'Bandcamp'
           | 'Other';
         url: string;
-        /**
-         * Optional text for hover states or extra context.
-         */
-        description?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -1487,7 +1484,6 @@ export interface SongsSelect<T extends boolean = true> {
     | {
         platform?: T;
         url?: T;
-        description?: T;
         id?: T;
       };
   stems?:

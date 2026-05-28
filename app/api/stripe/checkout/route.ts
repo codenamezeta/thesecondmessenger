@@ -11,19 +11,29 @@ import {
   type PaidCrewRank,
 } from '@/utilities/stripe'
 
-function buildLoginRedirect(req: NextRequest, tier: string | null): NextResponse {
+function buildLoginRedirect(
+  req: NextRequest,
+  tier: string | null,
+): NextResponse {
   const params = new URLSearchParams()
   if (tier) params.set('tier', tier)
-  const returnTo = params.size > 0 ? `/memberships?${params.toString()}` : '/memberships'
+  const returnTo =
+    params.size > 0 ? `/memberships?${params.toString()}` : '/memberships'
   return NextResponse.redirect(
     new URL(`/login?redirect=${encodeURIComponent(returnTo)}`, req.url),
   )
 }
 
-function buildErrorRedirect(req: NextRequest, message: string, tier: string | null): NextResponse {
+function buildErrorRedirect(
+  req: NextRequest,
+  message: string,
+  tier: string | null,
+): NextResponse {
   const params = new URLSearchParams({ error: message })
   if (tier) params.set('tier', tier)
-  return NextResponse.redirect(new URL(`/memberships?${params.toString()}`, req.url))
+  return NextResponse.redirect(
+    new URL(`/memberships?${params.toString()}`, req.url),
+  )
 }
 
 function isStripeMissingCustomerError(error: unknown): boolean {
@@ -69,7 +79,9 @@ async function resolveOrCreateStripeCustomer(user: User): Promise<string> {
   const stripe = getStripeClient()
   if (user.stripeCustomerId) {
     try {
-      const existingCustomer = await stripe.customers.retrieve(user.stripeCustomerId)
+      const existingCustomer = await stripe.customers.retrieve(
+        user.stripeCustomerId,
+      )
       if (!existingCustomer.deleted) {
         return existingCustomer.id
       }
@@ -137,7 +149,10 @@ async function getAuthenticatedUser(): Promise<User | null> {
   return freshUser
 }
 
-async function persistStripeCustomerId(userId: number, stripeCustomerId: string): Promise<void> {
+async function persistStripeCustomerId(
+  userId: number,
+  stripeCustomerId: string,
+): Promise<void> {
   const payload = await getPayload({ config: configPromise })
   await payload.update({
     collection: 'users',
@@ -183,7 +198,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json().catch(() => null)) as { tier?: string } | null
+    const body = (await req.json().catch(() => null)) as {
+      tier?: string
+    } | null
     const tier = parsePaidCrewRank(body?.tier || null)
 
     if (!tier) {
@@ -193,7 +210,10 @@ export async function POST(req: NextRequest) {
     const user = await getAuthenticatedUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 },
+      )
     }
 
     const { url, customerId } = await createCheckoutSession(

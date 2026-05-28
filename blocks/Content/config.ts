@@ -51,7 +51,9 @@ const columnFields: Field[] = [
         return [
           ...defaultFeatures,
           ...rootFeatures,
-          HeadingFeature({ enabledHeadingSizes: ['h2', 'h3', 'h4', 'h5', 'h6'] }),
+          HeadingFeature({
+            enabledHeadingSizes: ['h2', 'h3', 'h4', 'h5', 'h6'],
+          }),
           FixedToolbarFeature(),
           // TreeViewFeature(),
           EXPERIMENTAL_TableFeature(),

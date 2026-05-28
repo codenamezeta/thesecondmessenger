@@ -42,10 +42,7 @@ export const SongInfo = ({ className, compact = false }: SongInfoProps) => {
     _event: MouseEvent | TouchEvent | PointerEvent,
     info: PanInfo,
   ) => {
-    if (
-      info.offset.x < -SKIP_DISTANCE_PX ||
-      info.velocity.x < -SKIP_VELOCITY
-    ) {
+    if (info.offset.x < -SKIP_DISTANCE_PX || info.velocity.x < -SKIP_VELOCITY) {
       playNext()
     } else if (
       info.offset.x > SKIP_DISTANCE_PX ||

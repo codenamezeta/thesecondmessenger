@@ -252,7 +252,7 @@ function RankBadgePropMatrix({ showLabel }: { showLabel: boolean }) {
           <tr className="bg-muted/40">
             <th
               scope="col"
-              className="border border-border px-3 py-2 text-left font-mono text-[10px] tracking-widest uppercase text-muted-foreground"
+              className="border border-border px-3 py-2 text-left font-mono text-[10px] tracking-widest text-muted-foreground uppercase"
             >
               Tier (<span className="text-foreground">rank</span>)
             </th>
@@ -260,7 +260,7 @@ function RankBadgePropMatrix({ showLabel }: { showLabel: boolean }) {
               <th
                 key={size}
                 scope="col"
-                className="border border-border px-3 py-2 text-left font-mono text-[10px] tracking-widest uppercase text-muted-foreground"
+                className="border border-border px-3 py-2 text-left font-mono text-[10px] tracking-widest text-muted-foreground uppercase"
               >
                 size=&quot;{size}&quot;
               </th>
@@ -272,7 +272,7 @@ function RankBadgePropMatrix({ showLabel }: { showLabel: boolean }) {
             <tr key={`${rank}-${showLabel}`}>
               <th
                 scope="row"
-                className="border border-border px-3 py-2 align-middle text-left font-mono text-[10px] tracking-widest text-foreground uppercase"
+                className="border border-border px-3 py-2 text-left align-middle font-mono text-[10px] tracking-widest text-foreground uppercase"
               >
                 {RANK_BADGE_LABELS[rank]}
                 <span className="mt-1 block font-normal tracking-normal text-muted-foreground normal-case">
@@ -285,11 +285,7 @@ function RankBadgePropMatrix({ showLabel }: { showLabel: boolean }) {
                   className="border border-border px-3 py-4 align-middle"
                 >
                   <div className="flex flex-col items-start gap-2">
-                    <RankBadge
-                      rank={rank}
-                      size={size}
-                      showLabel={showLabel}
-                    />
+                    <RankBadge rank={rank} size={size} showLabel={showLabel} />
                     <span className="font-mono text-[9px] leading-tight text-muted-foreground">
                       showLabel={showLabel ? 'true' : 'false'}
                     </span>

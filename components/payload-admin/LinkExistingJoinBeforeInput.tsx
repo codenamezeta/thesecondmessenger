@@ -100,7 +100,9 @@ export function LinkExistingJoinBeforeInput(
     )
     if (!actions) return
 
-    let slot = actions.querySelector<HTMLElement>('[data-payload-link-existing-slot]')
+    let slot = actions.querySelector<HTMLElement>(
+      '[data-payload-link-existing-slot]',
+    )
     if (!slot) {
       slot = document.createElement('span')
       slot.dataset.payloadLinkExistingSlot = ''
@@ -123,7 +125,9 @@ export function LinkExistingJoinBeforeInput(
 
       const sid = Number(songId)
       if (!Number.isFinite(sid)) {
-        toast.error('Save the song first so it has an ID, then link it to playlists or releases.')
+        toast.error(
+          'Save the song first so it has an ID, then link it to playlists or releases.',
+        )
         return
       }
 
@@ -171,14 +175,7 @@ export function LinkExistingJoinBeforeInput(
         setLinking(false)
       }
     },
-    [
-      apiBase,
-      closeDrawer,
-      singularLabel,
-      songId,
-      targetSlug,
-      tracksFieldName,
-    ],
+    [apiBase, closeDrawer, singularLabel, songId, targetSlug, tracksFieldName],
   )
 
   if (docConfig?.slug !== 'songs') {
@@ -218,10 +215,11 @@ export function LinkExistingJoinBeforeInput(
         />
         {linkedCount === 0 ? (
           <Banner type="info">
-            This list is <strong>filtered</strong>: it only shows {pluralLabel} that already
-            include this song on their tracklist. Seeing &quot;No results&quot; here means this
-            track is not linked yet—not that you have no {pluralLabel} in the CMS (the link button
-            opens the full library).
+            This list is <strong>filtered</strong>: it only shows {pluralLabel}{' '}
+            that already include this song on their tracklist. Seeing &quot;No
+            results&quot; here means this track is not linked yet—not that you
+            have no {pluralLabel} in the CMS (the link button opens the full
+            library).
           </Banner>
         ) : null}
       </div>

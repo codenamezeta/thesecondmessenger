@@ -5,7 +5,10 @@ const GATED_CONTENT_SLUG = 'gated-content'
 const POSTS_SLUG = 'posts'
 const PATCH_FLAG = '__gatedContentDisableTransactionsPatched' as const
 
-const DISABLE_TRANSACTION_COLLECTIONS = new Set([GATED_CONTENT_SLUG, POSTS_SLUG])
+const DISABLE_TRANSACTION_COLLECTIONS = new Set([
+  GATED_CONTENT_SLUG,
+  POSTS_SLUG,
+])
 
 /** Retries for normal admin updates (rare NotFound). */
 const RETRY_DEFAULT_ATTEMPTS = 25

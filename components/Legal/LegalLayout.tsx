@@ -32,7 +32,7 @@ export function LegalLayout({
         <div className="absolute top-0 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
       </div>
 
-      <article className="container relative z-10 flex max-w-4xl flex-col gap-10">
+      <article className="relative z-10 container flex max-w-4xl flex-col gap-10">
         <header className="space-y-4 border border-border/50 bg-card/20 p-6 backdrop-blur-sm md:p-8">
           <p className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase">
             {eyebrow}
@@ -63,7 +63,12 @@ type LegalSectionProps = {
   children: ReactNode
 }
 
-export function LegalSection({ id, number, title, children }: LegalSectionProps) {
+export function LegalSection({
+  id,
+  number,
+  title,
+  children,
+}: LegalSectionProps) {
   return (
     <section
       id={id}

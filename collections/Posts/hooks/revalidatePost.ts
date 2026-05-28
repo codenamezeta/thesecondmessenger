@@ -1,11 +1,19 @@
-import type { CollectionAfterChangeHook, CollectionAfterDeleteHook } from 'payload'
+import type {
+  CollectionAfterChangeHook,
+  CollectionAfterDeleteHook,
+} from 'payload'
 
 import { after } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 
 import type { Post } from '../../../payload-types'
 
-function revalidatePublishedPost(doc: Post, payload: { logger: { info: (msg: string) => void; error: (args: object) => void } }) {
+function revalidatePublishedPost(
+  doc: Post,
+  payload: {
+    logger: { info: (msg: string) => void; error: (args: object) => void }
+  },
+) {
   const path = `/posts/${doc.slug}`
 
   payload.logger.info(`Revalidating post at path: ${path}`)

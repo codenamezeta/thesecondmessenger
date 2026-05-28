@@ -32,9 +32,10 @@ export function AccountBillingActions({
 }: Props) {
   const [portalLoading, setPortalLoading] = useState(false)
   const [changeLoading, setChangeLoading] = useState<PaidCrewRank | null>(null)
-  const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(
-    null,
-  )
+  const [message, setMessage] = useState<{
+    type: 'error' | 'success'
+    text: string
+  } | null>(null)
 
   const openBillingPortal = async () => {
     setMessage(null)
@@ -133,8 +134,8 @@ export function AccountBillingActions({
             Change paid tier
           </p>
           <p className="text-xs text-muted-foreground">
-            Upgrades or downgrades use prorated billing. You can also cancel or update your card in
-            Manage billing.
+            Upgrades or downgrades use prorated billing. You can also cancel or
+            update your card in Manage billing.
           </p>
           <div className="flex flex-wrap gap-2">
             {PAID_TIERS.map((tier) => {

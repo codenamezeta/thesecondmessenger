@@ -160,19 +160,18 @@ export const SongCard = ({ song, className }: SongCardProps) => {
   const isCurrent = isPlaying && currentSong?.id === song.id
   const href = song.slug ? `/music/${song.slug}` : null
 
-  const genre = song.genres?.[0] ? getTagName(song.genres[0]) : 'Unclassified'
+  const subGenre = song.subGenres?.[0] ? getTagName(song.subGenres[0]) : 'Unclassified'
 
-  // Round-robin across sub-genre, mood, activity, instrument, influence,
-  // theme, and genre — one chip per layer before any layer doubles up,
+  // Round-robin across sub-subGenre, mood, activity, instrument, influence,
+  // theme, and subGenre — one chip per layer before any layer doubles up,
   // so every card surfaces its most distinguishing tags rather than
   // bunching on moods + themes alone.
   const allFlavorTags = pickCardChips(song, 6)
 
   // Trading-card flavor caption — tight grammatical sentence derived
   // from the same 11-layer ontology, capped at ~90 chars. Renders in
-  // a Magic-card lore style below the tagline (when both present) or
-  // in the tagline's spot (when no human tagline is set).
-  const flavorText = buildSongCardFlavor(songToCopyInput(song))
+  // a Magic-card lore style below the stats.
+  const flavorText = buildSongCardFlavor(songToCopyInput(song), { maxLength: 160 })
 
   const duration = song.duration
     ? `${Math.floor(song.duration / 60)}:${Math.round(song.duration % 60)
@@ -380,7 +379,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
             </h3>
 
             <div className="mb-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-              <span className="text-primary/90">{genre}</span>
+              <span className="text-primary/90">{subGenre}</span>
               <span className="text-border" aria-hidden>
                 |
               </span>
@@ -393,17 +392,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
               </p>
             ) : null}
 
-            {flavorText ? (
-              <p
-                className={cn(
-                  'line-clamp-2 font-mono text-[10px] leading-snug tracking-wide text-muted-foreground/70 italic',
-                  song.tagline ? 'mt-1.5' : 'mt-0',
-                )}
-                aria-label="Auto-generated tag-derived flavor caption"
-              >
-                {flavorText}
-              </p>
-            ) : null}
+            
           </div>
 
           <div className="mt-auto grid grid-cols-3 gap-px overflow-hidden rounded-sm border border-border/80 bg-border/40">
@@ -456,9 +445,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
                       if (filterHref) router.push(filterHref)
                     }}
                     aria-label={
-                      filterHref
-                        ? `Browse ${tagLabel} in /music`
-                        : tagLabel
+                      filterHref ? `Browse ${tagLabel} in /music` : tagLabel
                     }
                     disabled={!filterHref}
                     className={cn(
@@ -478,6 +465,17 @@ export const SongCard = ({ song, className }: SongCardProps) => {
               })}
             </div>
           ) : null}
+          {flavorText ? (
+              <p
+                className={cn(
+                  'line-clamp-2 font-mono text-[10px] leading-snug tracking-wide text-muted-foreground/70 italic',
+                  song.tagline ? 'mt-1.5' : 'mt-0',
+                )}
+                aria-label="Auto-generated tag-derived flavor caption"
+              >
+                {flavorText}
+              </p>
+            ) : null}
           <div className="flex-1" />
           <div className="mt-1 flex items-end justify-between gap-3 border-t border-border/50 pt-1">
             <div

@@ -68,7 +68,7 @@ function FooterLinkList({
 export function Footer() {
   return (
     <footer
-      className="relative mt-24 border-t border-border/50 bg-card/10 backdrop-blur-md"
+      className="relative border-t border-border/50 bg-card/10 backdrop-blur-md"
       aria-label="Site footer"
     >
       <div

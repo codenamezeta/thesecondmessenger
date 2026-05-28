@@ -24,7 +24,9 @@ async function updateUserMembership(
   })
 }
 
-async function findUserByStripeCustomerId(customerId: string): Promise<{ id: number } | null> {
+async function findUserByStripeCustomerId(
+  customerId: string,
+): Promise<{ id: number } | null> {
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
     collection: 'users',
@@ -42,7 +44,9 @@ async function findUserByStripeCustomerId(customerId: string): Promise<{ id: num
 function resolveRankFromSubscription(
   subscription: Stripe.Subscription,
 ): ManagedCrewRank | null {
-  const metadataRank = parsePaidCrewRank(subscription.metadata?.crewRank || null)
+  const metadataRank = parsePaidCrewRank(
+    subscription.metadata?.crewRank || null,
+  )
   if (metadataRank) return metadataRank
 
   const subscriptionPriceId = subscription.items.data[0]?.price?.id
@@ -52,13 +56,18 @@ function resolveRankFromSubscription(
   return null
 }
 
-async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
+async function handleCheckoutCompleted(
+  session: Stripe.Checkout.Session,
+): Promise<void> {
   const payloadUserId = Number(session.metadata?.payloadUserId)
   const purchasedRank = parsePaidCrewRank(session.metadata?.crewRank || null)
-  const customerId = typeof session.customer === 'string' ? session.customer : null
+  const customerId =
+    typeof session.customer === 'string' ? session.customer : null
 
   if (!Number.isFinite(payloadUserId) || !purchasedRank || !customerId) {
-    throw new Error('Missing payloadUserId, purchased rank, or customer id on checkout session')
+    throw new Error(
+      'Missing payloadUserId, purchased rank, or customer id on checkout session',
+    )
   }
 
   await updateUserMembership(payloadUserId, {
@@ -67,7 +76,9 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
   })
 }
 
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Promise<void> {
+async function handleSubscriptionUpdated(
+  subscription: Stripe.Subscription,
+): Promise<void> {
   const customerId =
     typeof subscription.customer === 'string' ? subscription.customer : null
   if (!customerId) return
@@ -81,7 +92,9 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Pro
   await updateUserMembership(user.id, { crewRank: rank })
 }
 
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
+async function handleSubscriptionDeleted(
+  subscription: Stripe.Subscription,
+): Promise<void> {
   const customerId =
     typeof subscription.customer === 'string' ? subscription.customer : null
   if (!customerId) return
@@ -92,8 +105,11 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Pro
   await updateUserMembership(user.id, { crewRank: 'ensign' })
 }
 
-async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
-  const customerId = typeof invoice.customer === 'string' ? invoice.customer : null
+async function handleInvoicePaymentFailed(
+  invoice: Stripe.Invoice,
+): Promise<void> {
+  const customerId =
+    typeof invoice.customer === 'string' ? invoice.customer : null
   if (!customerId) return
 
   const user = await findUserByStripeCustomerId(customerId)
@@ -107,14 +123,21 @@ export async function POST(req: NextRequest) {
   const signature = req.headers.get('stripe-signature')
 
   if (!signature) {
-    return NextResponse.json({ error: 'Missing stripe signature' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Missing stripe signature' },
+      { status: 400 },
+    )
   }
 
   const body = await req.text()
   let event: Stripe.Event
 
   try {
-    event = stripe.webhooks.constructEvent(body, signature, getStripeWebhookSecret())
+    event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      getStripeWebhookSecret(),
+    )
   } catch (error) {
     console.error('Stripe webhook signature verification failed:', error)
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
@@ -123,13 +146,19 @@ export async function POST(req: NextRequest) {
   try {
     switch (event.type) {
       case 'checkout.session.completed':
-        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session)
+        await handleCheckoutCompleted(
+          event.data.object as Stripe.Checkout.Session,
+        )
         break
       case 'customer.subscription.updated':
-        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription)
+        await handleSubscriptionUpdated(
+          event.data.object as Stripe.Subscription,
+        )
         break
       case 'customer.subscription.deleted':
-        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription)
+        await handleSubscriptionDeleted(
+          event.data.object as Stripe.Subscription,
+        )
         break
       case 'invoice.payment_failed':
         await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice)
@@ -141,6 +170,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true }, { status: 200 })
   } catch (error) {
     console.error(`Stripe webhook handler failed for ${event.type}:`, error)
-    return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Webhook handler failed' },
+      { status: 500 },
+    )
   }
 }

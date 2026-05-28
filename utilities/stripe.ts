@@ -51,7 +51,9 @@ export function getPriceIdForRank(rank: PaidCrewRank): string {
   }
 }
 
-export function getRankForPriceId(priceId: string | null | undefined): PaidCrewRank | null {
+export function getRankForPriceId(
+  priceId: string | null | undefined,
+): PaidCrewRank | null {
   if (!priceId) return null
 
   const entries: Array<[PaidCrewRank, string]> = [
@@ -60,6 +62,8 @@ export function getRankForPriceId(priceId: string | null | undefined): PaidCrewR
     ['captain', process.env.STRIPE_PRICE_CAPTAIN || ''],
   ]
 
-  const match = entries.find(([, configuredPriceId]) => configuredPriceId === priceId)
+  const match = entries.find(
+    ([, configuredPriceId]) => configuredPriceId === priceId,
+  )
   return match ? match[0] : null
 }

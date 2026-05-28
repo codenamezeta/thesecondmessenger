@@ -14,12 +14,7 @@ type Props = MediaBlockProps & {
 }
 
 export const MediaBlock: React.FC<Props> = (props) => {
-  const {
-    className,
-    imgClassName,
-    media,
-    staticImage,
-  } = props
+  const { className, imgClassName, media, staticImage } = props
 
   return (
     <div className={cn('', className)}>

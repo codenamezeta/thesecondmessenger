@@ -25,11 +25,16 @@ const PresaveStats = async () => {
   // Map: { songId: count }
   const stats: Record<string | number, number> = {}
 
-  presaves.docs.forEach((user: any) => {
+  ;(
+    presaves.docs as unknown as {
+      campaigns?: (string | { id: string | number })[]
+    }[]
+  ).forEach((user) => {
     if (user.campaigns) {
-      user.campaigns.forEach((campaignItem: any) => {
+      user.campaigns.forEach((campaignItem) => {
         // Handle if campaignItem is ID or Object
-        const id = typeof campaignItem === 'object' ? campaignItem.id : campaignItem
+        const id =
+          typeof campaignItem === 'object' ? campaignItem.id : campaignItem
         stats[id] = (stats[id] || 0) + 1
       })
     }
@@ -51,15 +56,21 @@ const PresaveStats = async () => {
             <thead>
               <tr className={`${baseClass}__thead`}>
                 <th className={`${baseClass}__th`}>Song Title</th>
-                <th className={`${baseClass}__th ${baseClass}__th--right`}>Pre-Saves / Saves</th>
-                <th className={`${baseClass}__th ${baseClass}__th--right`}>Conversion</th>
+                <th className={`${baseClass}__th ${baseClass}__th--right`}>
+                  Pre-Saves / Saves
+                </th>
+                <th className={`${baseClass}__th ${baseClass}__th--right`}>
+                  Conversion
+                </th>
               </tr>
             </thead>
             <tbody>
               {songs.docs.map((song) => {
                 const count = stats[song.id] || 0
                 const conversion =
-                  presaves.totalDocs > 0 ? ((count / presaves.totalDocs) * 100).toFixed(1) : '0.0'
+                  presaves.totalDocs > 0
+                    ? ((count / presaves.totalDocs) * 100).toFixed(1)
+                    : '0.0'
 
                 return (
                   <tr key={song.id} className={`${baseClass}__tr`}>

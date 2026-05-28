@@ -207,7 +207,7 @@ export const MusicArchive = ({
   }
 
   return (
-    <section className="space-y-4">
+    <main id="music-by-the-second-messenger" className="container space-y-4 py-4">
       {/* CONTROLS TOOLBAR */}
       <div className="space-y-4 rounded-lg border border-border bg-linear-to-b from-secondary to-background p-4">
         {/* Top Row: Search, Filter Trigger, Existing Type Filters */}
@@ -215,7 +215,7 @@ export const MusicArchive = ({
           <div className="relative w-full min-w-64 flex-auto lg:max-w-1/2">
             <Label htmlFor="music-archive-search" className="sr-only">
               Search songs by title, lyrics, credits, or any tag (mood,
-              activity, instrument, gear, influence, etc.)
+              activity, instrument, gear, influences, etc.)
             </Label>
             <Search
               size={16}
@@ -235,24 +235,15 @@ export const MusicArchive = ({
             />
           </div>
           <div className="flex flex-col items-center gap-1 sm:flex-row">
-            <span
+            {/* <span
               className="hidden font-mono text-xs text-muted-foreground uppercase sm:block"
               aria-hidden
             >
-              Filter:
-            </span>
-
-            {/* Faceted tag drawer */}
-            <MusicFilterDrawer
-              state={state}
-              groups={facetGroups}
-              onToggleTag={handleToggleTag}
-              onClearLayer={handleClearLayer}
-              onClearAll={handleClearAll}
-            />
+              Filters:
+            </span> */}
 
             {/* Composition Type */}
-            <div className="flex gap-1">
+            {/* <div className="flex gap-1">
               <Label htmlFor="music-archive-composition" className="sr-only">
                 Composition type
               </Label>
@@ -278,10 +269,10 @@ export const MusicArchive = ({
                   <SelectItem value="Cover">Covers</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
 
             {/* Recording Type */}
-            <div className="flex flex-col gap-1">
+            {/* <div className="flex flex-col gap-1">
               <Label htmlFor="music-archive-recording" className="sr-only">
                 Recording type
               </Label>
@@ -308,7 +299,7 @@ export const MusicArchive = ({
                   <SelectItem value="Demo">Demo</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
 
             {/* Explicit Toggle */}
             <Button
@@ -337,6 +328,15 @@ export const MusicArchive = ({
             >
               {state.explicit === 'hide' ? 'Show Explicit' : 'Hide Explicit'}
             </Button>
+
+            {/* Faceted tag drawer */}
+            <MusicFilterDrawer
+              state={state}
+              groups={facetGroups}
+              onToggleTag={handleToggleTag}
+              onClearLayer={handleClearLayer}
+              onClearAll={handleClearAll}
+            />
           </div>
         </div>
 
@@ -491,6 +491,6 @@ export const MusicArchive = ({
           </li>
         )}
       </ol>
-    </section>
+    </main>
   )
 }

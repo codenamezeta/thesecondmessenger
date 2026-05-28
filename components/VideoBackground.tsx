@@ -86,7 +86,7 @@ export const VideoBackground: React.FC<VideoBackgroundProps> = ({
         playsInline
         preload={preload}
         poster={poster}
-        className="object-cover w-full h-full"
+        className="h-full w-full object-cover"
       >
         <source src={src} type="video/mp4" />
       </video>

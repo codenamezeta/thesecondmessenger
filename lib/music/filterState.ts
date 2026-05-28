@@ -34,11 +34,7 @@ export type SortMode =
   | 'shortest'
   | 'longest'
 
-export type CompositionFilter =
-  | 'all'
-  | 'Original'
-  | 'Cover'
-  | 'Public Domain'
+export type CompositionFilter = 'all' | 'Original' | 'Cover' | 'Public Domain'
 export type RecordingFilter = 'all' | 'Studio' | 'Live' | 'Demo'
 export type ExplicitFilter = 'show' | 'hide'
 
@@ -78,13 +74,10 @@ const RECORDING_VALUES: readonly RecordingFilter[] = [
 ]
 
 function emptyTagFilters(): TagFilters {
-  return SONG_TAG_FIELDS.reduce<TagFilters>(
-    (acc, field) => {
-      acc[field] = []
-      return acc
-    },
-    {} as TagFilters,
-  )
+  return SONG_TAG_FIELDS.reduce<TagFilters>((acc, field) => {
+    acc[field] = []
+    return acc
+  }, {} as TagFilters)
 }
 
 export const DEFAULT_FILTER_STATE: FilterState = {
@@ -121,10 +114,7 @@ type LooseSearchParams =
   | undefined
   | null
 
-function readParam(
-  source: LooseSearchParams,
-  key: string,
-): string | null {
+function readParam(source: LooseSearchParams, key: string): string | null {
   if (!source) return null
   if (source instanceof URLSearchParams) {
     return source.get(key)
@@ -165,8 +155,7 @@ export function parseSearchParams(
       RECORDING_VALUES,
       'all',
     ),
-    explicit:
-      readParam(searchParams, 'explicit') === 'hide' ? 'hide' : 'show',
+    explicit: readParam(searchParams, 'explicit') === 'hide' ? 'hide' : 'show',
     tags,
   }
 }
@@ -203,10 +192,7 @@ export function serializeFilterState(state: FilterState): URLSearchParams {
  * Build a URL string for navigating to `/music` with a single tag
  * pre-applied. Used by SongCard / SonicDNA chip click-throughs.
  */
-export function musicHrefForTag(
-  category: TagCategory,
-  slug: string,
-): string {
+export function musicHrefForTag(category: TagCategory, slug: string): string {
   const params = new URLSearchParams()
   params.set(category, slug)
   return `/music?${params.toString()}`

@@ -1,6 +1,10 @@
 import type Stripe from 'stripe'
 
-import { getRankForPriceId, getStripeClient, type PaidCrewRank } from '@/utilities/stripe'
+import {
+  getRankForPriceId,
+  getStripeClient,
+  type PaidCrewRank,
+} from '@/utilities/stripe'
 
 const ACTIVE_SUBSCRIPTION_STATUSES: Stripe.Subscription.Status[] = [
   'active',
@@ -39,11 +43,15 @@ function pickActiveSubscription(
   subscriptions: Stripe.Subscription[],
 ): Stripe.Subscription | null {
   return (
-    subscriptions.find((sub) => ACTIVE_SUBSCRIPTION_STATUSES.includes(sub.status)) ?? null
+    subscriptions.find((sub) =>
+      ACTIVE_SUBSCRIPTION_STATUSES.includes(sub.status),
+    ) ?? null
   )
 }
 
-function subscriptionToSummary(sub: Stripe.Subscription): BillingSubscriptionSummary {
+function subscriptionToSummary(
+  sub: Stripe.Subscription,
+): BillingSubscriptionSummary {
   const firstItem = sub.items.data[0]
   const priceId =
     firstItem && typeof firstItem.price === 'object' && firstItem.price
@@ -123,7 +131,10 @@ export async function getBillingSummaryForCustomer(
   }
 }
 
-export function formatStripeMoney(amountMinorUnits: number, currency: string): string {
+export function formatStripeMoney(
+  amountMinorUnits: number,
+  currency: string,
+): string {
   const code = currency.toUpperCase()
   try {
     return new Intl.NumberFormat('en-US', {

@@ -99,9 +99,7 @@ function buildTrackPosition(
   if (!release || !release.tracks || release.tracks.length === 0) {
     return { n: 1, total: 1 }
   }
-  const trackIds = release.tracks.map((t) =>
-    isResolved<Song>(t) ? t.id : t,
-  )
+  const trackIds = release.tracks.map((t) => (isResolved<Song>(t) ? t.id : t))
   const idx = trackIds.indexOf(song.id)
   if (idx < 0) return { n: 1, total: 1 }
   return { n: idx + 1, total: trackIds.length }
@@ -278,8 +276,7 @@ export function mapSongToTagSpec({
     ? new Date(song.releaseDate).getUTCFullYear()
     : undefined
 
-  const phonogramOwner =
-    song.phonogramCopyrightOwner?.trim() || PRIMARY_ARTIST
+  const phonogramOwner = song.phonogramCopyrightOwner?.trim() || PRIMARY_ARTIST
   const compositionOwner =
     song.compositionCopyrightOwner?.trim() || PRIMARY_ARTIST
 

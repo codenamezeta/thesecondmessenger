@@ -61,7 +61,7 @@ export function Header({
 
   return (
     <header
-      className={cn('relative overflow-hidden bg-background/50', className)}
+      className={cn('relative overflow-hidden bg-transparent', className)}
     >
       <div
         className="pointer-events-none absolute top-3 left-3 h-8 w-8 border-t-2 border-l-2 border-primary/30"

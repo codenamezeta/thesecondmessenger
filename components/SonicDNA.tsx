@@ -125,7 +125,10 @@ export const SonicDNA = ({ song }: { song: Song }) => {
                       {badge}
                     </Link>
                   ) : (
-                    <span key={tag.id} aria-label={`${section.label}: ${tag.name}`}>
+                    <span
+                      key={tag.id}
+                      aria-label={`${section.label}: ${tag.name}`}
+                    >
                       {badge}
                     </span>
                   )

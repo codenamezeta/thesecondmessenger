@@ -5,12 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef } from 'react'
 
 type UseClickableCardType<T extends HTMLElement> = {
-  card: {
-    ref: RefObject<T | null>
-  }
-  link: {
-    ref: RefObject<HTMLAnchorElement | null>
-  }
+  cardRef: RefObject<T | null>
+  linkRef: RefObject<HTMLAnchorElement | null>
 }
 
 interface Props {
@@ -60,7 +56,11 @@ function useClickableCard<T extends HTMLElement>({
         const difference = timeNow - timeDown.current
 
         if (link.current?.href && difference <= 250) {
-          if (!hasActiveParent.current && pressedButton.current === 0 && !e.ctrlKey) {
+          if (
+            !hasActiveParent.current &&
+            pressedButton.current === 0 &&
+            !e.ctrlKey
+          ) {
             if (external) {
               const target = newTab ? '_blank' : '_self'
               window.open(link.current.href, target)
@@ -96,12 +96,8 @@ function useClickableCard<T extends HTMLElement>({
   }, [card, link, router])
 
   return {
-    card: {
-      ref: card,
-    },
-    link: {
-      ref: link,
-    },
+    cardRef: card,
+    linkRef: link,
   }
 }
 

@@ -55,7 +55,11 @@ const collectAllTagNames = (doc: unknown): string => {
   return names.join(' ')
 }
 
-export const beforeSyncWithSearch: BeforeSync = async ({ req, originalDoc, searchDoc }) => {
+export const beforeSyncWithSearch: BeforeSync = async ({
+  req,
+  originalDoc,
+  searchDoc,
+}) => {
   const {
     doc: { relationTo: collection },
   } = searchDoc
