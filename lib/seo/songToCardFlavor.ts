@@ -80,6 +80,9 @@ function composeCardFlavor(
   if (!c.classification) return null
 
   let head = c.classification
+  if (head) {
+    head = head.charAt(0).toUpperCase() + head.slice(1)
+  }
   if (!dropped.has('activities') && c.activities) {
     head += ` for ${c.activities}`
   } else if (!dropped.has('themes') && c.themes) {

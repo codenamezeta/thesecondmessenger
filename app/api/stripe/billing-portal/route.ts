@@ -21,13 +21,18 @@ export async function POST(req: NextRequest) {
   try {
     const user = await getAuthenticatedUser()
     if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 },
+      )
     }
 
     const customerId = user.stripeCustomerId
     if (!customerId?.trim()) {
       return NextResponse.json(
-        { error: 'No Stripe customer on file. Subscribe to a paid tier first.' },
+        {
+          error: 'No Stripe customer on file. Subscribe to a paid tier first.',
+        },
         { status: 400 },
       )
     }
@@ -45,12 +50,18 @@ export async function POST(req: NextRequest) {
     })
 
     if (!session.url) {
-      return NextResponse.json({ error: 'Portal session URL missing' }, { status: 500 })
+      return NextResponse.json(
+        { error: 'Portal session URL missing' },
+        { status: 500 },
+      )
     }
 
     return NextResponse.json({ url: session.url }, { status: 200 })
   } catch (error) {
     console.error('Stripe billing portal error:', error)
-    return NextResponse.json({ error: 'Could not open billing portal' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Could not open billing portal' },
+      { status: 500 },
+    )
   }
 }

@@ -1,4 +1,8 @@
-import { type MigrateUpArgs, type MigrateDownArgs, sql } from '@payloadcms/db-vercel-postgres'
+import {
+  type MigrateUpArgs,
+  type MigrateDownArgs,
+  sql,
+} from '@payloadcms/db-vercel-postgres'
 
 /**
  * Remap existing `tags` documents to the 11-layer Sonic Tag Ontology
@@ -109,8 +113,17 @@ const REMAP: RemapEntry[] = [
   // ---- Old "Instrument" rows that are really gear or arrangement ----
   { name: 'Orchestral', from: 'instrument', to: 'arrangement' },
   // Typo fix bundled with category move
-  { name: 'Fender Statocaster', from: 'instrument', to: 'gear', rename: 'Fender Stratocaster' },
-  { name: 'Presonus Studio One / Fender Studio Pro', from: 'instrument', to: 'gear' },
+  {
+    name: 'Fender Statocaster',
+    from: 'instrument',
+    to: 'gear',
+    rename: 'Fender Stratocaster',
+  },
+  {
+    name: 'Presonus Studio One / Fender Studio Pro',
+    from: 'instrument',
+    to: 'gear',
+  },
   { name: 'Ibanez S61 Axion', from: 'instrument', to: 'gear' },
   { name: 'Boss Katana', from: 'instrument', to: 'gear' },
   { name: 'Vocal Harmonies', from: 'instrument', to: 'arrangement' },
@@ -233,7 +246,9 @@ async function applyRemap(
 }
 
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
-  payload.logger.info('🏷️  [tag-remap] up() starting — applying 11-layer ontology remap')
+  payload.logger.info(
+    '🏷️  [tag-remap] up() starting — applying 11-layer ontology remap',
+  )
 
   // 1) Per-name remap from the table. Handles all known intentional moves,
   //    the Fender Stratocaster typo fix, and merges on collision.
@@ -268,8 +283,14 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   payload.logger.info('🏷️  [tag-remap] up() complete')
 }
 
-export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
-  payload.logger.info('🏷️  [tag-remap] down() starting — reverting ontology remap (lossy)')
+export async function down({
+  db,
+  payload,
+  req,
+}: MigrateDownArgs): Promise<void> {
+  payload.logger.info(
+    '🏷️  [tag-remap] down() starting — reverting ontology remap (lossy)',
+  )
 
   // 1) Reverse the songs_rels.path rename first so when we flip categories
   //    back any field-name lookups still resolve.

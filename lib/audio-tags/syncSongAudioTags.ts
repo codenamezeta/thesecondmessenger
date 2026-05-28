@@ -119,14 +119,7 @@ export async function syncSongAudioTags(
       overrideAccess: true,
     })
 
-    await markStatus(
-      payload,
-      songId,
-      'synced',
-      hash,
-      null,
-      mutated.byteLength,
-    )
+    await markStatus(payload, songId, 'synced', hash, null, mutated.byteLength)
 
     return { status: 'synced', hash, bytesWritten: mutated.byteLength }
   } catch (err) {

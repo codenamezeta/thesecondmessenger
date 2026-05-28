@@ -41,7 +41,8 @@ export function formatList(
   options: FormatListOptions = {},
 ): string {
   const cleaned = items.filter(
-    (item): item is string => typeof item === 'string' && item.trim().length > 0,
+    (item): item is string =>
+      typeof item === 'string' && item.trim().length > 0,
   )
   if (cleaned.length === 0) return options.fallback ?? ''
   return getFormatter(options.type ?? 'conjunction').format(cleaned)

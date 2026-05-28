@@ -48,10 +48,7 @@ export function songSearchableTokens(song: Song): string {
  * `/music` page derives results inside a `useMemo` block where the
  * full song list is already in scope.
  */
-export function songMatchesQuery(
-  song: Song,
-  lowercaseQuery: string,
-): boolean {
+export function songMatchesQuery(song: Song, lowercaseQuery: string): boolean {
   if (!lowercaseQuery) return true
   return songSearchableTokens(song).includes(lowercaseQuery)
 }

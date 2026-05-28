@@ -45,12 +45,17 @@ const REQUIRED_SIZES: DerivativeName[] = [
 
 type MediaWithSizes = Media & {
   sizes?: Partial<
-    Record<DerivativeName, { url?: string | null; filename?: string | null } | null>
+    Record<
+      DerivativeName,
+      { url?: string | null; filename?: string | null } | null
+    >
   > | null
 }
 
 const isImageMime = (mime: string | null | undefined): boolean =>
-  typeof mime === 'string' && mime.startsWith('image/') && mime !== 'image/svg+xml'
+  typeof mime === 'string' &&
+  mime.startsWith('image/') &&
+  mime !== 'image/svg+xml'
 
 const hasAllSizes = (doc: MediaWithSizes): boolean =>
   REQUIRED_SIZES.every((name) => Boolean(doc.sizes?.[name]?.url))
@@ -145,9 +150,7 @@ export async function POST(req: NextRequest) {
     limit: ids ? ids.length : Math.min(Math.max(limit, 1), 500),
     depth: 0,
     overrideAccess: true,
-    where: ids
-      ? { id: { in: ids } }
-      : isImageMimeWhereClause(),
+    where: ids ? { id: { in: ids } } : isImageMimeWhereClause(),
   })
 
   const stats = {
@@ -156,7 +159,11 @@ export async function POST(req: NextRequest) {
     skippedAlreadyHasSizes: 0,
     regenerated: 0,
     failed: 0,
-    errors: [] as Array<{ id: number; filename: string | null; message: string }>,
+    errors: [] as Array<{
+      id: number
+      filename: string | null
+      message: string
+    }>,
   }
 
   for (const doc of result.docs) {

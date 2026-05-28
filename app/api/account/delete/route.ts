@@ -10,8 +10,12 @@ type DeleteBody = {
   cancelSubscriptionImmediately?: boolean
 }
 
-async function revokeGoogleTokens(tokens: Array<string | null | undefined>): Promise<void> {
-  const valid = tokens.filter((t): t is string => typeof t === 'string' && t.length > 0)
+async function revokeGoogleTokens(
+  tokens: Array<string | null | undefined>,
+): Promise<void> {
+  const valid = tokens.filter(
+    (t): t is string => typeof t === 'string' && t.length > 0,
+  )
   await Promise.all(
     valid.map(async (token) => {
       try {
@@ -50,12 +54,17 @@ async function cancelStripeSubscriptions(
         if (immediately) {
           await stripe.subscriptions.cancel(sub.id)
         } else {
-          await stripe.subscriptions.update(sub.id, { cancel_at_period_end: true })
+          await stripe.subscriptions.update(sub.id, {
+            cancel_at_period_end: true,
+          })
         }
       }),
     )
   } catch (error) {
-    console.warn('Stripe subscription cancellation failed during deletion:', error)
+    console.warn(
+      'Stripe subscription cancellation failed during deletion:',
+      error,
+    )
   }
 }
 
@@ -74,7 +83,10 @@ export async function POST(req: NextRequest) {
     const { user } = await payload.auth({ headers: await headers() })
 
     if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 },
+      )
     }
 
     const fullUser = await payload.findByID({
@@ -84,7 +96,10 @@ export async function POST(req: NextRequest) {
       overrideAccess: true,
     })
 
-    await revokeGoogleTokens([fullUser.googleAccessToken, fullUser.googleRefreshToken])
+    await revokeGoogleTokens([
+      fullUser.googleAccessToken,
+      fullUser.googleRefreshToken,
+    ])
 
     await cancelStripeSubscriptions(
       fullUser.stripeCustomerId,
@@ -107,7 +122,10 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Account deletion failed:', error)
     return NextResponse.json(
-      { error: 'Could not delete account. Please email support if this persists.' },
+      {
+        error:
+          'Could not delete account. Please email support if this persists.',
+      },
       { status: 500 },
     )
   }

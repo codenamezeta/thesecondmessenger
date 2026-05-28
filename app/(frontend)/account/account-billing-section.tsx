@@ -58,8 +58,8 @@ export function AccountBillingSection({ crewRank, billing }: Props) {
           Subscription & payments
         </h2>
         <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          Crew rank on the site usually updates right after Stripe webhooks run. Invoice history and
-          card updates are handled securely by Stripe.
+          Crew rank on the site usually updates right after Stripe webhooks run.
+          Invoice history and card updates are handled securely by Stripe.
         </p>
       </div>
 
@@ -74,7 +74,9 @@ export function AccountBillingSection({ crewRank, billing }: Props) {
           <p className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
             Crew rank (site)
           </p>
-          <p className="mt-1 text-lg font-semibold text-foreground">{RANK_LABELS[crewRank]}</p>
+          <p className="mt-1 text-lg font-semibold text-foreground">
+            {RANK_LABELS[crewRank]}
+          </p>
           {crewRank === 'admiral' && (
             <p className="mt-2 text-xs text-muted-foreground">
               Admiral is assigned manually and is not sold as a subscription.
@@ -99,15 +101,20 @@ export function AccountBillingSection({ crewRank, billing }: Props) {
             </>
           ) : billing.hasStripeCustomer ? (
             <p className="mt-1 text-sm text-muted-foreground">
-              No active subscription on this billing account. You can subscribe from{' '}
-              <Link href="/memberships" className="text-primary underline-offset-4 hover:underline">
+              No active subscription on this billing account. You can subscribe
+              from{' '}
+              <Link
+                href="/memberships"
+                className="text-primary underline-offset-4 hover:underline"
+              >
                 Memberships
               </Link>
               .
             </p>
           ) : (
             <p className="mt-1 text-sm text-muted-foreground">
-              No Stripe customer yet. Starting a paid plan creates your billing profile.
+              No Stripe customer yet. Starting a paid plan creates your billing
+              profile.
             </p>
           )}
         </div>
@@ -115,16 +122,16 @@ export function AccountBillingSection({ crewRank, billing }: Props) {
 
       {rankMismatch && (
         <div className="border border-primary/40 bg-primary/10 p-4 text-sm text-muted-foreground">
-          Your site rank ({RANK_LABELS[crewRank]}) and Stripe plan ({RANK_LABELS[subscriptionTier!]}
-          ) may be out of sync briefly after a change. Refresh in a moment or contact support if it
-          persists.
+          Your site rank ({RANK_LABELS[crewRank]}) and Stripe plan (
+          {RANK_LABELS[subscriptionTier!]}) may be out of sync briefly after a
+          change. Refresh in a moment or contact support if it persists.
         </div>
       )}
 
       {sub?.status === 'past_due' && (
         <div className="border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-          Payment failed. Use <strong>Manage billing</strong> to update your card before access
-          downgrades.
+          Payment failed. Use <strong>Manage billing</strong> to update your
+          card before access downgrades.
         </div>
       )}
 
@@ -154,12 +161,19 @@ export function AccountBillingSection({ crewRank, billing }: Props) {
               </thead>
               <tbody>
                 {billing.invoices.map((inv) => (
-                  <tr key={inv.id} className="border-b border-border/30 last:border-b-0">
+                  <tr
+                    key={inv.id}
+                    className="border-b border-border/30 last:border-b-0"
+                  >
                     <td className="px-3 py-2 text-muted-foreground">
                       {formatStripeTimestamp(inv.created)}
                     </td>
-                    <td className="px-3 py-2 font-mono text-xs">{inv.number ?? inv.id}</td>
-                    <td className="px-3 py-2 capitalize">{inv.status ?? '—'}</td>
+                    <td className="px-3 py-2 font-mono text-xs">
+                      {inv.number ?? inv.id}
+                    </td>
+                    <td className="px-3 py-2 capitalize">
+                      {inv.status ?? '—'}
+                    </td>
                     <td className="px-3 py-2">
                       {formatStripeMoney(inv.amountPaid, inv.currency)}
                     </td>

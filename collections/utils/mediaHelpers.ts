@@ -1,6 +1,6 @@
 // src/utils/mediaHelpers.ts
 
-import type { Payload } from "payload"
+import type { Payload } from 'payload'
 
 type FolderDocLike = {
   id: number
@@ -13,9 +13,9 @@ export const getOrCreateFolder = async (
   folderName: string,
   parentId?: number,
   adopt = false,
-) : Promise<number | null> => {
+): Promise<number | null> => {
   // Payload's built-in folders collection slug
-  const collectionSlug = "payload-folders" as const
+  const collectionSlug = 'payload-folders' as const
 
   // console.log(
   //   `[MediaHelper] Looking for folder "${folderName}" in collection "${collectionSlug}" (Parent: ${parentId || 'ROOT'})`,
@@ -35,7 +35,9 @@ export const getOrCreateFolder = async (
     const match = existing.docs.find((doc: unknown) => {
       const typedDoc = doc as FolderDocLike
       const docFolderId =
-        typeof typedDoc.folder === "object" && typedDoc.folder ? typedDoc.folder.id : typedDoc.folder
+        typeof typedDoc.folder === 'object' && typedDoc.folder
+          ? typedDoc.folder.id
+          : typedDoc.folder
       if (parentId !== undefined) return docFolderId === parentId
       return docFolderId == null
     })
@@ -48,7 +50,9 @@ export const getOrCreateFolder = async (
     // 1.5 Adopt existing folder if allowed
     if (adopt && existing.docs.length > 0) {
       const orphan = existing.docs[0]
-      console.log(`[MediaHelper] ♻️ Adopting existing folder "${folderName}" (${orphan.id})`)
+      console.log(
+        `[MediaHelper] ♻️ Adopting existing folder "${folderName}" (${orphan.id})`,
+      )
       await payload.update({
         collection: collectionSlug,
         id: orphan.id,
@@ -58,7 +62,9 @@ export const getOrCreateFolder = async (
     }
 
     // 2. Create if not found
-    const folderData: { name: string; folder?: number | null } = { name: folderName }
+    const folderData: { name: string; folder?: number | null } = {
+      name: folderName,
+    }
     if (parentId !== undefined) folderData.folder = parentId
 
     const newFolder = await payload.create({
@@ -69,7 +75,9 @@ export const getOrCreateFolder = async (
     // Force update parent if it wasn't set correctly during create
     if (parentId) {
       const createdParentId =
-        typeof newFolder.folder === "object" ? newFolder.folder?.id : newFolder.folder
+        typeof newFolder.folder === 'object'
+          ? newFolder.folder?.id
+          : newFolder.folder
       if (createdParentId != parentId) {
         console.log(
           `[MediaHelper] ⚠️ Parent mismatch after create. Force updating folder ${newFolder.id} to parent ${parentId}`,
@@ -101,26 +109,45 @@ export const organizeFile = async (
   const id = typeof fileId === 'object' && fileId !== null ? fileId.id : fileId
   if (!id) return
 
-  console.log(`[MediaHelper] Organizing File ${id} -> ${rootDirectory}/${itemName}/${subFolder}`)
+  console.log(
+    `[MediaHelper] Organizing File ${id} -> ${rootDirectory}/${itemName}/${subFolder}`,
+  )
 
   try {
     // 1. Level 1: Root Folder (e.g. "Songs")
-    const rootFolderId = await getOrCreateFolder(payload, rootDirectory, undefined, false)
+    const rootFolderId = await getOrCreateFolder(
+      payload,
+      rootDirectory,
+      undefined,
+      false,
+    )
     if (!rootFolderId) return
 
     // 2. Level 2: Project Folder (e.g. "Test Song")
-    const projectFolderId = await getOrCreateFolder(payload, itemName, rootFolderId, true) // Adopt project folders
+    const projectFolderId = await getOrCreateFolder(
+      payload,
+      itemName,
+      rootFolderId,
+      true,
+    ) // Adopt project folders
     if (!projectFolderId) return
 
     // 3. Level 3: Category Folder (e.g. "Masters")
-    const targetFolderId = await getOrCreateFolder(payload, subFolder, projectFolderId, false)
+    const targetFolderId = await getOrCreateFolder(
+      payload,
+      subFolder,
+      projectFolderId,
+      false,
+    )
     if (!targetFolderId) return
 
     // 4. Update the File
     const file = await payload.findByID({ collection: 'media', id })
 
     const currentFolderId =
-      typeof file.folder === 'object' && file.folder !== null ? file.folder.id : file.folder
+      typeof file.folder === 'object' && file.folder !== null
+        ? file.folder.id
+        : file.folder
 
     // Only update if it's not already correct
     if (file && currentFolderId != targetFolderId) {

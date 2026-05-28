@@ -32,12 +32,13 @@ export async function refreshSpotifyToken(refreshToken: string) {
   return data.access_token as string
 }
 
-
-
 /**
  * Saves a list of Track IDs to the User's Library
  */
-export async function saveTrackToLibrary(accessToken: string, trackIds: string[]) {
+export async function saveTrackToLibrary(
+  accessToken: string,
+  trackIds: string[],
+) {
   // REAL URL: https://api.spotify.com/v1/me/tracks
   const res = await fetch('https://api.spotify.com/v1/me/tracks', {
     method: 'PUT',

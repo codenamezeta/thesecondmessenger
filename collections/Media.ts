@@ -95,4 +95,3 @@ export const Media: CollectionConfig = {
     ],
   },
 }
-

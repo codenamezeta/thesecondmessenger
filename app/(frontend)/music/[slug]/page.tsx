@@ -18,12 +18,12 @@ import RichText from '@/components/RichText'
 import {
   Users,
   Disc,
-  ExternalLink,
   YoutubeIcon,
   ThumbsUpIcon,
   Info,
   CalendarClock,
 } from 'lucide-react'
+import { StreamingLinksCard } from '@/components/music/StreamingLinksCard'
 import type { GatedContent, Media, Release } from '@/payload-types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -56,7 +56,6 @@ type Args = {
 type SongDoc = NonNullable<Awaited<ReturnType<typeof querySongBySlug>>>
 type TagLike = { name?: string } | string | number | null | undefined
 type IdLike = { id: number | string } | number | string
-type StreamingLink = { id: string | number; platform: string; url: string }
 type CreditRole = { role: string }
 type CreditItem = {
   id: string | number
@@ -122,41 +121,6 @@ function SidebarCard({
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>
-  )
-}
-
-function StreamingLinksCard({ song }: { song: SongDoc }) {
-  if (!song.streamingLinks || song.streamingLinks.length === 0) return null
-
-  return (
-    <SidebarCard
-      icon={<Disc size={24} className="text-primary" />}
-      title="Stream Now"
-      description="Open official platform links."
-    >
-      <div className="space-y-2">
-        {(song.streamingLinks as StreamingLink[]).map((link) => (
-          <Button
-            key={link.id}
-            asChild
-            variant="outline"
-            className="h-12 w-full justify-between bg-background px-4 text-left"
-          >
-            <a
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-background font-body text-sm tracking-wider text-foreground/75 hover:text-primary hover:underline"
-            >
-              <span className="truncate font-body text-sm">
-                {link.platform}
-              </span>
-              <ExternalLink size={14} aria-hidden />
-            </a>
-          </Button>
-        ))}
-      </div>
-    </SidebarCard>
   )
 }
 
@@ -263,17 +227,44 @@ function SongMetadataCard({ song }: { song: SongDoc }) {
   ].filter((row) => Boolean(row.value))
 
   const tagGroups = [
-    { label: 'Genres', tags: resolveTags(song.genres as TagLike[]).slice(0, 3) },
-    { label: 'Sub-genres', tags: resolveTags(song.subGenres as TagLike[]).slice(0, 3) },
-    { label: 'Activities', tags: resolveTags(song.activities as TagLike[]).slice(0, 3) },
-    { label: 'Themes', tags: resolveTags(song.themes as TagLike[]).slice(0, 3) },
+    {
+      label: 'Genres',
+      tags: resolveTags(song.genres as TagLike[]).slice(0, 3),
+    },
+    {
+      label: 'Sub-genres',
+      tags: resolveTags(song.subGenres as TagLike[]).slice(0, 3),
+    },
+    {
+      label: 'Activities',
+      tags: resolveTags(song.activities as TagLike[]).slice(0, 3),
+    },
+    {
+      label: 'Themes',
+      tags: resolveTags(song.themes as TagLike[]).slice(0, 3),
+    },
     { label: 'Moods', tags: resolveTags(song.moods as TagLike[]).slice(0, 3) },
-    { label: 'Production', tags: resolveTags(song.production as TagLike[]).slice(0, 3) },
-    { label: 'Instruments', tags: resolveTags(song.instruments as TagLike[]).slice(0, 3) },
+    {
+      label: 'Production',
+      tags: resolveTags(song.production as TagLike[]).slice(0, 3),
+    },
+    {
+      label: 'Instruments',
+      tags: resolveTags(song.instruments as TagLike[]).slice(0, 3),
+    },
     { label: 'Gear', tags: resolveTags(song.gear as TagLike[]).slice(0, 3) },
-    { label: 'Arrangements', tags: resolveTags(song.arrangements as TagLike[]).slice(0, 3) },
-    { label: 'Influences', tags: resolveTags(song.influences as TagLike[]).slice(0, 3) },
-    { label: 'Other', tags: resolveTags(song.otherTags as TagLike[]).slice(0, 3) },
+    {
+      label: 'Arrangements',
+      tags: resolveTags(song.arrangements as TagLike[]).slice(0, 3),
+    },
+    {
+      label: 'Influences',
+      tags: resolveTags(song.influences as TagLike[]).slice(0, 3),
+    },
+    {
+      label: 'Other',
+      tags: resolveTags(song.otherTags as TagLike[]).slice(0, 3),
+    },
   ].filter((group) => group.tags.length > 0)
 
   if (detailRows.length === 0 && tagGroups.length === 0) return null
@@ -637,7 +628,9 @@ export default async function SongPage({ params }: Args) {
               />
             )}
 
-            <StreamingLinksCard song={song} />
+            {song.streamingLinks && song.streamingLinks.length > 0 && (
+              <StreamingLinksCard streamingLinks={song.streamingLinks} />
+            )}
             <SongMetadataCard song={song} />
             <ReleaseDetailsCard song={song} />
             <CreditsCard song={song} />

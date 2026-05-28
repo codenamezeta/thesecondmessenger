@@ -35,12 +35,16 @@ interface BlogArchiveProps {
   categories: { id: number; title: string; slug: string }[]
 }
 
-function getCategoryTitle(cat: number | Category | null | undefined): string | null {
+function getCategoryTitle(
+  cat: number | Category | null | undefined,
+): string | null {
   if (!cat || typeof cat === 'number') return null
   return cat.title || null
 }
 
-function getCategoryId(cat: number | Category | null | undefined): number | null {
+function getCategoryId(
+  cat: number | Category | null | undefined,
+): number | null {
   if (!cat) return null
   if (typeof cat === 'number') return cat
   return cat.id
@@ -67,7 +71,9 @@ function estimateReadTime(post: Post): string {
 
 function BlogArchiveListItem({ post }: { post: Post }) {
   const heroUrl = (post.heroImage as Media)?.url
-  const category = post.categories?.[0] ? getCategoryTitle(post.categories[0] as Category) : null
+  const category = post.categories?.[0]
+    ? getCategoryTitle(post.categories[0] as Category)
+    : null
   const publishDate = post.publishedAt ? formatDate(post.publishedAt) : null
   const readTime = estimateReadTime(post)
 
@@ -86,7 +92,11 @@ function BlogArchiveListItem({ post }: { post: Post }) {
               className="object-cover saturate-75 transition-all duration-500 group-hover:saturate-100"
             />
           ) : (
-            <FileText size={24} className="text-muted-foreground/40" aria-hidden />
+            <FileText
+              size={24}
+              className="text-muted-foreground/40"
+              aria-hidden
+            />
           )}
         </div>
 
@@ -96,7 +106,7 @@ function BlogArchiveListItem({ post }: { post: Post }) {
               {category}
             </span>
           )}
-          <h3 className="truncate font-heading text-base uppercase text-foreground transition-colors group-hover:text-primary">
+          <h3 className="truncate font-heading text-base text-foreground uppercase transition-colors group-hover:text-primary">
             {post.title}
           </h3>
           {post.meta?.description && (
@@ -107,7 +117,9 @@ function BlogArchiveListItem({ post }: { post: Post }) {
         </div>
 
         <div className="hidden shrink-0 text-right md:block">
-          <div className="font-mono text-xs text-muted-foreground">{publishDate ?? '—'}</div>
+          <div className="font-mono text-xs text-muted-foreground">
+            {publishDate ?? '—'}
+          </div>
           <div className="mt-0.5 font-mono text-[9px] tracking-widest text-primary/60 uppercase">
             {readTime}
           </div>
@@ -172,7 +184,8 @@ export const BlogArchive = ({ initialPosts, categories }: BlogArchiveProps) => {
           })
         )
           return true
-        if (p.populatedAuthors?.some((a) => a.name?.toLowerCase().includes(q))) return true
+        if (p.populatedAuthors?.some((a) => a.name?.toLowerCase().includes(q)))
+          return true
         return false
       })
     }
@@ -211,7 +224,7 @@ export const BlogArchive = ({ initialPosts, categories }: BlogArchiveProps) => {
     <section className="space-y-8">
       <div className="space-y-4 border border-border/30 bg-secondary p-4">
         <div className="flex flex-row flex-wrap items-center justify-between gap-4">
-          <div className="relative min-w-64 max-w-96 flex-auto">
+          <div className="relative max-w-96 min-w-64 flex-auto">
             <Label htmlFor="blog-search" className="sr-only">
               Search posts by title, description, category, or author
             </Label>
@@ -274,7 +287,10 @@ export const BlogArchive = ({ initialPosts, categories }: BlogArchiveProps) => {
 
         <div className="flex flex-wrap items-center gap-4 border-t border-border/30 pt-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-xs text-muted-foreground uppercase" aria-hidden>
+            <span
+              className="font-mono text-xs text-muted-foreground uppercase"
+              aria-hidden
+            >
               Filter:
             </span>
 
@@ -283,8 +299,15 @@ export const BlogArchive = ({ initialPosts, categories }: BlogArchiveProps) => {
                 <Label htmlFor="blog-category" className="sr-only">
                   Category filter
                 </Label>
-                <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v)}>
-                  <SelectTrigger id="blog-category" size="sm" className="min-w-44 text-xs">
+                <Select
+                  value={categoryFilter}
+                  onValueChange={(v) => setCategoryFilter(v)}
+                >
+                  <SelectTrigger
+                    id="blog-category"
+                    size="sm"
+                    className="min-w-44 text-xs"
+                  >
                     <Tag className="size-3" aria-hidden />
                     <SelectValue placeholder="All Categories" />
                   </SelectTrigger>
@@ -304,12 +327,19 @@ export const BlogArchive = ({ initialPosts, categories }: BlogArchiveProps) => {
           <div className="flex-1" />
 
           <div className="flex items-center gap-2">
-            <ArrowUpDown size={14} className="shrink-0 text-muted-foreground" aria-hidden />
+            <ArrowUpDown
+              size={14}
+              className="shrink-0 text-muted-foreground"
+              aria-hidden
+            />
             <div className="flex flex-col gap-1">
               <Label htmlFor="blog-sort" className="sr-only">
                 Sort order
               </Label>
-              <Select value={sort} onValueChange={(v) => setSort(v as SortMode)}>
+              <Select
+                value={sort}
+                onValueChange={(v) => setSort(v as SortMode)}
+              >
                 <SelectTrigger
                   id="blog-sort"
                   size="sm"
@@ -332,7 +362,8 @@ export const BlogArchive = ({ initialPosts, categories }: BlogArchiveProps) => {
       <div className="flex items-center justify-between">
         <p className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
           <span className="text-primary">{filteredPosts.length}</span>{' '}
-          {filteredPosts.length === 1 ? 'TRANSMISSION' : 'TRANSMISSIONS'} RETRIEVED
+          {filteredPosts.length === 1 ? 'TRANSMISSION' : 'TRANSMISSIONS'}{' '}
+          RETRIEVED
         </p>
         {(search || categoryFilter !== 'all') && (
           <button

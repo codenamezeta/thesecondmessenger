@@ -15,8 +15,6 @@ const PRISM_LANGUAGE_MAP: Record<string, string> = {
 }
 
 export const Code: React.FC<Props> = ({ code, language = '' }) => {
-  if (!code) return null
-
   const [prismReady, setPrismReady] = useState(false)
   const [markdownReady, setMarkdownReady] = useState(false)
 
@@ -26,7 +24,8 @@ export const Code: React.FC<Props> = ({ code, language = '' }) => {
     const load = async () => {
       // Prism "components" modules patch a shared Prism instance. Ensure the
       // instance we pass into `prism-react-renderer` is the one being patched.
-      ;(globalThis as any).Prism = Prism
+      ;(globalThis as typeof globalThis & { Prism?: typeof Prism }).Prism =
+        Prism
 
       try {
         await Promise.all([
@@ -61,8 +60,12 @@ export const Code: React.FC<Props> = ({ code, language = '' }) => {
     }
   }, [])
 
-  const effectiveLanguage = language === 'markdown' && !markdownReady ? 'markup' : language
-  const prismLanguage = PRISM_LANGUAGE_MAP[effectiveLanguage] ?? effectiveLanguage
+  if (!code) return null
+
+  const effectiveLanguage =
+    language === 'markdown' && !markdownReady ? 'markup' : language
+  const prismLanguage =
+    PRISM_LANGUAGE_MAP[effectiveLanguage] ?? effectiveLanguage
 
   if (!prismReady) {
     return (

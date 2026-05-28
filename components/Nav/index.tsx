@@ -126,10 +126,7 @@ export const Nav: React.FC = () => {
         <AdminBar />
         <div className="container flex h-(--main-nav-bar-height) items-center justify-between gap-0">
           {/* Logo */}
-          <Link
-            href="/"
-            className="group z-10 flex shrink-0 items-center py-3"
-          >
+          <Link href="/" className="group z-10 flex shrink-0 items-center py-3">
             {renderNavLogo({
               className:
                 'h-12 w-auto object-contain opacity-75 invert transition-opacity group-hover:opacity-100 md:h-14 dark:invert-0',

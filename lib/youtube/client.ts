@@ -62,7 +62,9 @@ function humanizeYouTubeError(
       )
     case 'quotaExceeded':
     case 'rateLimitExceeded':
-      return new Error('YouTube is rate-limiting this account right now. Try again in a moment.')
+      return new Error(
+        'YouTube is rate-limiting this account right now. Try again in a moment.',
+      )
     case 'subscriptionDuplicate':
       // Callers handle this as success; surface a message just in case it
       // bubbles up somewhere.
@@ -100,8 +102,7 @@ export async function subscribeToChannel(
   channelId: string,
   accessToken: string,
 ) {
-  const url =
-    'https://www.googleapis.com/youtube/v3/subscriptions?part=snippet'
+  const url = 'https://www.googleapis.com/youtube/v3/subscriptions?part=snippet'
   const res = await callYouTubeApi(url, accessToken, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -123,7 +124,11 @@ export async function subscribeToChannel(
     if (body?.error?.errors?.[0]?.reason === 'subscriptionDuplicate') {
       return { alreadySubscribed: true }
     }
-    throw humanizeYouTubeError(body, 'Failed to subscribe on YouTube', res.status)
+    throw humanizeYouTubeError(
+      body,
+      'Failed to subscribe on YouTube',
+      res.status,
+    )
   }
 
   return { alreadySubscribed: false }

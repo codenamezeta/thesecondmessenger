@@ -2,7 +2,9 @@ import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import { Header } from '@/components/Header'
 import { MusicArchive } from '@/components/MusicArchive'
+import { StreamingPlatformDirectory } from '@/components/music/StreamingPlatformDirectory'
 import { parseSearchParams } from '@/lib/music/filterState'
+import DotField from '@/components/DotField'
 import { Metadata } from 'next'
 
 // Reading `searchParams` opts the page into dynamic rendering per
@@ -57,7 +59,22 @@ export default async function MusicPage({ searchParams }: MusicPageProps) {
   })
 
   return (
-    <article className="space-y-12 bg-transparent">
+    <article className="bg-linear-to-br from-primary/10 via-transparent to-accent/15 pb-24">
+      <div className="fixed inset-0 -z-10 bg-background">
+        <DotField
+          dotRadius={1}
+          dotSpacing={20}
+          bulgeStrength={20}
+          glowRadius={200}
+          waveAmplitude={1}
+          cursorRadius={100}
+          cursorForce={0.18}
+          gradientFrom="#55f7e6"
+          gradientTo="#cd5d1a"
+          glowColor="#181e1e"
+        />
+      </div>
+
       <Header
         eyebrow="// ACCESSING AUDIO ARCHIVE"
         title="Music"
@@ -67,12 +84,12 @@ export default async function MusicPage({ searchParams }: MusicPageProps) {
           label: 'Songs Released... so far',
         }}
       />
-
       <main className="container">
         <MusicArchive
           initialSongs={songs.docs}
           initialFilters={initialFilters}
         />
+        <StreamingPlatformDirectory />
       </main>
     </article>
   )

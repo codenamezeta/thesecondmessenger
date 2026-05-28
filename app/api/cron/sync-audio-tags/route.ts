@@ -36,8 +36,7 @@ export async function GET(request: Request) {
     )
   }
 
-  const authorized =
-    key === expected || auth === `Bearer ${expected}`
+  const authorized = key === expected || auth === `Bearer ${expected}`
   if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -55,19 +54,21 @@ export async function GET(request: Request) {
   try {
     const jobs = (
       payload as unknown as {
-        jobs?: { run?: (args?: unknown) => Promise<{ noJobsRemaining?: boolean }> }
+        jobs?: {
+          run?: (args?: unknown) => Promise<{ noJobsRemaining?: boolean }>
+        }
       }
     ).jobs
     if (jobs?.run) {
       const result = await jobs.run({ limit: BATCH_LIMIT })
-      stats.jobsRun =
-        (result as unknown as { jobStatus?: Record<string, unknown> })
-          .jobStatus
-          ? Object.keys(
-              (result as unknown as { jobStatus: Record<string, unknown> })
-                .jobStatus,
-            ).length
-          : 0
+      stats.jobsRun = (
+        result as unknown as { jobStatus?: Record<string, unknown> }
+      ).jobStatus
+        ? Object.keys(
+            (result as unknown as { jobStatus: Record<string, unknown> })
+              .jobStatus,
+          ).length
+        : 0
     }
   } catch (err) {
     payload.logger.warn({

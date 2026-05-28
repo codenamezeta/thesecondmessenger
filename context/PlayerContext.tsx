@@ -15,6 +15,18 @@ import { Song, Release } from '@/payload-types'
 export type ViewMode = 'audio' | 'medium' | 'fullscreen'
 export type VideoMode = 'theater' | 'mini'
 
+export interface YouTubePlayerRef {
+  seekTo: (seconds: number, allowSeekAhead: boolean) => void
+  getIframe?: () => HTMLIFrameElement | null
+  playVideo?: () => void
+  pauseVideo?: () => void
+  setVolume?: (volume: number) => void
+  mute?: () => void
+  unMute?: () => void
+  getCurrentTime?: () => number
+  getDuration?: () => number
+}
+
 /**
  * Metadata for a Song page that wants the Global Player's VideoStage to land
  * inline on its own viewscreen frame. Registered by `SongInlineVideoFrame`,
@@ -107,7 +119,7 @@ interface PlayerActions {
   setIsSeeking: (seeking: boolean) => void
   /** Seek to a specific time — VideoStage registers its player via registerYouTubePlayer */
   seekTo: (time: number) => void
-  registerYouTubePlayer: (player: any) => void
+  registerYouTubePlayer: (player: YouTubePlayerRef) => void
   /** Close the player (standby mode): pause + hide all UI */
   closePlayer: () => void
   updateSongMetadata: (id: string, metadata: Partial<PlayableMedia>) => void
@@ -146,12 +158,16 @@ const normalizeSongData = async (
     id: youtubeId as string,
     youtubeId: youtubeId as string,
     title:
-      (typeof input !== 'string' && (input as { title?: string }).title) || 'Unknown Title',
+      (typeof input !== 'string' && (input as { title?: string }).title) ||
+      'Unknown Title',
     artist:
-      (typeof input !== 'string' && (input as { channelTitle?: string }).channelTitle) ||
+      (typeof input !== 'string' &&
+        (input as { channelTitle?: string }).channelTitle) ||
       'The Second Messenger',
     coverImage:
-      (typeof input !== 'string' && (input as { thumbnail?: string }).thumbnail) || undefined,
+      (typeof input !== 'string' &&
+        (input as { thumbnail?: string }).thumbnail) ||
+      undefined,
   }
 }
 
@@ -174,7 +190,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   // Drawer & tab state
   const [isLibraryDrawerOpen, setIsLibraryDrawerOpen] = useState(false)
   const [isInfoDrawerOpen, setIsInfoDrawerOpen] = useState(false)
-  const [activeLibraryTab, setActiveLibraryTab] = useState<'playlists' | 'queue'>('queue')
+  const [activeLibraryTab, setActiveLibraryTab] = useState<
+    'playlists' | 'queue'
+  >('queue')
   const [activeInfoTab, setActiveInfoTab] = useState('about')
 
   // Playback state (updated by VideoStage)
@@ -184,15 +202,21 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [isSeeking, setIsSeeking] = useState(false)
 
   // Inline target (Song page viewscreen frame that wants to host the video)
-  const [inlineTarget, setInlineTargetState] = useState<InlineTarget | null>(null)
+  const [inlineTarget, setInlineTargetState] = useState<InlineTarget | null>(
+    null,
+  )
 
   // YouTube player ref — VideoStage registers its player instance here
-  const ytPlayerRef = useRef<any>(null)
+  const ytPlayerRef = useRef<YouTubePlayerRef | null>(null)
 
   // Derived backward-compat values
   const isVideoEnabled = videoEnabled
   const miniMode = videoMode === 'mini'
-  const viewMode: ViewMode = !videoEnabled ? 'audio' : videoMode === 'mini' ? 'medium' : 'fullscreen'
+  const viewMode: ViewMode = !videoEnabled
+    ? 'audio'
+    : videoMode === 'mini'
+      ? 'medium'
+      : 'fullscreen'
 
   // Fetch all songs on mount
   useEffect(() => {
@@ -210,7 +234,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   // --- Actions ---
 
-  const registerYouTubePlayer = useCallback((player: any) => {
+  const registerYouTubePlayer = useCallback((player: YouTubePlayerRef) => {
     ytPlayerRef.current = player
   }, [])
 
@@ -232,7 +256,10 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     [],
   )
 
-  const toggleControls = useCallback(() => setControlsVisible((prev) => !prev), [])
+  const toggleControls = useCallback(
+    () => setControlsVisible((prev) => !prev),
+    [],
+  )
 
   const closePlayer = useCallback(() => {
     setIsPlaying(false)
@@ -266,7 +293,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       const song = await normalizeSongData(media, allSongs)
 
       const isSame =
-        currentSong?.youtubeId && song.youtubeId && currentSong.youtubeId === song.youtubeId
+        currentSong?.youtubeId &&
+        song.youtubeId &&
+        currentSong.youtubeId === song.youtubeId
 
       if (isSame) {
         togglePlay()
@@ -349,17 +378,26 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setInlineTargetState((prev) => (prev?.element === element ? null : prev))
   }, [])
 
-  const updateSongMetadata = useCallback((id: string, metadata: Partial<PlayableMedia>) => {
-    setAllSongs((prev) =>
-      prev.map((s) => (s.youtubeId === id ? ({ ...s, ...metadata } as PlayableMedia) : s)),
-    )
-    setQueue((prev) =>
-      prev.map((s) => (s.youtubeId === id ? ({ ...s, ...metadata } as PlayableMedia) : s)),
-    )
-    setCurrentSong((prev) =>
-      prev?.youtubeId === id ? ({ ...prev, ...metadata } as PlayableMedia) : prev,
-    )
-  }, [])
+  const updateSongMetadata = useCallback(
+    (id: string, metadata: Partial<PlayableMedia>) => {
+      setAllSongs((prev) =>
+        prev.map((s) =>
+          s.youtubeId === id ? ({ ...s, ...metadata } as PlayableMedia) : s,
+        ),
+      )
+      setQueue((prev) =>
+        prev.map((s) =>
+          s.youtubeId === id ? ({ ...s, ...metadata } as PlayableMedia) : s,
+        ),
+      )
+      setCurrentSong((prev) =>
+        prev?.youtubeId === id
+          ? ({ ...prev, ...metadata } as PlayableMedia)
+          : prev,
+      )
+    },
+    [],
+  )
 
   const value = useMemo<PlayerContextType>(
     () => ({
@@ -465,7 +503,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     ],
   )
 
-  return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>
+  return (
+    <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>
+  )
 }
 
 export const usePlayer = (): PlayerContextType => {

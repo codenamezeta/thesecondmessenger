@@ -25,7 +25,10 @@ export async function POST() {
     const { user } = await payload.auth({ headers: await headers() })
 
     if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 },
+      )
     }
 
     const fullUser = await payload.findByID({
@@ -35,8 +38,12 @@ export async function POST() {
       overrideAccess: true,
     })
 
-    const tokensToRevoke = [fullUser.googleRefreshToken, fullUser.googleAccessToken]
-      .filter((token): token is string => typeof token === 'string' && token.length > 0)
+    const tokensToRevoke = [
+      fullUser.googleRefreshToken,
+      fullUser.googleAccessToken,
+    ].filter(
+      (token): token is string => typeof token === 'string' && token.length > 0,
+    )
 
     await Promise.all(tokensToRevoke.map(revokeWithGoogle))
 

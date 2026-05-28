@@ -113,7 +113,9 @@ function AuthPageContent() {
       })
 
       if (!res.ok) {
-        const payloadError = parsePayloadError(await res.json().catch(() => null))
+        const payloadError = parsePayloadError(
+          await res.json().catch(() => null),
+        )
         throw new Error(payloadError ?? 'Failed to create account.')
       }
 

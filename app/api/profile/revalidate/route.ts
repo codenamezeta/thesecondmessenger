@@ -29,5 +29,8 @@ export async function POST(request: Request) {
 
   revalidatePath('/crew')
 
-  return NextResponse.json({ revalidated: true, usernames: Array.from(usernames) })
+  return NextResponse.json({
+    revalidated: true,
+    usernames: Array.from(usernames),
+  })
 }

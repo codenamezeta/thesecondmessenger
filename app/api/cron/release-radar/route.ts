@@ -66,7 +66,9 @@ export async function GET(request: Request) {
 
         if (accessToken) {
           // B. Save the song to their library
-          const success = await saveTrackToLibrary(accessToken, [song.spotifyId])
+          const success = await saveTrackToLibrary(accessToken, [
+            song.spotifyId,
+          ])
           if (success) stats.successfulSaves++
         } else {
           stats.errors++ // Token refresh failed (maybe user revoked access)

@@ -14,10 +14,20 @@ export type PublicProfile = {
 
 type PublicProfileSource = Pick<
   User,
-  'id' | 'username' | 'displayName' | 'bio' | 'crewRank' | 'avatar' | 'createdAt' | 'updatedAt'
+  | 'id'
+  | 'username'
+  | 'displayName'
+  | 'bio'
+  | 'crewRank'
+  | 'avatar'
+  | 'createdAt'
+  | 'updatedAt'
 >
 
-function readAvatar(avatar: User['avatar']): { avatarUrl: string | null; avatarAlt: string } {
+function readAvatar(avatar: User['avatar']): {
+  avatarUrl: string | null
+  avatarAlt: string
+} {
   if (avatar && typeof avatar === 'object') {
     const media = avatar as Media
     return {
@@ -32,7 +42,9 @@ function readAvatar(avatar: User['avatar']): { avatarUrl: string | null; avatarA
   }
 }
 
-export function mapUserToPublicProfile(user: PublicProfileSource): PublicProfile {
+export function mapUserToPublicProfile(
+  user: PublicProfileSource,
+): PublicProfile {
   const avatar = readAvatar(user.avatar)
 
   return {

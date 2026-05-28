@@ -21,14 +21,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/utilities/ui'
-import {
-  FIELD_LABELS,
-  type SongTagField,
-} from '@/lib/songs/tagFields'
-import {
-  activeTagFilterCount,
-  type FilterState,
-} from '@/lib/music/filterState'
+import { FIELD_LABELS, type SongTagField } from '@/lib/songs/tagFields'
+import { activeTagFilterCount, type FilterState } from '@/lib/music/filterState'
 import type { FacetGroup } from '@/lib/music/facetCounts'
 
 interface MusicFilterDrawerProps {
@@ -124,8 +118,8 @@ export const MusicFilterDrawer = ({
             Filter Database
           </SheetTitle>
           <SheetDescription className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
-            Combine layers to drill into the catalog. Filters AND across
-            categories; choices within a category OR together.
+            Filter by genre, mood, activity, instrument, gear, arrangement,
+            influence, and more. Layers AND together; choices within a layer OR.
           </SheetDescription>
         </SheetHeader>
 

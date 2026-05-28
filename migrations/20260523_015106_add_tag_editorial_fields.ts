@@ -1,4 +1,8 @@
-import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-vercel-postgres'
+import {
+  MigrateUpArgs,
+  MigrateDownArgs,
+  sql,
+} from '@payloadcms/db-vercel-postgres'
 
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
@@ -8,7 +12,11 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "tags_featured_image_idx" ON "tags" USING btree ("featured_image_id");`)
 }
 
-export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
+export async function down({
+  db,
+  payload,
+  req,
+}: MigrateDownArgs): Promise<void> {
   await db.execute(sql`
    ALTER TABLE "tags" DROP CONSTRAINT "tags_featured_image_id_media_id_fk";
   
