@@ -1989,6 +1989,19 @@ export interface MediaBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "EmbedBlock".
+ */
+export interface EmbedBlock {
+  /**
+   * Paste the full iframe embed code (e.g. from SoundCloud, YouTube, Spotify). Only standard iframes are supported.
+   */
+  code: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'embed';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "ArchiveBlock".
  */
 export interface ArchiveBlock {

@@ -28,7 +28,7 @@ interface RelatedSongsProps {
  */
 export const RelatedSongs = async ({
   song,
-  limit = 4,
+  limit = 6,
   candidatePoolSize = 60,
 }: RelatedSongsProps) => {
   const payload = await getPayload({ config: configPromise })
@@ -58,7 +58,7 @@ export const RelatedSongs = async ({
         </h2>
       </header>
       <p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-        Ranked by overlap across the 11 sonic-tag layers
+        {`If you liked ${song.title}, you'll probably also like these songs.`}
       </p>
       <ol className="my-0 grid auto-rows-fr grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {related.map((s) => (

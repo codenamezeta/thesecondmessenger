@@ -14,6 +14,7 @@ import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
 import { Banner } from '../../blocks/Banner/config'
 import { Code } from '../../blocks/Code/config'
 import { MediaBlock } from '../../blocks/MediaBlock/config'
+import { Embed } from '../../blocks/Embed/config'
 import { populateAuthors } from './hooks/populateAuthors'
 import { revalidateDelete, revalidatePost } from './hooks/revalidatePost'
 
@@ -75,7 +76,7 @@ export const Posts: CollectionConfig<'posts'> = {
                   return [
                     ...rootFeatures,
                     HeadingFeature({ enabledHeadingSizes: ['h2', 'h3', 'h4'] }),
-                    BlocksFeature({ blocks: [Banner, Code, MediaBlock] }),
+                    BlocksFeature({ blocks: [Banner, Code, MediaBlock, Embed] }),
                     FixedToolbarFeature(),
                     InlineToolbarFeature(),
                     HorizontalRuleFeature(),

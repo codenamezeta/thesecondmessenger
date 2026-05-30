@@ -17,6 +17,7 @@ import { Code } from '@/blocks/Code/config'
 import { Content } from '@/blocks/Content/config'
 import { FormBlock } from '@/blocks/Form/config'
 import { MediaBlock } from '@/blocks/MediaBlock/config'
+import { Embed } from '@/blocks/Embed/config'
 import type { Release } from '@/payload-types'
 import { queueAudioTagSync } from '@/lib/audio-tags/queueAudioTagSync'
 
@@ -794,6 +795,16 @@ export const Songs: CollectionConfig = {
                   'The 11-layer Sonic Tag Ontology. Each row is a distinct semantic surface for search engines, AI chatbots, and the front-end. See `.cursor/rules/sonic-tag-ontology.mdc` for full definitions.',
               },
               fields: [
+                {
+                  name: 'tagCopyButtons',
+                  type: 'ui',
+                  admin: {
+                    components: {
+                      Field:
+                        '@/components/payload-admin/TagCopyButtons#TagCopyButtons',
+                    },
+                  },
+                },
                 // --- Row 1: Genre + Sub-genre (the broad foundation + cultural movement) ---
                 {
                   type: 'row',
@@ -1073,6 +1084,7 @@ export const Songs: CollectionConfig = {
                         CallToAction,
                         Content,
                         FormBlock,
+                        Embed,
                       ],
                     }),
                     // TreeViewFeature(),
@@ -1100,7 +1112,7 @@ export const Songs: CollectionConfig = {
               name: 'comment',
               type: 'textarea',
               label: 'Embedded Comment (COMM)',
-              defaultValue: 'Thank you for being a fan',
+              defaultValue: 'Thank you for listening.',
               admin: {
                 rows: 2,
                 description:

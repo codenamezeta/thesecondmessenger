@@ -42,7 +42,7 @@ export const LibrarySync = ({
   const { ensureToken } = useYouTubeAuth()
 
   const [status, setStatus] = useState<
-    'idle' | 'loading' | 'success' | 'connected'
+    'idle' | 'loading' | 'success' | 'connected' | 'error'
   >(() => {
     if (initialIsSaved) return 'connected'
     if (
@@ -50,18 +50,44 @@ export const LibrarySync = ({
       searchParams.get('action') === 'spotify'
     )
       return 'success'
+    if (
+      searchParams.get('error') === 'spotify' &&
+      searchParams.get('action') === 'spotify'
+    )
+      return 'error'
     return 'idle'
   })
   const [activePlatform, setActivePlatform] = useState<
     'spotify' | 'youtube' | null
-  >(null)
+  >(() =>
+    searchParams.get('action') === 'spotify' ? 'spotify' : null,
+  )
+  const [errorMessage, setErrorMessage] = useState<string | null>(() => {
+    if (searchParams.get('error') !== 'spotify') return null
+    const reason = searchParams.get('reason')
+    if (reason === 'access_denied') {
+      return 'Spotify authorization was cancelled.'
+    }
+    return 'Could not connect to Spotify. Please try again.'
+  })
 
   // --- SPOTIFY HANDLER ---
   const handleSpotify = async () => {
     setStatus('loading')
     setActivePlatform('spotify')
-    const url = await getSpotifyAuthUrl(songId)
-    if (url) router.push(url)
+    setErrorMessage(null)
+
+    try {
+      const url = await getSpotifyAuthUrl(songId)
+      router.push(url)
+    } catch (err) {
+      setStatus('error')
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : 'Spotify is not configured on this server.',
+      )
+    }
   }
 
   // --- YOUTUBE HANDLER ---
@@ -95,6 +121,30 @@ export const LibrarySync = ({
         err instanceof Error ? err.message : 'Failed to connect to YouTube.',
       )
     }
+  }
+
+  // --- RENDER: ERROR FLASH ---
+  if (status === 'error') {
+    return (
+      <div className="flex w-full flex-col gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+        <div>
+          <h4 className="font-heading text-sm font-bold tracking-widest text-destructive uppercase">
+            Link Failed
+          </h4>
+          <p className="mt-1 font-mono text-[10px] text-wrap text-destructive/80">
+            {errorMessage ??
+              'Could not connect to Spotify. Please try again in a moment.'}
+          </p>
+        </div>
+        <button
+          onClick={handleSpotify}
+          className="flex w-full items-center justify-center gap-2 rounded border border-destructive/30 px-4 py-2 text-[10px] font-bold tracking-widest text-destructive uppercase transition-colors hover:bg-destructive/10"
+        >
+          <Disc3 size={14} />
+          Retry Spotify Link
+        </button>
+      </div>
+    )
   }
 
   // --- RENDER: SUCCESS FLASH ---
