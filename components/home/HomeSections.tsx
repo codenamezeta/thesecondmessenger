@@ -136,6 +136,7 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
               tag="span"
               className=""
               textAlign="left"
+              immediate
             />{' '}
             <SplitText
               text="Pop-Punk"
@@ -143,8 +144,15 @@ function HeroSection({ featuredSong }: { featuredSong?: SongPreview }) {
               delay={200}
               className="glitch-text"
               textAlign="left"
+              immediate
             />{' '}
-            <SplitText text=" Heart" tag="span" className="" textAlign="left" />
+            <SplitText
+              text=" Heart"
+              tag="span"
+              className=""
+              textAlign="left"
+              immediate
+            />
           </motion.h1>
 
           {/* Tagline */}
