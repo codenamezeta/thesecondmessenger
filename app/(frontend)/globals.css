@@ -4,60 +4,43 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================================
+   THEMES
+   -----------------------------------------------------------
+   Source of truth for theme metadata is `lib/themes.ts`.
+
+   - `:root` holds structural tokens + the DEFAULT (dark) palette.
+   - Each additional theme is a self-contained `[data-theme="<id>"]`
+     block overriding the color tokens.
+   - `ThemeProvider` sets `data-theme` AND toggles `.dark` (per the
+     theme's `mode`) so shadcn `dark:` utilities keep working.
+   - Charts + sidebar-primary derive from `--primary` (see :root),
+     so they re-tint automatically for every theme.
+   - All colors are oklch; opacity modifiers (bg-primary/50) work
+     natively, so no HSL-channel workaround is needed.
+   ============================================================ */
+
 :root {
-  --background: oklch(0.98 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.511 0.096 186.391);
-  --primary-sl: hsl(160, 100%, 75%);
-  --primary-foreground: oklch(0.984 0.014 180.72);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.511 0.096 186.391);
-  --accent-foreground: oklch(0.984 0.014 180.72);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.705 0.015 286.067);
-  --special: oklch(40% 0.15 7);
-  --chart-1: oklch(0.855 0.138 181.071);
-  --chart-2: oklch(0.704 0.14 182.503);
-  --chart-3: oklch(0.6 0.118 184.704);
-  --chart-4: oklch(0.511 0.096 186.391);
-  --chart-5: oklch(0.437 0.078 188.216);
+  /* --- Structural tokens (theme-independent) --- */
   --radius: 0.2rem;
   --main-nav-bar-height: clamp(4.75rem, calc(100vh / 15), 6rem);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.6 0.118 184.704);
-  --sidebar-primary-foreground: oklch(0.984 0.014 180.72);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.705 0.015 286.067);
-}
 
-.dark {
+  /* --- Default palette: "Deep Space" (dark) --- */
   --background: oklch(0.075 0.005 285.823);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.21 0.006 285.885);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.33 0.01 285);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(77% 0.13 170);
+  --primary: oklch(0.77 0.13 170);
   --primary-foreground: oklch(0.984 0.014 180.72);
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
-  --accent: oklch(67% 0.15 38);
+  --accent: oklch(0.67 0.15 38);
   --accent-foreground: oklch(0.984 0.014 180.72);
   --muted: oklch(0.274 0.006 286.033);
   --muted-foreground: oklch(0.705 0.015 286.067);
-  --special: oklch(40% 0.15 7);
+  --special: oklch(0.4 0.15 7);
   --destructive: oklch(0.7 0.25 25);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
@@ -69,33 +52,180 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
-  /* Programmatically related colors */
 
-  /* Chart 5 uses your primary as the baseline */
+  /* --- Derived colors (recompute from --primary per theme) --- */
   --chart-5: var(--primary);
-
   --chart-4: oklch(
     from var(--chart-5) calc(l - 0.1) calc(c + 0.01) calc(h + 3)
   );
-
   --chart-3: oklch(
     from var(--chart-4) calc(l - 0.1) calc(c + 0.01) calc(h + 3)
   );
-
   --chart-2: oklch(
     from var(--chart-3) calc(l - 0.1) calc(c + 0.01) calc(h + 3)
   );
-
   --chart-1: oklch(
     from var(--chart-2) calc(l - 0.1) calc(c + 0.01) calc(h + 3)
   );
-
-  /* Sidebar primary gets mapped to a beautiful mid-tone (Chart 2) */
   --sidebar-primary: var(--chart-2);
-
-  /* Because the sidebar background is bright, the foreground text needs to be 
-     drastically darker to be readable. We subtract 0.67 from the lightness. */
   --sidebar-primary-foreground: oklch(from var(--primary) calc(l - 0.67) c h);
+}
+
+/* "Daybreak" — light mode (was the previous default) */
+[data-theme='light'] {
+  --background: oklch(0.98 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --primary: oklch(0.511 0.096 186.391);
+  --primary-foreground: oklch(0.984 0.014 180.72);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --accent: oklch(0.511 0.096 186.391);
+  --accent-foreground: oklch(0.984 0.014 180.72);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --special: oklch(0.4 0.15 7);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.705 0.015 286.067);
+
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.141 0.005 285.823);
+  --sidebar-accent: oklch(0.967 0.001 286.375);
+  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-border: oklch(0.92 0.004 286.32);
+  --sidebar-ring: oklch(0.705 0.015 286.067);
+
+  /* Light needs an explicit readable sidebar-primary pairing. */
+  --sidebar-primary: oklch(0.6 0.118 184.704);
+  --sidebar-primary-foreground: oklch(0.984 0.014 180.72);
+}
+
+/* "Interstellar" — deep blue space, lime signal (dark) */
+[data-theme='interstellar'] {
+  --background: oklch(0.13 0.03 265);
+  --foreground: oklch(0.98 0.005 248);
+  --card: oklch(0.21 0.03 260);
+  --card-foreground: oklch(0.98 0.005 248);
+  --popover: oklch(0.25 0.03 260);
+  --popover-foreground: oklch(0.98 0.005 248);
+  --primary: oklch(0.87 0.21 128);
+  --primary-foreground: oklch(0.18 0.04 265);
+  --secondary: oklch(0.5 0.08 256);
+  --secondary-foreground: oklch(0.98 0.005 248);
+  --accent: oklch(0.45 0.15 12);
+  --accent-foreground: oklch(0.98 0.005 248);
+  --muted: oklch(0.27 0.03 260);
+  --muted-foreground: oklch(0.72 0.03 256);
+  --special: oklch(0.45 0.15 7);
+  --destructive: oklch(0.6 0.22 25);
+  --border: oklch(0.4 0.04 260);
+  --input: oklch(0.27 0.03 260);
+  --ring: oklch(0.87 0.21 128);
+
+  --sidebar: oklch(0.16 0.03 265);
+  --sidebar-foreground: oklch(0.98 0.005 248);
+  --sidebar-accent: oklch(0.27 0.03 260);
+  --sidebar-accent-foreground: oklch(0.98 0.005 248);
+  --sidebar-border: oklch(0.4 0.04 260);
+  --sidebar-ring: oklch(0.87 0.21 128);
+}
+
+/* "Kelly Come Home" — warm paper + burnt sienna (light) */
+[data-theme='kelly_come_home'] {
+  --background: oklch(0.95 0.006 70);
+  --foreground: oklch(0.18 0.03 40);
+  --card: oklch(0.97 0.01 75);
+  --card-foreground: oklch(0.18 0.03 40);
+  --popover: oklch(0.97 0.01 75);
+  --popover-foreground: oklch(0.18 0.03 40);
+  --primary: oklch(0.45 0.11 38);
+  --primary-foreground: oklch(0.95 0.03 75);
+  --secondary: oklch(0.88 0.05 70);
+  --secondary-foreground: oklch(0.4 0.1 38);
+  --accent: oklch(0.82 0.07 55);
+  --accent-foreground: oklch(0.35 0.1 38);
+  --muted: oklch(0.85 0.02 60);
+  --muted-foreground: oklch(0.45 0.03 50);
+  --special: oklch(0.5 0.13 30);
+  --destructive: oklch(0.55 0.22 27);
+  --border: oklch(0.8 0.03 60);
+  --input: oklch(0.88 0.02 65);
+  --ring: oklch(0.45 0.11 38);
+
+  --sidebar: oklch(0.93 0.01 70);
+  --sidebar-foreground: oklch(0.2 0.03 40);
+  --sidebar-accent: oklch(0.85 0.02 60);
+  --sidebar-accent-foreground: oklch(0.35 0.1 38);
+  --sidebar-border: oklch(0.8 0.03 60);
+  --sidebar-ring: oklch(0.45 0.11 38);
+
+  --sidebar-primary: oklch(0.45 0.11 38);
+  --sidebar-primary-foreground: oklch(0.95 0.03 75);
+}
+
+/* "Nebula" — violet haze with a cyan edge (dark) */
+[data-theme='nebula'] {
+  --background: oklch(0.11 0.02 300);
+  --foreground: oklch(0.97 0.01 310);
+  --card: oklch(0.18 0.03 300);
+  --card-foreground: oklch(0.97 0.01 310);
+  --popover: oklch(0.22 0.04 300);
+  --popover-foreground: oklch(0.97 0.01 310);
+  --primary: oklch(0.72 0.18 320);
+  --primary-foreground: oklch(0.15 0.03 310);
+  --secondary: oklch(0.28 0.05 290);
+  --secondary-foreground: oklch(0.97 0.01 310);
+  --accent: oklch(0.7 0.16 200);
+  --accent-foreground: oklch(0.15 0.03 240);
+  --muted: oklch(0.26 0.04 300);
+  --muted-foreground: oklch(0.72 0.04 305);
+  --special: oklch(0.45 0.18 330);
+  --destructive: oklch(0.65 0.24 20);
+  --border: oklch(0.4 0.05 305);
+  --input: oklch(0.26 0.04 300);
+  --ring: oklch(0.72 0.18 320);
+
+  --sidebar: oklch(0.14 0.025 300);
+  --sidebar-foreground: oklch(0.97 0.01 310);
+  --sidebar-accent: oklch(0.26 0.04 300);
+  --sidebar-accent-foreground: oklch(0.97 0.01 310);
+  --sidebar-border: oklch(0.4 0.05 305);
+  --sidebar-ring: oklch(0.72 0.18 320);
+}
+
+/* "Distress Signal" — amber alert against the dark (dark) */
+[data-theme='distress'] {
+  --background: oklch(0.1 0.015 30);
+  --foreground: oklch(0.96 0.02 80);
+  --card: oklch(0.17 0.025 35);
+  --card-foreground: oklch(0.96 0.02 80);
+  --popover: oklch(0.21 0.03 35);
+  --popover-foreground: oklch(0.96 0.02 80);
+  --primary: oklch(0.78 0.16 70);
+  --primary-foreground: oklch(0.16 0.03 50);
+  --secondary: oklch(0.28 0.04 40);
+  --secondary-foreground: oklch(0.96 0.02 80);
+  --accent: oklch(0.62 0.22 25);
+  --accent-foreground: oklch(0.97 0.02 80);
+  --muted: oklch(0.26 0.03 40);
+  --muted-foreground: oklch(0.72 0.04 60);
+  --special: oklch(0.55 0.2 30);
+  --destructive: oklch(0.62 0.24 25);
+  --border: oklch(0.4 0.05 45);
+  --input: oklch(0.26 0.03 40);
+  --ring: oklch(0.78 0.16 70);
+
+  --sidebar: oklch(0.13 0.02 35);
+  --sidebar-foreground: oklch(0.96 0.02 80);
+  --sidebar-accent: oklch(0.26 0.03 40);
+  --sidebar-accent-foreground: oklch(0.96 0.02 80);
+  --sidebar-border: oklch(0.4 0.05 45);
+  --sidebar-ring: oklch(0.78 0.16 70);
 }
 
 @theme inline {

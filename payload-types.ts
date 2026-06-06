@@ -126,8 +126,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'site-settings': SiteSetting;
+  };
+  globalsSelect: {
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -345,6 +349,10 @@ export interface User {
   avatar?: (number | null) | Media;
   bio?: string | null;
   zipCode?: number | null;
+  /**
+   * Preferred site color theme. Leave empty to follow the featured theme.
+   */
+  themePreference?: ('dark' | 'light' | 'interstellar' | 'kelly_come_home' | 'nebula' | 'distress') | null;
   role: 'admin' | 'user';
   crewRank: 'ensign' | 'lieutenant' | 'commander' | 'captain' | 'admiral';
   /**
@@ -1596,6 +1604,7 @@ export interface UsersSelect<T extends boolean = true> {
   avatar?: T;
   bio?: T;
   zipCode?: T;
+  themePreference?: T;
   role?: T;
   crewRank?: T;
   stripeCustomerId?: T;
@@ -1895,6 +1904,31 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * Site-wide presentation settings, including the featured theme that rotates with releases.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: number;
+  /**
+   * Default color theme for visitors who have not picked their own. Flip this on release day to refresh the whole site — anyone "following the featured theme" updates automatically.
+   */
+  defaultTheme: 'dark' | 'light' | 'interstellar' | 'kelly_come_home' | 'nebula' | 'distress';
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  defaultTheme?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
