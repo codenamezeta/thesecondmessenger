@@ -74,6 +74,12 @@ const DotField = memo(({
   const sizeRef = useRef({ w: 0, h: 0, offsetX: 0, offsetY: 0 });
   const glowOpacity = useRef(0);
   const engagement = useRef(0);
+  const isVisibleRef = useRef(true);
+  const resolvedColorsRef = useRef<{ from: string; to: string } | null>(null);
+  const colorSourceRef = useRef<{ from: string | null; to: string | null }>({
+    from: null,
+    to: null,
+  });
   const propsRef = useRef<Partial<DotFieldProps>>({});
   propsRef.current = { dotRadius, dotSpacing, cursorRadius, cursorForce, bulgeOnly, bulgeStrength, sparkle, waveAmplitude, gradientFrom, gradientTo };
   const rebuildRef = useRef<(() => void) | null>(null);
@@ -89,10 +95,50 @@ const DotField = memo(({
     const ctx = canvas.getContext('2d', { alpha: true });
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let resizeTimer: NodeJS.Timeout;
+    let visibilityObserver: IntersectionObserver | undefined;
 
     function resize() {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(doResize, 100);
+    }
+
+    function startLoop() {
+      if (rafRef.current === null) {
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    }
+
+    function stopLoop() {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    }
+
+    function setVisible(visible: boolean) {
+      isVisibleRef.current = visible;
+      if (visible) {
+        startLoop();
+      } else {
+        stopLoop();
+      }
+    }
+
+    function syncGradientColors(target: HTMLCanvasElement) {
+      const p = propsRef.current;
+      if (!p.gradientFrom || !p.gradientTo) return;
+
+      if (
+        resolvedColorsRef.current === null ||
+        colorSourceRef.current.from !== p.gradientFrom ||
+        colorSourceRef.current.to !== p.gradientTo
+      ) {
+        colorSourceRef.current = { from: p.gradientFrom, to: p.gradientTo };
+        resolvedColorsRef.current = {
+          from: resolveCssColor(p.gradientFrom, target),
+          to: resolveCssColor(p.gradientTo, target),
+        };
+      }
     }
 
     function doResize() {
@@ -117,6 +163,7 @@ const DotField = memo(({
       };
 
       buildDots(w, h);
+      syncGradientColors(canvas);
     }
 
     function buildDots(w: number, h: number) {
@@ -177,7 +224,10 @@ const DotField = memo(({
 
     function tick() {
       const activeCanvas = canvasRef.current;
-      if (!activeCanvas) return;
+      if (!activeCanvas || !isVisibleRef.current) {
+        rafRef.current = null;
+        return;
+      }
 
       frameCount++;
       const dots = dotsRef.current;
@@ -203,12 +253,13 @@ const DotField = memo(({
       if (!ctx || !p.gradientFrom || !p.gradientTo || !p.cursorRadius || !p.dotRadius) return;
       ctx.clearRect(0, 0, w, h);
 
-      const colorFrom = resolveCssColor(p.gradientFrom, activeCanvas);
-      const colorTo = resolveCssColor(p.gradientTo, activeCanvas);
+      syncGradientColors(activeCanvas);
+      const colors = resolvedColorsRef.current;
+      if (!colors) return;
 
       const grad = ctx.createLinearGradient(0, 0, w, h);
-      grad.addColorStop(0, colorFrom);
-      grad.addColorStop(1, colorTo);
+      grad.addColorStop(0, colors.from);
+      grad.addColorStop(1, colors.to);
       ctx.fillStyle = grad;
 
       const cr = p.cursorRadius;
@@ -304,7 +355,18 @@ const DotField = memo(({
     doResize();
     window.addEventListener('resize', resize);
     window.addEventListener('mousemove', onMouseMove, { passive: true });
-    rafRef.current = requestAnimationFrame(tick);
+
+    const observeTarget = canvas.parentElement;
+    if (observeTarget) {
+      visibilityObserver = new IntersectionObserver(
+        ([entry]) => setVisible(entry.isIntersecting),
+        { root: null, rootMargin: '200px 0px', threshold: 0 },
+      );
+      visibilityObserver.observe(observeTarget);
+    }
+
+    // Observer fires asynchronously — start immediately if already on screen.
+    startLoop();
 
     rebuildRef.current = () => {
       const { w, h } = sizeRef.current;
@@ -313,7 +375,8 @@ const DotField = memo(({
 
     // Cleanup physics loops when component unmounts
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      stopLoop();
+      visibilityObserver?.disconnect();
       clearInterval(speedInterval);
       clearTimeout(resizeTimer);
       window.removeEventListener('resize', resize);
