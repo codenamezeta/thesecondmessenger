@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import type { Song, Tag } from '@/payload-types'
 import { FIELD_TO_CATEGORY, type SongTagField } from '@/lib/songs/tagFields'
+import { resolveTagIcon } from '@/lib/songs/tagIcons'
 import { musicHrefForTag } from '@/lib/music/filterState'
 
 const isTag = (tag: unknown): tag is Tag =>
@@ -108,12 +109,14 @@ export const SonicDNA = ({ song }: { song: Song }) => {
                   const href = tag.slug
                     ? musicHrefForTag(FIELD_TO_CATEGORY[field], tag.slug)
                     : null
+                  const TagGlyph = resolveTagIcon(tag)
                   const badge = (
                     <Badge
                       variant="outline"
-                      className="cursor-pointer bg-background/50 font-mono text-[10px] tracking-wide transition-all hover:border-primary/50 hover:bg-primary/20 hover:text-primary"
+                      className="flex cursor-pointer items-center gap-1 bg-background/50 font-mono text-[10px] tracking-wide transition-all hover:border-primary/50 hover:bg-primary/20 hover:text-primary"
                     >
-                      #{tag.name.toUpperCase()}
+                      <TagGlyph className="size-3 opacity-80" aria-hidden />
+                      {tag.name.toUpperCase()}
                     </Badge>
                   )
                   return href ? (

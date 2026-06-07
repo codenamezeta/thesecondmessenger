@@ -1,8 +1,10 @@
 'use client'
 
+import { useCallback, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { motion, useReducedMotion } from 'motion/react'
 import {
   Play,
   Pause,
@@ -10,31 +12,32 @@ import {
   Activity,
   Clock,
   Music2,
+  Gauge,
   AlertCircle,
   Radio,
   Mic2,
   Headphones,
+  type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/utilities/ui'
-import type { Song, Media, Tag } from '@/payload-types'
-import { chipCategory, pickCardChips } from '@/lib/songs/pickCardChips'
-import { songToCopyInput } from '@/lib/songs/songCopyInput'
-import { buildSongCardFlavor } from '@/lib/seo/songToCardFlavor'
+import type { Song, Media } from '@/payload-types'
+import { getSongTagField, getTagNames } from '@/lib/songs/tagFields'
+import {
+  chipCategory,
+  getArrangementKeywords,
+  pickCardChips,
+} from '@/lib/songs/pickCardChips'
+import { buildCardFragment } from '@/lib/songs/cardFragment'
+import { getCardRarity, type RarityVariant } from '@/lib/songs/cardRarity'
+import { tempoMarkingForBpm } from '@/lib/songs/tempoDescriptor'
 import { musicHrefForTag } from '@/lib/music/filterState'
 import { usePlayer } from '@/context/PlayerContext'
 import { Button } from '@/components/ui/button'
+import DecryptedText from '@/components/DecryptedText'
 
 interface SongCardProps {
   song: Song
   className?: string
-}
-
-const getTagName = (
-  tag: string | number | Tag | null | undefined,
-): string | null => {
-  if (!tag) return null
-  if (typeof tag === 'string' || typeof tag === 'number') return null
-  return tag.name || null
 }
 
 /** FNV-1a 32-bit — deterministic fingerprint for visuals (SSR-safe). */
@@ -149,9 +152,102 @@ const CHART_ACCENT = [
   'from-primary/30 via-chart-5/25 to-transparent',
 ] as const
 
+/** Gem accent color (CSS var) by rarity variant/tier. Gem-only, no labels. */
+function gemColorFor(variant: RarityVariant, tier: string): string {
+  if (variant === 'vault') return 'var(--color-special)'
+  if (variant === 'deluxe') return 'var(--color-primary)'
+  if (tier === 'holo') return 'var(--color-primary)'
+  if (tier === 'rare') return 'var(--color-accent)'
+  return 'var(--color-muted-foreground)'
+}
+
+/** A single quantitative stat cell in the spec strip. */
+function StatCell({
+  Icon,
+  value,
+  label,
+  hasModifier,
+  title,
+}: {
+  Icon: LucideIcon
+  value: string
+  label: string
+  hasModifier?: boolean
+  title?: string
+}) {
+  return (
+    <div
+      className="relative flex flex-col items-center justify-center gap-0.5 bg-card/80 p-2"
+      title={title}
+    >
+      {hasModifier ? (
+        <span
+          className="absolute top-1 right-1 font-mono text-[9px] leading-none text-primary"
+          aria-hidden
+        >
+          ⇄
+        </span>
+      ) : null}
+      <Icon className="size-2.5 text-muted-foreground" aria-hidden />
+      <span className="w-full truncate text-center font-mono text-[10px] font-bold text-foreground">
+        {value}
+      </span>
+      <span className="font-mono text-[7px] tracking-wider text-muted-foreground uppercase">
+        {label}
+      </span>
+    </div>
+  )
+}
+
 export const SongCard = ({ song, className }: SongCardProps) => {
   const router = useRouter()
   const { playMedia, isPlaying, currentSong } = usePlayer()
+  const prefersReducedMotion = useReducedMotion()
+
+  const tiltRef = useRef<HTMLDivElement>(null)
+  const rafRef = useRef<number | null>(null)
+  const interactiveRef = useRef(false)
+
+  // Pointer tilt + foil tracking only on fine pointers without a
+  // reduced-motion preference. Checked once on mount.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const fine = window.matchMedia('(pointer: fine)').matches
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    interactiveRef.current = fine && !reduce
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    }
+  }, [])
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!interactiveRef.current) return
+    const el = tiltRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const px = (e.clientX - rect.left) / rect.width
+    const py = (e.clientY - rect.top) / rect.height
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    rafRef.current = requestAnimationFrame(() => {
+      const maxTilt = 6
+      el.style.setProperty('--rx', `${(px - 0.5) * 2 * maxTilt}deg`)
+      el.style.setProperty('--ry', `${-(py - 0.5) * 2 * maxTilt}deg`)
+      el.style.setProperty('--mx', `${(px * 100).toFixed(2)}%`)
+      el.style.setProperty('--my', `${(py * 100).toFixed(2)}%`)
+      el.style.setProperty('--pointer', '1')
+    })
+  }, [])
+
+  const resetTilt = useCallback(() => {
+    const el = tiltRef.current
+    if (!el) return
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    el.style.setProperty('--rx', '0deg')
+    el.style.setProperty('--ry', '0deg')
+    el.style.setProperty('--mx', '50%')
+    el.style.setProperty('--my', '0%')
+    el.style.setProperty('--pointer', '0')
+  }, [])
 
   const coverUrl = (song.coverArt as Media)?.url
   const releaseYear = song.releaseDate
@@ -160,24 +256,30 @@ export const SongCard = ({ song, className }: SongCardProps) => {
   const isCurrent = isPlaying && currentSong?.id === song.id
   const href = song.slug ? `/music/${song.slug}` : null
 
-  const subGenre = song.subGenres?.[0] ? getTagName(song.subGenres[0]) : 'Unclassified'
+  const subGenre =
+    getTagNames(getSongTagField(song, 'subGenres'))[0] ??
+    getTagNames(getSongTagField(song, 'genres'))[0] ??
+    'Unclassified'
 
-  // Round-robin across sub-genre, mood, activity, instrument, influence,
-  // theme, and genre — one chip per layer before any layer doubles up,
-  // so every card surfaces its most distinguishing tags rather than
-  // bunching on moods + themes alone.
-  const allFlavorTags = pickCardChips(song, 6)
+  const rarity = getCardRarity(song)
+  const showGem = rarity.level >= 1
+  const gemColor = gemColorFor(rarity.variant, rarity.tier)
 
-  // Trading-card flavor caption — tight grammatical sentence derived
-  // from the same 11-layer ontology, capped at ~90 chars. Renders in
-  // a Magic-card lore style below the tag chips (when present).
-  const flavorText = buildSongCardFlavor(songToCopyInput(song), { maxLength: 160 })
+  // One chip per layer (round-robin) for variety; arrangements get their
+  // own "ability" treatment below the type line.
+  const chips = pickCardChips(song, 6)
+  const keywords = getArrangementKeywords(song, 3)
+
+  // Flavor: the human tagline IS the lore quote. When absent, fall back
+  // to a non-prose "dossier" fragment that can't be grammatically wrong.
+  const fragment = song.tagline ? null : buildCardFragment(song)
 
   const duration = song.duration
     ? `${Math.floor(song.duration / 60)}:${Math.round(song.duration % 60)
         .toString()
         .padStart(2, '0')}`
     : '--:--'
+  const tempo = tempoMarkingForBpm(song.bpm)
 
   const serialNumber = `LOG-${releaseYear}-${compositionAbbrev(song.compositionType)}-${song.id.toString().padStart(3, '0')}`
   const rec = recordingTypePresentation(song.recordingType)
@@ -195,6 +297,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
   const accentGradient = CHART_ACCENT[accentIdx]
   const foilSkewDeg = (fnv1a32(song.title + identityKey) % 7) - 3
   const meshPhase = fnv1a32(barcodeSource(song)) % 360
+  const entranceDelay = (fnv1a32(song.title) % 26) / 100
 
   const bars = barcodeHeights(barcodeSource(song), 32)
 
@@ -209,7 +312,9 @@ export const SongCard = ({ song, className }: SongCardProps) => {
       className={cn(
         'relative flex h-full flex-col overflow-hidden rounded-lg border-t border-r-2 border-b-2 border-l-2 border-border border-r-border/50 border-b-border/60 border-l-border bg-card/30 shadow-sm backdrop-blur-sm transition-[transform,box-shadow,border-color] duration-500 ease-out',
         'group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-[0_20px_50px_-20px] group-hover:shadow-primary/25',
-        isCurrent && 'border-primary/50 shadow-[0_0_0_1px] shadow-primary/20',
+        rarity.level >= 1 && 'border-t-primary/40',
+        rarity.level >= 2 && 'shadow-[0_0_0_1px] shadow-primary/10',
+        isCurrent && 'tsm-now-playing border-primary/60',
       )}
     >
       {/* Deterministic ambient plane (tempo / key / recording identity) */}
@@ -224,10 +329,11 @@ export const SongCard = ({ song, className }: SongCardProps) => {
           )}
           style={{ transform: `rotate(${foilSkewDeg}deg)` }}
         />
-        {/* Top specular wash — opacity 0.07; reads mostly as a slight cool/warm bias */}
+        {/* Top specular wash — strength scales with rarity */}
         <div
-          className="absolute inset-0 opacity-5"
+          className="absolute inset-0"
           style={{
+            opacity: 0.05 + rarity.level * 0.04,
             background: `radial-gradient(ellipse at ${20 + (meshPhase % 55)}% 0%, color-mix(in oklch, var(--color-primary) 14%, transparent) 0%, transparent 58%)`,
           }}
         />
@@ -240,7 +346,16 @@ export const SongCard = ({ song, className }: SongCardProps) => {
         />
       </div>
 
-      {/* Specular band — only moves into view on group-hover; starts off-screen left */}
+      {/* Pointer-reactive holographic foil — holo + secret tiers only */}
+      {rarity.isFoil ? (
+        <div
+          className="tsm-card-foil pointer-events-none absolute inset-0 z-20 rounded-lg"
+          data-variant={rarity.variant}
+          aria-hidden
+        />
+      ) : null}
+
+      {/* Specular band — only sweeps into view on group-hover */}
       <div
         className="pointer-events-none absolute inset-0 z-20 overflow-hidden rounded-sm"
         aria-hidden
@@ -248,9 +363,9 @@ export const SongCard = ({ song, className }: SongCardProps) => {
         <div className="absolute inset-0 -translate-x-full skew-x-12 bg-linear-to-r from-transparent via-foreground/12 to-transparent opacity-100 transition-[transform,opacity] duration-700 ease-out group-hover:translate-x-full group-hover:opacity-100" />
       </div>
 
-      {/* Full-bleed texture under art + data; both sit later in the tree and occlude most of this */}
+      {/* Full-bleed texture under art + data */}
       <div className="absolute inset-0 bg-transparent">
-        {/* Blueprint grid — perpendicular 1px guides forming squares (not CRT scanlines) */}
+        {/* Blueprint grid */}
         <div
           className="absolute inset-0"
           style={{
@@ -260,7 +375,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
             opacity: 0.12,
           }}
         />
-        {/* Horizontal scanlines — 6% black stripes; easy to miss under cover art and the tinted data panel */}
+        {/* Horizontal scanlines */}
         <div
           className="pointer-events-none absolute inset-0"
           style={{
@@ -271,11 +386,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
       </div>
 
       {/* Art frame */}
-      <div
-        className={cn(
-          'relative aspect-square w-full bg-transparent transition-colors duration-500 group-hover:border-special',
-        )}
-      >
+      <div className="relative aspect-square w-full bg-transparent">
         {coverUrl ? (
           <Image
             src={coverUrl}
@@ -284,9 +395,13 @@ export const SongCard = ({ song, className }: SongCardProps) => {
             className={cn(
               'object-cover transition-all duration-700 ease-out',
               isCurrent
-                ? 'glitch-text-2 scale-105 opacity-10 saturate-75'
+                ? 'scale-[1.03] opacity-100 saturate-125'
                 : 'opacity-90 group-hover:scale-[1.04] group-hover:opacity-100',
             )}
+            style={{
+              transform:
+                'translate3d(calc((var(--mx, 50%) - 50%) * -0.05), calc((var(--my, 0%) - 50%) * -0.05), 0)',
+            }}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
@@ -326,9 +441,32 @@ export const SongCard = ({ song, className }: SongCardProps) => {
 
         <div className="absolute top-2 right-2 left-2 z-30 flex items-start justify-between gap-2">
           <div className="rounded-sm border border-border/80 bg-background/70 px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-muted-foreground uppercase backdrop-blur-md">
-            {serialNumber}
+            <DecryptedText
+              text={serialNumber}
+              animateOn="view"
+              sequential
+              revealDirection="start"
+              speed={28}
+              useOriginalCharsOnly={false}
+              characters="ABCDEF0123456789-"
+              className="text-muted-foreground"
+              encryptedClassName="text-primary/60"
+            />
           </div>
           <div className="flex shrink-0 items-center gap-1">
+            {showGem ? (
+              <span
+                className={cn(
+                  'block size-2 rotate-45 rounded-[1px] border border-foreground/30',
+                  rarity.isFoil && 'tsm-card-gem-foil',
+                )}
+                style={{
+                  backgroundColor: gemColor,
+                  boxShadow: `0 0 6px ${gemColor}`,
+                }}
+                aria-hidden
+              />
+            ) : null}
             <div
               className={cn(
                 'flex items-center gap-0.5 rounded-sm border px-1.5 py-0.5 font-mono text-[8px] font-bold tracking-widest uppercase backdrop-blur-md',
@@ -350,7 +488,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
 
       {/* Data panel */}
       <div className="relative z-40 flex flex-1 flex-col bg-linear-to-b from-card to-transparent px-4">
-        {/* Horizontal scanlines — this layer is only over the data panel (visible there); card-level scanlines sit under this panel */}
+        {/* Scanlines local to the data panel */}
         <div
           className="pointer-events-none absolute inset-0 opacity-20"
           style={{
@@ -371,7 +509,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
               className={cn(
                 'mt-3 mb-1 font-heading text-lg leading-tight tracking-wide text-pretty uppercase transition-colors md:text-xl',
                 isCurrent
-                  ? 'text-primary drop-shadow-[0_0_12px_var(--color-primary)]'
+                  ? 'glitch-text-2 text-primary drop-shadow-[0_0_12px_var(--color-primary)]'
                   : 'text-foreground group-hover:text-primary',
               )}
             >
@@ -386,50 +524,75 @@ export const SongCard = ({ song, className }: SongCardProps) => {
               <span>{song.compositionType}</span>
             </div>
 
+            {/* Arrangement "ability" keywords */}
+            {keywords.length > 0 ? (
+              <div className="mb-1.5 flex flex-wrap gap-1">
+                {keywords.map((kw) => (
+                  <span
+                    key={`${kw.field}-${kw.tagId}`}
+                    className="flex items-center gap-1 rounded-sm border border-accent/40 bg-accent/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-accent uppercase"
+                  >
+                    <kw.icon className="size-2.5" aria-hidden />
+                    {kw.text}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+
             {song.tagline ? (
               <p className="line-clamp-2 border-l-2 border-accent/50 pl-2 font-body text-xs leading-snug text-muted-foreground italic">
                 {song.tagline}
               </p>
+            ) : fragment ? (
+              <p
+                className="line-clamp-2 border-l-2 border-border/60 pl-2 font-mono text-[10px] leading-snug tracking-wide text-muted-foreground/80"
+                aria-label="Tag-derived summary"
+              >
+                {fragment}
+              </p>
             ) : null}
-
           </div>
 
-          <div className="mt-auto grid grid-cols-3 gap-px overflow-hidden rounded-sm border border-border/80 bg-border/40">
-            <div className="flex flex-col items-center justify-center gap-0.5 bg-card/80 p-2">
-              <Activity
-                className="size-2.5 text-muted-foreground"
-                aria-hidden
-              />
-              <span className="font-mono text-[10px] font-bold text-foreground">
-                {song.bpm ?? '--'}
-              </span>
-              <span className="font-mono text-[7px] tracking-wider text-muted-foreground uppercase">
-                BPM
-              </span>
-            </div>
-            <div className="flex flex-col items-center justify-center gap-0.5 border-x border-border/30 bg-card/80 p-2">
-              <Music2 className="size-2.5 text-muted-foreground" aria-hidden />
-              <span className="w-full truncate text-center font-mono text-[10px] font-bold text-foreground">
-                {song.key || '—'}
-              </span>
-              <span className="font-mono text-[7px] tracking-wider text-muted-foreground uppercase">
-                Key
-              </span>
-            </div>
-            <div className="flex flex-col items-center justify-center gap-0.5 bg-card/80 p-2">
-              <Clock className="size-2.5 text-muted-foreground" aria-hidden />
-              <span className="font-mono text-[10px] font-bold text-foreground">
-                {duration}
-              </span>
-              <span className="font-mono text-[7px] tracking-wider text-muted-foreground uppercase">
-                Time
-              </span>
-            </div>
+          {/* Quantitative spec strip */}
+          <div className="mt-auto grid grid-cols-4 gap-px overflow-hidden rounded-sm border border-border/80 bg-border/40">
+            <StatCell
+              Icon={Activity}
+              value={song.bpm ? String(song.bpm) : '--'}
+              label="BPM"
+              hasModifier={Boolean(song.changesTempo)}
+              title={
+                song.changesTempo && song.bpm && song.bpmEnd
+                  ? `Tempo shifts ${song.bpm} → ${song.bpmEnd} BPM`
+                  : undefined
+              }
+            />
+            <StatCell
+              Icon={Music2}
+              value={song.key || '—'}
+              label="Key"
+              hasModifier={Boolean(song.changesKey)}
+              title={
+                song.changesKey && song.key && song.keyEnd
+                  ? `Key shifts ${song.key} → ${song.keyEnd}`
+                  : undefined
+              }
+            />
+            <StatCell
+              Icon={Gauge}
+              value={tempo?.label ?? '—'}
+              label="Tempo"
+              title={
+                tempo && song.bpm
+                  ? `${song.bpm} BPM — ${tempo.feel}`
+                  : undefined
+              }
+            />
+            <StatCell Icon={Clock} value={duration} label="Time" />
           </div>
 
-          {allFlavorTags.length > 0 ? (
+          {chips.length > 0 ? (
             <div className="flex flex-wrap gap-1.5 pt-0.5">
-              {allFlavorTags.map((tag) => {
+              {chips.map((tag) => {
                 const filterHref = tag.slug
                   ? musicHrefForTag(chipCategory(tag), tag.slug)
                   : null
@@ -464,40 +627,49 @@ export const SongCard = ({ song, className }: SongCardProps) => {
               })}
             </div>
           ) : null}
-          {flavorText ? (
-              <p
-                className={cn(
-                  'line-clamp-2 font-mono text-[10px] leading-snug tracking-wide text-muted-foreground/70 italic',
-                  song.tagline ? 'mt-1.5' : 'mt-0',
-                )}
-                aria-label="Auto-generated tag-derived flavor caption"
-              >
-                {flavorText}
-              </p>
-            ) : null}
+
           <div className="flex-1" />
           <div className="mt-1 flex items-end justify-between gap-3 border-t border-border/50 pt-1">
             <div
               className="flex h-4 min-w-0 flex-1 items-end gap-px"
               role="img"
               aria-label={
-                song.isrc
-                  ? `Barcode pattern derived from ISRC ${song.isrc}`
-                  : 'Catalog barcode pattern'
+                isCurrent
+                  ? 'Now playing — animated level meter'
+                  : song.isrc
+                    ? `Barcode pattern derived from ISRC ${song.isrc}`
+                    : 'Catalog barcode pattern'
               }
             >
               {bars.map((h, i) => (
                 <div
                   key={i}
-                  className="bar w-0.5 min-w-px bg-foreground/35 transition-[height,background-color] duration-300 group-hover:bg-primary/50"
-                  style={{ height: `calc(${h}% + 5px)` }}
+                  className={cn(
+                    'w-0.5 min-w-px bg-foreground/35 transition-[height,background-color] duration-300 group-hover:bg-primary/50',
+                    isCurrent && 'tsm-eq-bar bg-primary/70',
+                  )}
+                  style={{
+                    height: `calc(${h}% + 5px)`,
+                    animationDelay: isCurrent ? `${(i % 8) * 90}ms` : undefined,
+                  }}
                 />
               ))}
             </div>
             <div className="shrink-0 pb-1 text-right font-mono text-[7px] leading-tight tracking-widest text-muted-foreground uppercase">
               {song.isrc ? (
                 <>
-                  <span className="block text-foreground/80">{song.isrc}</span>
+                  <span className="block text-foreground/80">
+                    <DecryptedText
+                      text={song.isrc}
+                      animateOn="view"
+                      sequential
+                      revealDirection="end"
+                      speed={26}
+                      characters="ABCDEF0123456789"
+                      className="text-foreground/80"
+                      encryptedClassName="text-primary/50"
+                    />
+                  </span>
                   <span className="opacity-70">ISRC</span>
                 </>
               ) : (
@@ -511,23 +683,46 @@ export const SongCard = ({ song, className }: SongCardProps) => {
   )
 
   const shellClass = cn(
-    'group relative block h-full bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    'group relative block h-full bg-transparent [perspective:1100px] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
     !href && 'cursor-default',
     className,
   )
 
-  if (href) {
-    return (
-      <Link href={href} className={shellClass}>
-        <span className="sr-only">Open song page: {song.title}</span>
-        {cardSurface}
-      </Link>
-    )
-  }
-
-  return (
-    <div className={shellClass} role="group" aria-label={song.title}>
+  const tilt = (
+    <div
+      ref={tiltRef}
+      className="tsm-card-tilt h-full"
+      onPointerMove={handlePointerMove}
+      onPointerLeave={resetTilt}
+    >
       {cardSurface}
     </div>
+  )
+
+  const inner = href ? (
+    <Link href={href} className={shellClass}>
+      <span className="sr-only">Open song page: {song.title}</span>
+      {tilt}
+    </Link>
+  ) : (
+    <div className={shellClass} role="group" aria-label={song.title}>
+      {tilt}
+    </div>
+  )
+
+  return (
+    <motion.div
+      className="h-full"
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
+      whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '0px 0px -8% 0px' }}
+      transition={{
+        duration: 0.5,
+        delay: entranceDelay,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+    >
+      {inner}
+    </motion.div>
   )
 }

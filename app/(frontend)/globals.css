@@ -214,7 +214,7 @@
   --accent-foreground: oklch(0.97 0.02 80);
   --muted: oklch(0.26 0.03 40);
   --muted-foreground: oklch(0.72 0.04 60);
-  --special: oklch(0.55 0.2 30);
+  --special: oklch(0.55 0.2 120);
   --destructive: oklch(0.62 0.24 25);
   --border: oklch(0.4 0.05 45);
   --input: oklch(0.26 0.03 40);
@@ -434,6 +434,110 @@
   /* color: rgb(248 113 113 / 0.85); */
   color: var(--primary);
   animation: glitch-flicker 12s steps(1, end) infinite;
+}
+
+/* ============================================================
+   Song trading cards — depth, foil, equalizer, now-playing.
+
+   All driven by CSS custom properties set on `.tsm-card-tilt` by the
+   pointer handler in `components/SongCard.tsx` (--rx/--ry tilt,
+   --mx/--my pointer position, --pointer 0|1). Everything degrades to a
+   calm static state when motion is reduced or there's no fine pointer.
+   ============================================================ */
+
+/* Pointer-tracked 3D tilt. Children parallax off the same --mx/--my. */
+.tsm-card-tilt {
+  transform: perspective(1100px) rotateX(var(--ry, 0deg)) rotateY(var(--rx, 0deg));
+  transition: transform 0.25s ease-out;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* Pointer-reactive holographic foil (holo + secret rarity only). At rest
+   it shows a faint static sheen; it brightens and follows the cursor as
+   --pointer rises to 1. Rainbow literals are intentional (a foil is not a
+   theme color). */
+.tsm-card-foil {
+  background: radial-gradient(
+    circle at var(--mx, 50%) var(--my, 0%),
+    hsl(190 100% 70% / 0.35),
+    hsl(280 100% 70% / 0.22) 26%,
+    hsl(50 100% 70% / 0.16) 46%,
+    transparent 70%
+  );
+  mix-blend-mode: color-dodge;
+  opacity: calc(0.22 + var(--pointer, 0) * 0.5);
+  transition: opacity 0.3s ease-out;
+}
+.tsm-card-foil[data-variant='vault'] {
+  background: radial-gradient(
+    circle at var(--mx, 50%) var(--my, 0%),
+    hsl(330 100% 72% / 0.42),
+    hsl(0 100% 66% / 0.24) 30%,
+    transparent 72%
+  );
+}
+
+/* Live level-meter: the catalog barcode animates while the song plays. */
+@keyframes tsm-eq-bounce {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.tsm-eq-bar {
+  transform-origin: bottom;
+  animation: tsm-eq-bounce 0.9s ease-in-out infinite;
+}
+
+/* Now-playing glow ring pulse. */
+@keyframes tsm-now-playing {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px var(--color-primary),
+      0 0 18px -8px var(--color-primary);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px var(--color-primary),
+      0 0 34px -4px var(--color-primary);
+  }
+}
+.tsm-now-playing {
+  animation: tsm-now-playing 2.4s ease-in-out infinite;
+}
+
+/* Rarity gem shimmer (foil tiers). */
+@keyframes tsm-gem-shimmer {
+  0%,
+  100% {
+    filter: brightness(1) saturate(1);
+  }
+  50% {
+    filter: brightness(1.55) saturate(1.4);
+  }
+}
+.tsm-card-gem-foil {
+  animation: tsm-gem-shimmer 2.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tsm-card-tilt {
+    transform: none !important;
+    transition: none;
+  }
+  .tsm-eq-bar,
+  .tsm-now-playing,
+  .tsm-card-gem-foil {
+    animation: none !important;
+  }
+  .tsm-card-foil {
+    opacity: 0.18 !important;
+  }
 }
 
 @layer components {
