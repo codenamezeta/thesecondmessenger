@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { anyone } from '@/access/anyone'
+import { THEME_SELECT_OPTIONS } from '@/lib/themes'
 
 const RANK_LABELS: Record<string, string> = {
   ensign: 'Ensign',
@@ -158,6 +159,20 @@ export const Users: CollectionConfig = {
       required: false,
       access: {
         read: canReadPrivateUserField,
+      },
+    },
+    // --- PREFERENCES ---
+    {
+      // Nullable on purpose: an unset value means "follow the featured/site
+      // default theme", so flipping the site default on release day reaches
+      // every user who has not explicitly chosen their own theme.
+      name: 'themePreference',
+      type: 'select',
+      required: false,
+      options: THEME_SELECT_OPTIONS,
+      admin: {
+        description:
+          'Preferred site color theme. Leave empty to follow the featured theme.',
       },
     },
     // --- AUTH ---

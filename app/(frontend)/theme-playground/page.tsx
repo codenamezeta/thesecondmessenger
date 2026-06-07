@@ -1,4 +1,4 @@
-// import { ThemeSelector } from '@/providers/Theme/ThemeSelector'
+import { ThemeSelect } from '@/components/ThemeSelect'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -49,9 +49,9 @@ export default function ThemePlayground() {
       </p>
       <div className="flex flex-col justify-between gap-4">
         <h2 className="mb-4 font-heading text-2xl tracking-widest text-secondary uppercase">
-          Press &quot;d&quot; to change theme
+          Switch themes to preview
         </h2>
-        {/* <ThemeSelector /> */}
+        <ThemeSelect />
         <Separator />
       </div>
       <div className="flex flex-wrap justify-between gap-y-4 py-12">
