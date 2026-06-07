@@ -20,6 +20,8 @@ export interface SplitTextProps {
   tag?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span'
   textAlign?: React.CSSProperties['textAlign']
   onLetterAnimationComplete?: () => void
+  /** When true, animates on mount instead of waiting for scroll (for above-the-fold heroes). */
+  immediate?: boolean
 }
 
 const SplitText: React.FC<SplitTextProps> = ({
@@ -36,6 +38,7 @@ const SplitText: React.FC<SplitTextProps> = ({
   tag = 'p',
   textAlign = 'center',
   onLetterAnimationComplete,
+  immediate = false,
 }) => {
   const ref = useRef<HTMLParagraphElement>(null)
   const animationCompletedRef = useRef(false)
@@ -107,14 +110,28 @@ const SplitText: React.FC<SplitTextProps> = ({
         reduceWhiteSpace: false,
         onSplit: (self: GSAPSplitText) => {
           assignTargets(self)
+          const tweenVars = {
+            ...to,
+            duration,
+            ease,
+            stagger: delay / 1000,
+            onComplete: () => {
+              animationCompletedRef.current = true
+              onCompleteRef.current?.()
+            },
+            willChange: 'transform, opacity',
+            force3D: true,
+          }
+
+          if (immediate) {
+            return gsap.fromTo(targets, { ...from }, tweenVars)
+          }
+
           return gsap.fromTo(
             targets,
             { ...from },
             {
-              ...to,
-              duration,
-              ease,
-              stagger: delay / 1000,
+              ...tweenVars,
               scrollTrigger: {
                 trigger: el,
                 start,
@@ -122,12 +139,6 @@ const SplitText: React.FC<SplitTextProps> = ({
                 fastScrollEnd: true,
                 anticipatePin: 0.4,
               },
-              onComplete: () => {
-                animationCompletedRef.current = true
-                onCompleteRef.current?.()
-              },
-              willChange: 'transform, opacity',
-              force3D: true,
             },
           )
         },
@@ -155,6 +166,7 @@ const SplitText: React.FC<SplitTextProps> = ({
         threshold,
         rootMargin,
         fontsLoaded,
+        immediate,
       ],
       scope: ref,
     },

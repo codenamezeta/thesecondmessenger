@@ -8,6 +8,8 @@ import type { Media, User } from '@/payload-types'
 import { getBillingSummaryForCustomer } from '@/utilities/billing'
 import { getMeUser } from '@/utilities/getMeUser'
 
+import { ThemeSelect } from '@/components/ThemeSelect'
+
 import { AccountBillingSection } from './account-billing-section'
 import { AccountDataAndPrivacy } from './data-and-privacy'
 import { AccountProfileForm } from './profile-form'
@@ -142,6 +144,23 @@ export default async function AccountPage() {
         </header>
 
         <AccountProfileForm initialData={initialData} />
+
+        <section className="mt-8 space-y-4 border border-border/50 bg-card/20 p-6 backdrop-blur-sm">
+          <div>
+            <p className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase">
+              {'// Appearance'}
+            </p>
+            <h2 className="mt-1 font-heading text-2xl tracking-tight text-foreground uppercase">
+              Theme
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              Choose your color theme. Your selection saves to your account and
+              follows you across devices. Pick &ldquo;Featured&rdquo; to always
+              track the site&rsquo;s current featured theme.
+            </p>
+          </div>
+          <ThemeSelect />
+        </section>
 
         <AccountBillingSection
           crewRank={userWithAvatar.crewRank}

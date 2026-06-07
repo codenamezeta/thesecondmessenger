@@ -126,8 +126,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'site-settings': SiteSetting;
+  };
+  globalsSelect: {
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -345,6 +349,10 @@ export interface User {
   avatar?: (number | null) | Media;
   bio?: string | null;
   zipCode?: number | null;
+  /**
+   * Preferred site color theme. Leave empty to follow the featured theme.
+   */
+  themePreference?: ('dark' | 'light' | 'interstellar' | 'kelly_come_home' | 'nebula' | 'distress') | null;
   role: 'admin' | 'user';
   crewRank: 'ensign' | 'lieutenant' | 'commander' | 'captain' | 'admiral';
   /**
@@ -726,6 +734,71 @@ export interface Tag {
     | 'influence'
     | 'other';
   slug?: string | null;
+  /**
+   * Optional. Glyph shown on song cards and the Sonic DNA panel for this tag. Leave empty to use the sensible default for this category (e.g. a guitar tag without an icon falls back to the instrument default).
+   */
+  icon?:
+    | (
+        | 'music'
+        | 'guitar'
+        | 'piano'
+        | 'drum'
+        | 'bass'
+        | 'mic'
+        | 'synth'
+        | 'headphones'
+        | 'keyboard'
+        | 'speaker'
+        | 'waveform'
+        | 'sliders'
+        | 'volume'
+        | 'radio'
+        | 'disc'
+        | 'cpu'
+        | 'activity'
+        | 'dumbbell'
+        | 'running'
+        | 'car'
+        | 'gamepad'
+        | 'book'
+        | 'code'
+        | 'coffee'
+        | 'plane'
+        | 'party'
+        | 'zap'
+        | 'heart'
+        | 'heart-crack'
+        | 'rain'
+        | 'flame'
+        | 'skull'
+        | 'sparkles'
+        | 'moon'
+        | 'sun'
+        | 'sunrise'
+        | 'globe'
+        | 'swords'
+        | 'users'
+        | 'user'
+        | 'map-pin'
+        | 'gift'
+        | 'snowflake'
+        | 'trees'
+        | 'mountain'
+        | 'ghost'
+        | 'star'
+        | 'history'
+        | 'crown'
+        | 'layers'
+        | 'branch'
+        | 'repeat'
+        | 'clock'
+        | 'rocket'
+        | 'telescope'
+        | 'satellite'
+        | 'orbit'
+        | 'tag'
+      )
+    | null;
   /**
    * Optional. Renders above the song grid on /music/tag/<category>/<slug> landing pages. Use to give context for the tag (e.g. why a sub-genre matters, when a particular activity-tag is appropriate). Leave empty for tags that don’t need editorial framing.
    */
@@ -1578,6 +1651,7 @@ export interface TagsSelect<T extends boolean = true> {
   name?: T;
   category?: T;
   slug?: T;
+  icon?: T;
   description?: T;
   featuredImage?: T;
   updatedAt?: T;
@@ -1596,6 +1670,7 @@ export interface UsersSelect<T extends boolean = true> {
   avatar?: T;
   bio?: T;
   zipCode?: T;
+  themePreference?: T;
   role?: T;
   crewRank?: T;
   stripeCustomerId?: T;
@@ -1895,6 +1970,31 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * Site-wide presentation settings, including the featured theme that rotates with releases.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: number;
+  /**
+   * Default color theme for visitors who have not picked their own. Flip this on release day to refresh the whole site — anyone "following the featured theme" updates automatically.
+   */
+  defaultTheme: 'dark' | 'light' | 'interstellar' | 'kelly_come_home' | 'nebula' | 'distress';
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  defaultTheme?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

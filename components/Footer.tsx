@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
-import { ThemeToggle } from '@/components/ThemeToggle'
+import { ThemeSelect } from '@/components/ThemeSelect'
 
 const exploreLinks = [
   // { label: 'Home', href: '/' },
@@ -129,7 +129,7 @@ export function Footer() {
             </Link>
             .
           </p>
-          <ThemeToggle />
+          <ThemeSelect />
           <p className="font-mono text-[10px] tracking-[0.25em] text-primary/70 uppercase lg:max-w-xs lg:text-right">
             Secure channel · End of file
           </p>

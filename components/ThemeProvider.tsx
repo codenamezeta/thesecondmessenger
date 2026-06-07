@@ -2,32 +2,31 @@
 
 import * as React from 'react'
 
-export type ThemeSetting = 'light' | 'dark' | 'system'
+import {
+  DEFAULT_THEME,
+  getThemeMode,
+  isThemeId,
+  THEME_STORAGE_KEY,
+  type ThemeId,
+} from '@/lib/themes'
 
-const STORAGE_KEY = 'theme'
-const MEDIA_QUERY_DARK = '(prefers-color-scheme: dark)'
-
-function isValidThemeSetting(value: string | null): value is ThemeSetting {
-  return value === 'light' || value === 'dark' || value === 'system'
-}
-
-function readInitialThemeSetting(): ThemeSetting {
-  if (typeof window === 'undefined') return 'dark'
-
+function readStoredTheme(): ThemeId | null {
+  if (typeof window === 'undefined') return null
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY)
-    return isValidThemeSetting(stored) ? stored : 'system'
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY)
+    return isThemeId(stored) ? stored : null
   } catch {
-    return 'system'
+    return null
   }
 }
 
-function resolveTheme(
-  themeSetting: ThemeSetting,
-  systemPrefersDark: boolean,
-): 'light' | 'dark' {
-  if (themeSetting === 'system') return systemPrefersDark ? 'dark' : 'light'
-  return themeSetting
+function writeStoredTheme(id: ThemeId | null) {
+  try {
+    if (id) window.localStorage.setItem(THEME_STORAGE_KEY, id)
+    else window.localStorage.removeItem(THEME_STORAGE_KEY)
+  } catch {
+    // No-op (private mode / disabled storage)
+  }
 }
 
 function disableTransitionsTemporarily() {
@@ -47,10 +46,44 @@ function disableTransitionsTemporarily() {
   }, 1)
 }
 
+function applyTheme(id: ThemeId) {
+  if (typeof document === 'undefined') return
+  const mode = getThemeMode(id)
+  const el = document.documentElement
+  el.dataset.theme = id
+  el.classList.toggle('dark', mode === 'dark')
+  el.style.colorScheme = mode
+  disableTransitionsTemporarily()
+}
+
+async function patchAccountTheme(userId: number, theme: ThemeId | null) {
+  try {
+    await fetch(`/api/users/${userId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ themePreference: theme }),
+    })
+  } catch {
+    // Best-effort; localStorage still holds the choice for this device.
+  }
+}
+
 type ThemeContextValue = {
-  themeSetting: ThemeSetting
-  resolvedTheme: 'light' | 'dark'
-  setTheme: (next: ThemeSetting) => void
+  /** The theme currently applied to the document. */
+  activeTheme: ThemeId
+  /** The user's explicit choice, or null when following the featured theme. */
+  explicitTheme: ThemeId | null
+  /** The site-wide featured/default theme. */
+  siteDefault: ThemeId
+  /** True when no explicit choice is set (i.e. tracking the featured theme). */
+  isFollowingFeatured: boolean
+  /** Has the client mounted (avoids SSR/CSR selection mismatches). */
+  mounted: boolean
+  /** Set an explicit theme (persists to device + account). */
+  setTheme: (id: ThemeId) => void
+  /** Clear the explicit choice and follow the featured theme again. */
+  followFeatured: () => void
 }
 
 const ThemeContext = React.createContext<ThemeContextValue | null>(null)
@@ -63,82 +96,130 @@ export function useTheme() {
   return ctx
 }
 
-function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [themeSetting, setThemeSetting] = React.useState<ThemeSetting>('system')
-  const [systemPrefersDark, setSystemPrefersDark] = React.useState(false)
+function ThemeProvider({
+  children,
+  siteDefault = DEFAULT_THEME,
+}: {
+  children: React.ReactNode
+  siteDefault?: ThemeId
+}) {
+  const [explicitTheme, setExplicitTheme] = React.useState<ThemeId | null>(null)
+  const [mounted, setMounted] = React.useState(false)
+  const userIdRef = React.useRef<number | null>(null)
 
-  const setTheme = React.useCallback((next: ThemeSetting) => {
-    setThemeSetting(next)
-    try {
-      window.localStorage.setItem(STORAGE_KEY, next)
-    } catch {
-      // No-op (private mode / disabled storage)
+  const activeTheme = explicitTheme ?? siteDefault
+
+  // 1. Adopt this device's stored choice immediately on mount.
+  React.useEffect(() => {
+    setMounted(true)
+    const stored = readStoredTheme()
+    if (stored) {
+      setExplicitTheme(stored)
+      applyTheme(stored)
+    } else {
+      applyTheme(siteDefault)
+    }
+    // siteDefault is request-stable; intentionally run once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // 2. Reconcile with the signed-in account (cross-device preference).
+  React.useEffect(() => {
+    let cancelled = false
+
+    async function syncWithAccount() {
+      try {
+        const res = await fetch('/api/users/me', { credentials: 'include' })
+        if (!res.ok) return
+        const data = (await res.json()) as {
+          user?: { id?: number; themePreference?: unknown } | null
+        }
+        const user = data.user
+        if (!user || typeof user.id !== 'number') return
+        if (cancelled) return
+
+        userIdRef.current = user.id
+        const accountTheme = isThemeId(user.themePreference)
+          ? user.themePreference
+          : null
+        const stored = readStoredTheme()
+
+        if (accountTheme && !stored) {
+          // Fresh device: adopt the account preference.
+          setExplicitTheme(accountTheme)
+          applyTheme(accountTheme)
+          writeStoredTheme(accountTheme)
+        } else if (!accountTheme && stored) {
+          // Chose a theme (possibly while logged out) but account is empty —
+          // persist it so it follows them across devices.
+          void patchAccountTheme(user.id, stored)
+        }
+      } catch {
+        // Anonymous or offline: device storage already governs the theme.
+      }
+    }
+
+    void syncWithAccount()
+    return () => {
+      cancelled = true
     }
   }, [])
 
-  React.useEffect(() => {
-    setThemeSetting(readInitialThemeSetting())
-
-    const mql = window.matchMedia(MEDIA_QUERY_DARK)
-    setSystemPrefersDark(mql.matches)
-
-    const onChange = () => setSystemPrefersDark(mql.matches)
-    if (typeof mql.addEventListener === 'function') {
-      mql.addEventListener('change', onChange)
-      return () => mql.removeEventListener('change', onChange)
+  const setTheme = React.useCallback((next: ThemeId) => {
+    setExplicitTheme(next)
+    applyTheme(next)
+    writeStoredTheme(next)
+    if (userIdRef.current != null) {
+      void patchAccountTheme(userIdRef.current, next)
     }
-
-    mql.addListener(onChange)
-    return () => mql.removeListener(onChange)
   }, [])
 
-  const resolvedTheme = resolveTheme(themeSetting, systemPrefersDark)
+  const followFeatured = React.useCallback(() => {
+    setExplicitTheme(null)
+    applyTheme(siteDefault)
+    writeStoredTheme(null)
+    if (userIdRef.current != null) {
+      void patchAccountTheme(userIdRef.current, null)
+    }
+  }, [siteDefault])
 
+  // Keep the document in sync if the featured theme changes while following it.
   React.useEffect(() => {
-    document.documentElement.classList.toggle('dark', resolvedTheme === 'dark')
-    document.documentElement.style.colorScheme = resolvedTheme
+    if (mounted && explicitTheme === null) {
+      applyTheme(siteDefault)
+    }
+  }, [siteDefault, explicitTheme, mounted])
 
-    disableTransitionsTemporarily()
-  }, [resolvedTheme])
-
+  // Cross-tab sync of the device choice.
   React.useEffect(() => {
     function onStorage(e: StorageEvent) {
-      if (e.key !== STORAGE_KEY) return
-      if (!isValidThemeSetting(e.newValue)) return
-      setThemeSetting(e.newValue)
+      if (e.key !== THEME_STORAGE_KEY) return
+      const next = isThemeId(e.newValue) ? e.newValue : null
+      setExplicitTheme(next)
+      applyTheme(next ?? siteDefault)
     }
-
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
-  }, [])
+  }, [siteDefault])
 
-  React.useEffect(() => {
-    function isTypingTarget(target: EventTarget | null) {
-      if (!(target instanceof HTMLElement)) return false
-      return (
-        target.isContentEditable ||
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.tagName === 'SELECT'
-      )
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.defaultPrevented || event.repeat) return
-      if (event.metaKey || event.ctrlKey || event.altKey) return
-      if (event.key.toLowerCase() !== 'd') return
-      if (isTypingTarget(event.target)) return
-
-      setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
-    }
-
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [resolvedTheme, setTheme])
-
-  const value = React.useMemo(
-    () => ({ themeSetting, resolvedTheme, setTheme }),
-    [themeSetting, resolvedTheme, setTheme],
+  const value = React.useMemo<ThemeContextValue>(
+    () => ({
+      activeTheme,
+      explicitTheme,
+      siteDefault,
+      isFollowingFeatured: explicitTheme === null,
+      mounted,
+      setTheme,
+      followFeatured,
+    }),
+    [
+      activeTheme,
+      explicitTheme,
+      siteDefault,
+      mounted,
+      setTheme,
+      followFeatured,
+    ],
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

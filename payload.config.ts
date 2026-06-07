@@ -19,6 +19,7 @@ import { Songs } from './collections/Songs'
 import { GatedContent } from './collections/GatedContent'
 import { Tags } from './collections/Tags'
 import { Users } from './collections/Users'
+import { SiteSettings } from './globals/SiteSettings'
 import { syncAudioTagsTask } from './lib/audio-tags/syncAudioTagsTask'
 import { patchGatedContentDisableTransactions } from './lib/payload-gated-content-transactions'
 
@@ -58,6 +59,7 @@ export default buildConfig({
     Tags,
     Users,
   ],
+  globals: [SiteSettings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
