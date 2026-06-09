@@ -71,7 +71,8 @@ const DotField = memo(({
   const dotsRef = useRef<{ax: number, ay: number, sx: number, sy: number, vx: number, vy: number, x: number, y: number}[]>([]);
   const mouseRef = useRef({ x: -9999, y: -9999, prevX: -9999, prevY: -9999, speed: 0 });
   const rafRef = useRef<number | null>(null);
-  const sizeRef = useRef({ w: 0, h: 0, offsetX: 0, offsetY: 0 });
+  const sizeRef = useRef({ w: 0, h: 0 });
+  const staticModeRef = useRef(false);
   const glowOpacity = useRef(0);
   const engagement = useRef(0);
   const isVisibleRef = useRef(true);
@@ -117,7 +118,7 @@ const DotField = memo(({
 
     function setVisible(visible: boolean) {
       isVisibleRef.current = visible;
-      if (visible) {
+      if (visible && !staticModeRef.current) {
         startLoop();
       } else {
         stopLoop();
@@ -155,23 +156,23 @@ const DotField = memo(({
       canvas.style.height = `${h}px`;
       if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      sizeRef.current = {
-        w,
-        h,
-        offsetX: rect.left + window.scrollX,
-        offsetY: rect.top + window.scrollY,
-      };
+      sizeRef.current = { w, h };
 
       buildDots(w, h);
       syncGradientColors(canvas);
+
+      if (staticModeRef.current) {
+        drawStaticFrame();
+      }
     }
 
     function buildDots(w: number, h: number) {
       const p = propsRef.current;
       if (!p.dotRadius || p.dotSpacing === undefined) return;
-      
-      // Ensure we don't crash the browser with too many dots
-      const step = Math.max(p.dotRadius + p.dotSpacing, 5); 
+
+      // Coarser grid on touch / reduced-motion devices — fewer dots, no animation.
+      const spacingBoost = staticModeRef.current ? 2 : 1;
+      const step = Math.max(p.dotRadius + p.dotSpacing * spacingBoost, 5);
       const cols = Math.floor(w / step);
       const rows = Math.floor(h / step);
       
@@ -202,9 +203,40 @@ const DotField = memo(({
     }
 
     function onMouseMove(e: MouseEvent) {
-      const s = sizeRef.current;
-      mouseRef.current.x = e.pageX - s.offsetX;
-      mouseRef.current.y = e.pageY - s.offsetY;
+      const parent = canvas?.parentElement;
+      if (!parent || staticModeRef.current) return;
+      const rect = parent.getBoundingClientRect();
+      mouseRef.current.x = e.clientX - rect.left;
+      mouseRef.current.y = e.clientY - rect.top;
+    }
+
+    function drawStaticFrame() {
+      const activeCanvas = canvasRef.current;
+      if (!activeCanvas || !ctx) return;
+
+      const dots = dotsRef.current;
+      const { w, h } = sizeRef.current;
+      const p = propsRef.current;
+      if (!p.gradientFrom || !p.gradientTo || !p.dotRadius) return;
+
+      ctx.clearRect(0, 0, w, h);
+      syncGradientColors(activeCanvas);
+      const colors = resolvedColorsRef.current;
+      if (!colors) return;
+
+      const grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0, colors.from);
+      grad.addColorStop(1, colors.to);
+      ctx.fillStyle = grad;
+
+      const rad = p.dotRadius / 2;
+      ctx.beginPath();
+      for (let i = 0; i < dots.length; i++) {
+        const d = dots[i];
+        ctx.moveTo(d.ax + rad, d.ay);
+        ctx.arc(d.ax, d.ay, rad, 0, TWO_PI);
+      }
+      ctx.fill();
     }
 
     function updateMouseSpeed() {
@@ -224,7 +256,7 @@ const DotField = memo(({
 
     function tick() {
       const activeCanvas = canvasRef.current;
-      if (!activeCanvas || !isVisibleRef.current) {
+      if (!activeCanvas || !isVisibleRef.current || staticModeRef.current) {
         rafRef.current = null;
         return;
       }
@@ -352,9 +384,20 @@ const DotField = memo(({
       rafRef.current = requestAnimationFrame(tick);
     }
 
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+    staticModeRef.current = prefersReducedMotion || coarsePointer;
+
     doResize();
+
+    if (!staticModeRef.current) {
+      window.addEventListener('mousemove', onMouseMove, { passive: true });
+      startLoop();
+    } else if (glowEl) {
+      glowEl.style.display = 'none';
+    }
+
     window.addEventListener('resize', resize);
-    window.addEventListener('mousemove', onMouseMove, { passive: true });
 
     const observeTarget = canvas.parentElement;
     if (observeTarget) {
@@ -365,8 +408,7 @@ const DotField = memo(({
       visibilityObserver.observe(observeTarget);
     }
 
-    // Observer fires asynchronously — start immediately if already on screen.
-    startLoop();
+    // Observer fires asynchronously — interactive mode starts in startLoop above.
 
     rebuildRef.current = () => {
       const { w, h } = sizeRef.current;

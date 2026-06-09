@@ -7,19 +7,18 @@ import {
 import { songMatchesQuery } from '@/lib/songs/searchableTokens'
 import type { FilterState, SortMode } from './filterState'
 
-/** True when `song` carries at least one tag (in `field`) whose slug is in `slugs`. */
-function hasAnyTagSlug(
+/** True when `song` carries every tag (in `field`) whose slug is in `slugs`. */
+function hasAllTagSlugs(
   song: Song,
   field: (typeof SONG_TAG_FIELDS)[number],
   slugs: string[],
 ): boolean {
   if (slugs.length === 0) return true
   const tags = getResolvedTags(getSongTagField(song, field))
-  for (const tag of tags) {
-    const slug = tag.slug ?? null
-    if (slug && slugs.includes(slug)) return true
-  }
-  return false
+  const songSlugs = new Set(
+    tags.map((tag) => tag.slug).filter((slug): slug is string => Boolean(slug)),
+  )
+  return slugs.every((slug) => songSlugs.has(slug))
 }
 
 /**
@@ -35,7 +34,7 @@ function hasAnyTagSlug(
  *   - composition: AND.
  *   - recording:   AND.
  *   - explicit:    AND (hide explicit when set to 'hide').
- *   - tags:        AND across layers; OR within a layer (any-match).
+ *   - tags:        AND across layers; AND within a layer (all selected tags required).
  */
 export function filterSongs(songs: Song[], state: FilterState): Song[] {
   const q = state.q.trim().toLowerCase()
@@ -56,7 +55,7 @@ export function filterSongs(songs: Song[], state: FilterState): Song[] {
   for (const field of SONG_TAG_FIELDS) {
     const slugs = state.tags[field]
     if (slugs && slugs.length > 0) {
-      data = data.filter((s) => hasAnyTagSlug(s, field, slugs))
+      data = data.filter((s) => hasAllTagSlugs(s, field, slugs))
     }
   }
 
@@ -67,6 +66,10 @@ const releaseTime = (song: Song): number =>
   song.releaseDate ? new Date(song.releaseDate).getTime() : 0
 
 const durationOf = (song: Song): number => song.duration ?? 0
+
+const popularityOf = (song: Song): number => song.popularity ?? 0
+
+const bpmOf = (song: Song): number => song.bpm ?? 0
 
 export function sortSongs(songs: Song[], sort: SortMode): Song[] {
   const out = [...songs]
@@ -82,6 +85,15 @@ export function sortSongs(songs: Song[], sort: SortMode): Song[] {
       break
     case 'longest':
       out.sort((a, b) => durationOf(b) - durationOf(a))
+      break
+    case 'popular':
+      out.sort((a, b) => popularityOf(b) - popularityOf(a))
+      break
+    case 'bpm-low':
+      out.sort((a, b) => bpmOf(a) - bpmOf(b))
+      break
+    case 'bpm-high':
+      out.sort((a, b) => bpmOf(b) - bpmOf(a))
       break
     case 'oldest':
       out.sort((a, b) => releaseTime(a) - releaseTime(b))
