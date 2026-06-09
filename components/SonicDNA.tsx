@@ -109,7 +109,7 @@ export const SonicDNA = ({ song }: { song: Song }) => {
                   const href = tag.slug
                     ? musicHrefForTag(FIELD_TO_CATEGORY[field], tag.slug)
                     : null
-                  const TagGlyph = resolveTagIcon(tag)
+                  const TagGlyph = resolveTagIcon(tag.category)
                   const badge = (
                     <Badge
                       variant="outline"

@@ -435,6 +435,10 @@ export interface Song {
    */
   releaseDate?: string | null;
   /**
+   * Auto-assigned. This song’s position within its composition type, ordered by release date (oldest = 1). Powers the card catalog code, e.g. TSM-2025-ORG-011.
+   */
+  catalogSequence?: number | null;
+  /**
    * Releases whose tracklists already include this song (filtered). Empty until the song is on at least one release—use Link existing or edit the release tracklist.
    */
   relatedReleases?: {
@@ -1536,6 +1540,7 @@ export interface SongsSelect<T extends boolean = true> {
   coverArt?: T;
   slug?: T;
   releaseDate?: T;
+  catalogSequence?: T;
   relatedReleases?: T;
   inPlaylists?: T;
   featuredArtists?:

@@ -20,6 +20,10 @@ import { MediaBlock } from '@/blocks/MediaBlock/config'
 import { Embed } from '@/blocks/Embed/config'
 import type { Release } from '@/payload-types'
 import { queueAudioTagSync } from '@/lib/audio-tags/queueAudioTagSync'
+import {
+  CATALOG_UPDATE_CONTEXT,
+  recomputeCatalogSequences,
+} from '@/lib/songs/catalogNumbers'
 
 /** hasMany → `tags` relationships on Song; duplicate IDs can appear as duplicate `_rels` rows. */
 const SONG_TAG_RELATIONSHIP_KEYS = [
@@ -187,7 +191,10 @@ export const Songs: CollectionConfig = {
       // master audio file's ID3v2.3 / Vorbis tags. We delegate to a Payload
       // job so the admin save returns immediately; the actual download →
       // mutate → upload happens later via Vercel Cron hitting the queue.
-      async ({ doc, previousDoc, req, operation }) => {
+      async ({ doc, previousDoc, req, operation, context }) => {
+        // Skip internal catalog-sequence writes: they only touch
+        // `catalogSequence` and must not re-trigger an audio re-sync.
+        if (context?.[CATALOG_UPDATE_CONTEXT]) return doc
         if (operation !== 'create' && operation !== 'update') return doc
         try {
           await queueAudioTagSync({
@@ -200,6 +207,58 @@ export const Songs: CollectionConfig = {
           req.payload.logger.error({
             err,
             msg: `🎵 [Songs Hook] Failed to enqueue audio tag sync for song id=${doc?.id}`,
+          })
+        }
+        return doc
+      },
+      // --- HOOK: MAINTAIN CATALOG SEQUENCE ---
+      // Keep each song's `catalogSequence` (its release-date rank within
+      // its composition type) accurate. Only fires when something that
+      // affects ranking actually changes, and skips its own internal
+      // writes to avoid recursion.
+      async ({ doc, previousDoc, req, operation, context }) => {
+        if (context?.[CATALOG_UPDATE_CONTEXT]) return doc
+        if (operation !== 'create' && operation !== 'update') return doc
+        const rankingChanged =
+          operation === 'create' ||
+          doc?.releaseDate !== previousDoc?.releaseDate ||
+          doc?.compositionType !== previousDoc?.compositionType
+        if (!rankingChanged) return doc
+        try {
+          await recomputeCatalogSequences(req.payload, doc?.compositionType, req)
+          // A song that switched composition types leaves a gap in its
+          // former type — renumber that one too.
+          if (
+            operation === 'update' &&
+            previousDoc?.compositionType &&
+            previousDoc.compositionType !== doc?.compositionType
+          ) {
+            await recomputeCatalogSequences(
+              req.payload,
+              previousDoc.compositionType,
+              req,
+            )
+          }
+        } catch (err) {
+          req.payload.logger.error({
+            err,
+            msg: `🎵 [Songs Hook] Failed to recompute catalog sequence for song id=${doc?.id}`,
+          })
+        }
+        return doc
+      },
+    ],
+    afterDelete: [
+      // Renumber the deleted song's composition type so sequences stay
+      // contiguous after a removal.
+      async ({ doc, req, context }) => {
+        if (context?.[CATALOG_UPDATE_CONTEXT]) return doc
+        try {
+          await recomputeCatalogSequences(req.payload, doc?.compositionType, req)
+        } catch (err) {
+          req.payload.logger.error({
+            err,
+            msg: `🎵 [Songs Hook] Failed to recompute catalog sequence after deleting song id=${doc?.id}`,
           })
         }
         return doc
@@ -241,6 +300,17 @@ export const Songs: CollectionConfig = {
         position: 'sidebar',
         readOnly: true, // <--- Locked down
         description: 'Auto-synced from the related Release.',
+      },
+    },
+    {
+      name: 'catalogSequence',
+      type: 'number',
+      index: true,
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description:
+          'Auto-assigned. This song\u2019s position within its composition type, ordered by release date (oldest = 1). Powers the card catalog code, e.g. TSM-2025-ORG-011.',
       },
     },
     {
