@@ -1,11 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import {
-  buildClassification,
-  normalizeTagline,
-  truncateAtWord,
-} from './songCopyComposer'
+import { buildClassification, truncateAtWord } from './songCopyComposer'
 import {
   buildSongMetaDescription,
   buildSongPageTitle,
@@ -22,30 +18,36 @@ test('buildClassification avoids genre stutter', () => {
   assert.doesNotMatch(result, /rock rock/)
 })
 
-test('normalizeTagline strips trailing punctuation and caps length', () => {
-  assert.equal(normalizeTagline('Hook line!!!'), 'Hook line')
-  const long =
-    'This is an intentionally long tagline that should not consume the entire meta description budget'
-  const capped = normalizeTagline(long, 40)
-  assert.ok(capped)
-  assert.ok(capped.length <= 40)
-  assert.match(capped, /…$/)
-})
-
-test('buildSongMetaDescription weaves activities and influences', () => {
+test('buildSongMetaDescription weaves tag layers for search intent', () => {
   const description = buildSongMetaDescription({
     title: 'Signal Fire',
     moods: ['Energetic'],
     subGenres: ['Pop-punk'],
     genres: ['Rock'],
+    production: ['Punchy'],
+    themes: ['Heartbreak'],
     activities: ['Running'],
     influences: ['Blink-182'],
   })
 
   assert.match(description, /Signal Fire is an energetic pop-punk rock track/)
+  assert.match(description, /with punchy production/)
+  assert.match(description, /exploring themes of heartbreak/)
   assert.match(description, /Perfect for running/)
-  assert.match(description, /For fans of Blink-182/)
   assert.ok(description.length <= 155)
+})
+
+test('buildSongMetaDescription uses secondary genres and instruments when space allows', () => {
+  const description = buildSongMetaDescription({
+    title: 'Signal Fire',
+    moods: ['Energetic'],
+    subGenres: ['Pop-punk'],
+    genres: ['Rock', 'Alternative'],
+    instruments: ['Electric Guitar'],
+  })
+
+  assert.match(description, /blending alternative/)
+  assert.match(description, /featuring electric guitar/)
 })
 
 test('buildSongMetaDescription includes featured artists', () => {
@@ -56,6 +58,17 @@ test('buildSongMetaDescription includes featured artists', () => {
   })
 
   assert.match(description, /by The Second Messenger feat\. Jane Doe/)
+})
+
+test('buildSongMetaDescription includes technical metadata when present', () => {
+  const description = buildSongMetaDescription({
+    title: 'Tempo Track',
+    genres: ['Rock'],
+    bpm: 128,
+    key: 'A minor',
+  })
+
+  assert.match(description, /128 BPM, A minor/)
 })
 
 test('buildSongPageTitle adds feat suffix when guests are present', () => {

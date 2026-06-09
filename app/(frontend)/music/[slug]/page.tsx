@@ -418,7 +418,6 @@ export async function generateMetadata({
   //    canonical generator. See `lib/seo/songToMetaDescription.ts`.
   const finalDescription = buildSongMetaDescription({
     title: song.title,
-    tagline: song.tagline,
     featuredArtists: featuredArtistNames,
     genres: resolveTags(song.genres),
     subGenres: resolveTags(song.subGenres),
@@ -427,11 +426,13 @@ export async function generateMetadata({
     instruments: resolveTags(song.instruments),
     activities: resolveTags(song.activities),
     influences: resolveTags(song.influences),
+    production: resolveTags(song.production),
+    arrangements: resolveTags(song.arrangements),
+    bpm: song.bpm,
+    key: song.key,
   })
 
   // 2. KEYWORDS — every layer dumped flat for crawlers + internal search.
-  //    Production, gear, and arrangements live here rather than in the
-  //    sentence because they read awkwardly inside grammatical copy.
   const allKeywords = [
     song.title,
     'The Second Messenger',
