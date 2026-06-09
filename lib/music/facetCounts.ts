@@ -37,7 +37,7 @@ export type FacetGroup = {
 /**
  * Build all 11 facet groups for the drawer, with counts that respect
  * other-layer filters but ignore this layer's own filter — the
- * standard "ANDed across layers, ORed within a layer" facet UX so
+ * standard "ANDed across layers and within a layer" facet UX so
  * users can see how each in-layer choice would expand the result set.
  *
  * Pure / O(songs * layers * tags) — fine at our catalog size.

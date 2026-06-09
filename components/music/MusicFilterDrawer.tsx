@@ -119,7 +119,7 @@ export const MusicFilterDrawer = ({
           </SheetTitle>
           <SheetDescription className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
             Filter by genre, mood, activity, instrument, gear, arrangement,
-            influence, and more. Layers AND together; choices within a layer OR.
+            influence, and more. All selections AND together.
           </SheetDescription>
         </SheetHeader>
 

@@ -40,6 +40,8 @@ import {
 import { SongCard } from './SongCard'
 import { MusicFilterDrawer } from './music/MusicFilterDrawer'
 import { ActiveFilterChips } from './music/ActiveFilterChips'
+import { ArchiveSongPlayButton } from './music/ArchiveSongPlayButton'
+import { ArchiveSongMeta } from './music/ArchiveSongMeta'
 
 // type CompositionFilter = FilterState['composition']
 // type RecordingFilter = FilterState['recording']
@@ -96,10 +98,11 @@ export const MusicArchive = ({
 
   //- 2. LIST ROW
   const ListItem = ({ song }: { song: Song }) => (
-    <li>
+    <li className="group flex items-center gap-3 border-b border-border p-4 transition-colors hover:bg-card sm:gap-4">
+      <ArchiveSongPlayButton song={song} size="sm" />
       <Link
         href={songHrefFromArchive(song.slug ?? '', archiveQuery)}
-        className="group flex items-center gap-6 border-b border-border p-4 transition-colors hover:bg-card"
+        className="flex min-w-0 flex-1 items-center gap-4 sm:gap-6"
       >
         <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/50 bg-white/5 text-muted-foreground transition-transform duration-500 group-hover:scale-105">
           {(song.coverArt as Media)?.url ? (
@@ -114,15 +117,16 @@ export const MusicArchive = ({
             <Disc size={24} />
           )}
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 items-center">
           <h3 className="text-base font-bold text-pretty text-foreground group-hover:text-primary">
             {song.title}
           </h3>
           <p className="truncate font-mono text-xs text-muted-foreground group-hover:text-card-foreground">
             {song.tagline}
           </p>
+          <ArchiveSongMeta song={song} className="sm:hidden" />
         </div>
-        <div className="hidden text-right md:block">
+        <div className="hidden shrink-0 text-right md:block">
           <div className="font-mono text-xs text-muted-foreground group-hover:text-card-foreground">
             {song.releaseDate
               ? new Date(song.releaseDate).toLocaleDateString()
@@ -133,10 +137,15 @@ export const MusicArchive = ({
               ? 'Released'
               : 'Scheduled'}
           </div>
+          <ArchiveSongMeta
+            song={song}
+            align="right"
+            className="hidden sm:flex"
+          />
         </div>
         <ArrowRight
           size={16}
-          className="text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:animate-bounce group-hover:text-primary"
+          className="hidden shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:animate-bounce group-hover:text-primary sm:block"
         />
       </Link>
     </li>
@@ -162,52 +171,62 @@ export const MusicArchive = ({
               : 'md:ml-auto md:pl-12 md:text-left',
           )}
         >
-          <Link
-            href={songHrefFromArchive(song.slug ?? '', archiveQuery)}
-            className="group inline-block max-w-lg rounded p-4 hover:border"
+          <div
+            className={cn(
+              'group inline-flex max-w-lg flex-col gap-3 rounded p-4 hover:border',
+              isLeft ? 'md:ml-auto md:items-end' : 'md:mr-auto md:items-start',
+            )}
           >
-            {song.coverArt && (
-              <div
-                className={cn(
-                  'relative mb-6 h-24 w-24 overflow-hidden rounded-sm border border-white/10 bg-muted/10 shadow-2xl',
-                  isLeft ? 'md:ml-auto' : 'md:mr-auto',
-                )}
-              >
-                <Image
-                  src={(song.coverArt as Media).url!}
-                  fill
-                  alt={song.title}
-                  sizes="96px"
-                  className="scale-105 object-cover saturate-[0.67] transition-all duration-500 group-hover:scale-110 group-hover:saturate-100"
-                />
-              </div>
-            )}
-            <span className="mb-2 block font-mono text-lg font-bold tracking-widest text-primary uppercase">
-              {song.releaseDate
-                ? new Date(song.releaseDate).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })
-                : 'Date Unknown'}
-            </span>
-            <h3 className="font-heading text-3xl leading-[0.9] font-bold tracking-widest text-foreground uppercase transition-colors group-hover:text-accent">
-              {song.title}
-            </h3>
-            {song.isExplicit && (
-              <span className="font-mono text-xs tracking-widest text-red-500/30 uppercase">
-                Explicit
-              </span>
-            )}
-            <p
+            <div
               className={cn(
-                'mt-3 font-mono text-sm leading-relaxed text-pretty text-muted-foreground',
-                isLeft ? 'ml-auto' : 'mr-auto',
+                'flex items-center gap-3',
+                isLeft && 'md:flex-row-reverse',
               )}
             >
-              {song.tagline}
-            </p>
-          </Link>
+              {song.coverArt ? (
+                <Link
+                  href={songHrefFromArchive(song.slug ?? '', archiveQuery)}
+                  className="relative block size-24 shrink-0 overflow-hidden rounded-sm border border-white/10 bg-muted/10 shadow-2xl"
+                >
+                  <Image
+                    src={(song.coverArt as Media).url!}
+                    fill
+                    alt={song.title}
+                    sizes="96px"
+                    className="scale-105 object-cover saturate-[0.67] transition-all duration-500 group-hover:scale-110 group-hover:saturate-100"
+                  />
+                </Link>
+              ) : null}
+            </div>
+            <Link
+              href={songHrefFromArchive(song.slug ?? '', archiveQuery)}
+              className="block"
+            >
+              <span className="mb-2 block font-mono text-lg font-bold tracking-widest text-primary uppercase">
+                {song.releaseDate
+                  ? new Date(song.releaseDate).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })
+                  : 'Date Unknown'}
+              </span>
+              <h3 className="font-heading text-3xl leading-[0.9] font-bold tracking-widest text-foreground uppercase transition-colors group-hover:text-accent">
+                {song.title}
+              </h3>
+
+              <p
+                className={cn(
+                  'my-3 font-mono text-sm leading-relaxed text-pretty text-muted-foreground',
+                  isLeft ? 'ml-auto' : 'mr-auto',
+                )}
+              >
+                {song.tagline}
+              </p>
+              <ArchiveSongMeta song={song} align={isLeft ? 'right' : 'left'} />
+            </Link>
+            <ArchiveSongPlayButton song={song} size="md" />
+          </div>
         </div>
       </li>
     )
@@ -432,6 +451,9 @@ export const MusicArchive = ({
                   <SelectItem value="za">Z - A</SelectItem>
                   <SelectItem value="shortest">Shortest</SelectItem>
                   <SelectItem value="longest">Longest</SelectItem>
+                  <SelectItem value="popular">Most Popular</SelectItem>
+                  <SelectItem value="bpm-low">Tempo (Slowest)</SelectItem>
+                  <SelectItem value="bpm-high">Tempo (Fastest)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

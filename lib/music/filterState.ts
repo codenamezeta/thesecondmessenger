@@ -22,7 +22,7 @@ import {
  * Tag values are tag SLUGS (not names) — stable, URL-safe, and what
  * Payload generates by default on the Tags collection.
  *
- * Multiple values per layer use OR semantics; multiple layers AND.
+ * Multiple values per layer use AND semantics; multiple layers AND.
  */
 
 export type ViewMode = 'grid' | 'list' | 'timeline'
@@ -33,6 +33,9 @@ export type SortMode =
   | 'za'
   | 'shortest'
   | 'longest'
+  | 'popular'
+  | 'bpm-low'
+  | 'bpm-high'
 
 export type CompositionFilter = 'all' | 'Original' | 'Cover' | 'Public Domain'
 export type RecordingFilter = 'all' | 'Studio' | 'Live' | 'Demo'
@@ -58,6 +61,9 @@ const SORT_VALUES: readonly SortMode[] = [
   'za',
   'shortest',
   'longest',
+  'popular',
+  'bpm-low',
+  'bpm-high',
 ]
 const VIEW_VALUES: readonly ViewMode[] = ['grid', 'list', 'timeline']
 const COMPOSITION_VALUES: readonly CompositionFilter[] = [
