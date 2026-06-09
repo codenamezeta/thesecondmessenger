@@ -189,8 +189,17 @@ export function serializeFilterState(state: FilterState): URLSearchParams {
 }
 
 /**
+ * Build a URL for a tag's SEO landing page (`/music/tag/<category>/<slug>`).
+ * Used by SongCard chips, SonicDNA, and song-page metadata badges.
+ */
+export function tagLandingHref(category: TagCategory, slug: string): string {
+  return `/music/tag/${category}/${slug}`
+}
+
+/**
  * Build a URL string for navigating to `/music` with a single tag
- * pre-applied. Used by SongCard / SonicDNA chip click-throughs.
+ * pre-applied as a client-side filter. Prefer {@link tagLandingHref} for
+ * crawlable internal links from song surfaces.
  */
 export function musicHrefForTag(category: TagCategory, slug: string): string {
   const params = new URLSearchParams()

@@ -1,14 +1,8 @@
 /**
- * Shared sentence-grammar primitives for song-derived copy generators.
+ * Shared sentence-grammar primitives for song-derived SEO copy.
  *
- * Two callers use this:
- *   - `songToMetaDescription.ts` — long-form `<meta name="description">`
- *     copy capped at 155 chars (Google desktop snippet sweet spot).
- *   - `songToCardFlavor.ts` — short trading-card flavor line under the
- *     title on `SongCard`, capped at ~90 chars.
- *
- * Both presets share these primitives so the wording stays consistent
- * (e.g. the "Hard Rock Rock" anti-stutter rule is enforced once, here).
+ * Primary caller: `songToMetaDescription.ts` — `<meta name="description">`
+ * copy capped at 155 chars (Google desktop snippet sweet spot).
  *
  * Pure / deterministic / defensive — no I/O, empty layers silently drop.
  */
@@ -23,8 +17,10 @@ import { formatList } from './formatList'
  */
 export type SongCopyInput = {
   title: string
-  /** Optional human-written hook. Meta uses it as a lead-in; card preset ignores it. */
+  /** Optional human-written hook used as a lead-in in meta descriptions. */
   tagline?: string | null
+  /** Guest artist display names — composed into the artist clause when present. */
+  featuredArtists?: string[] | null
   genres?: string[] | null
   subGenres?: string[] | null
   moods?: string[] | null
@@ -47,8 +43,8 @@ export type SongCopyCaps = {
 /** Default Google snippet sweet spot for `<meta name="description">`. */
 export const DEFAULT_META_MAX_LENGTH = 155
 
-/** Default soft cap for in-card flavor lines. Sized to fit one ~90-char line on the card data panel without wrapping awkwardly on common viewport widths. */
-export const DEFAULT_CARD_MAX_LENGTH = 90
+/** Max characters kept from a CMS tagline before it becomes the meta lead-in. */
+export const DEFAULT_TAGLINE_MAX_LENGTH = 60
 
 /** Take the first `n` non-empty entries from a string array. */
 export function take(items: string[] | null | undefined, n: number): string[] {
@@ -75,10 +71,27 @@ export function softLower(s: string): string {
 /** Strip trailing punctuation from a tagline so it composes without ".." artifacts. */
 export function normalizeTagline(
   tagline: string | null | undefined,
+  maxLength = DEFAULT_TAGLINE_MAX_LENGTH,
 ): string | null {
   const t = tagline?.trim()
   if (!t) return null
-  return t.replace(/[.!?]+$/u, '').trim() || null
+  let normalized = t.replace(/[.!?]+$/u, '').trim()
+  if (!normalized) return null
+  if (maxLength > 0 && normalized.length > maxLength) {
+    normalized = truncateAtWord(normalized, maxLength)
+  }
+  return normalized || null
+}
+
+/** Truncate at the last word boundary, appending an ellipsis when shortened. */
+export function truncateAtWord(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text
+  const budget = Math.max(1, maxLength - 1)
+  const slice = text.slice(0, budget)
+  const lastSpace = slice.lastIndexOf(' ')
+  const cut =
+    lastSpace > budget * 0.5 ? slice.slice(0, lastSpace) : slice.slice(0, budget)
+  return `${cut.trim()}…`
 }
 
 /**
@@ -88,17 +101,13 @@ export function normalizeTagline(
  * Anti-stutter: if the sub-genre name already contains the broad genre
  * word ("Hard Rock" contains "Rock"; "Pop-punk" contains "Pop"), the
  * genre is dropped from the visible fragment to avoid "Hard Rock Rock".
- *
- * Set `noun = ''` to omit the trailing "track" word — useful for the
- * card preset which wants a tighter fragment ("an energetic pop-punk
- * for running" rather than "an energetic pop-punk track for running").
  */
 export function buildClassification(args: {
   moods: string[]
   subGenres: string[]
   genres: string[]
   defaultGenre: string
-  /** Trailing noun. Default 'track'. Pass '' to omit. */
+  /** Trailing noun. Default 'track'. */
   noun?: string
 }): string {
   const noun = args.noun ?? 'track'

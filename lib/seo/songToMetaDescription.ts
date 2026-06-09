@@ -27,9 +27,7 @@
  * Override via `options.caps` for niche cases (e.g. landing pages
  * that want every theme listed).
  *
- * Sentence grammar (`buildClassification`, article selection,
- * tagline normalization, etc.) lives in `songCopyComposer.ts` and is
- * shared with the trading-card flavor preset in `songToCardFlavor.ts`.
+ * Sentence grammar lives in `songCopyComposer.ts`.
  */
 
 import { PRIMARY_ARTIST } from '@/lib/branding'
@@ -40,6 +38,7 @@ import {
   normalizeTagline,
   softLower,
   take,
+  truncateAtWord,
   type SongCopyCaps,
   type SongCopyInput,
 } from './songCopyComposer'
@@ -112,6 +111,25 @@ function composeDescription(
   return sentences.join(' ').replace(/\s+/g, ' ').trim()
 }
 
+function buildArtistClause(
+  artistName: string,
+  featuredArtists: string[],
+): string {
+  if (featuredArtists.length === 0) return artistName
+  return `${artistName} feat. ${formatList(featuredArtists)}`
+}
+
+export function buildSongPageTitle(
+  title: string,
+  featuredArtists?: string[] | null,
+  artistName = PRIMARY_ARTIST,
+): string {
+  const featured = take(featuredArtists, 3)
+  const featSuffix =
+    featured.length > 0 ? ` (feat. ${formatList(featured)})` : ''
+  return `${title}${featSuffix} | ${artistName}`
+}
+
 export function buildSongMetaDescription(
   input: SongDescriptionInput,
   options: SongDescriptionOptions = {},
@@ -120,6 +138,7 @@ export function buildSongMetaDescription(
   const maxLength = options.maxLength ?? DEFAULT_META_MAX_LENGTH
   const artistName = options.artistName ?? PRIMARY_ARTIST
   const defaultGenre = options.defaultGenre ?? 'Rock'
+  const featuredArtists = take(input.featuredArtists, 3)
 
   const moods = take(input.moods, caps.moods)
   const subGenres = take(input.subGenres, caps.subGenres)
@@ -137,9 +156,10 @@ export function buildSongMetaDescription(
   })
 
   const tagline = normalizeTagline(input.tagline)
+  const artistClause = buildArtistClause(artistName, featuredArtists)
   const subject = tagline
-    ? `${tagline}. ${input.title} is ${classification} by ${artistName}`
-    : `${input.title} is ${classification} by ${artistName}`
+    ? `${tagline}. ${input.title} is ${classification} by ${artistClause}`
+    : `${input.title} is ${classification} by ${artistClause}`
 
   const clauses: Clauses = {
     subject,
@@ -158,6 +178,10 @@ export function buildSongMetaDescription(
     if (result.length <= maxLength) break
     dropped.add(clause)
     result = composeDescription(clauses, dropped)
+  }
+
+  if (result.length > maxLength) {
+    result = truncateAtWord(result, maxLength)
   }
 
   return result

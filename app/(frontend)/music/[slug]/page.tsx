@@ -40,8 +40,14 @@ import { MusicRecordingSchema } from '@/schema/MusicRecording'
 import { generateMeta } from '@/utilities/generateMeta'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
-import { buildSongMetaDescription } from '@/lib/seo/songToMetaDescription'
-
+import { buildSongMetaDescription, buildSongPageTitle } from '@/lib/seo/songToMetaDescription'
+import { ARTIST_HOMEPAGE } from '@/lib/branding'
+import {
+  FIELD_TO_CATEGORY,
+  getResolvedTags,
+  type SongTagField,
+} from '@/lib/songs/tagFields'
+import { tagLandingHref } from '@/lib/music/filterState'
 import { getMeUser } from '@/utilities/getMeUser'
 import { SongGatedBonusSection } from '@/components/SongGatedBonusSection'
 import { userMeetsGatedFileAccess } from '@/access/crewRanks'
@@ -227,43 +233,44 @@ function SongMetadataCard({ song }: { song: SongDoc }) {
   ].filter((row) => Boolean(row.value))
 
   const tagGroups = [
-    {
-      label: 'Genres',
-      tags: resolveTags(song.genres as TagLike[]).slice(0, 3),
-    },
+    { label: 'Genres', field: 'genres' as SongTagField, tags: getResolvedTags(song.genres).slice(0, 3) },
     {
       label: 'Sub-genres',
-      tags: resolveTags(song.subGenres as TagLike[]).slice(0, 3),
+      field: 'subGenres' as SongTagField,
+      tags: getResolvedTags(song.subGenres).slice(0, 3),
     },
     {
       label: 'Activities',
-      tags: resolveTags(song.activities as TagLike[]).slice(0, 3),
+      field: 'activities' as SongTagField,
+      tags: getResolvedTags(song.activities).slice(0, 3),
     },
-    {
-      label: 'Themes',
-      tags: resolveTags(song.themes as TagLike[]).slice(0, 3),
-    },
-    { label: 'Moods', tags: resolveTags(song.moods as TagLike[]).slice(0, 3) },
+    { label: 'Themes', field: 'themes' as SongTagField, tags: getResolvedTags(song.themes).slice(0, 3) },
+    { label: 'Moods', field: 'moods' as SongTagField, tags: getResolvedTags(song.moods).slice(0, 3) },
     {
       label: 'Production',
-      tags: resolveTags(song.production as TagLike[]).slice(0, 3),
+      field: 'production' as SongTagField,
+      tags: getResolvedTags(song.production).slice(0, 3),
     },
     {
       label: 'Instruments',
-      tags: resolveTags(song.instruments as TagLike[]).slice(0, 3),
+      field: 'instruments' as SongTagField,
+      tags: getResolvedTags(song.instruments).slice(0, 3),
     },
-    { label: 'Gear', tags: resolveTags(song.gear as TagLike[]).slice(0, 3) },
+    { label: 'Gear', field: 'gear' as SongTagField, tags: getResolvedTags(song.gear).slice(0, 3) },
     {
       label: 'Arrangements',
-      tags: resolveTags(song.arrangements as TagLike[]).slice(0, 3),
+      field: 'arrangements' as SongTagField,
+      tags: getResolvedTags(song.arrangements).slice(0, 3),
     },
     {
       label: 'Influences',
-      tags: resolveTags(song.influences as TagLike[]).slice(0, 3),
+      field: 'influences' as SongTagField,
+      tags: getResolvedTags(song.influences).slice(0, 3),
     },
     {
       label: 'Other',
-      tags: resolveTags(song.otherTags as TagLike[]).slice(0, 3),
+      field: 'otherTags' as SongTagField,
+      tags: getResolvedTags(song.otherTags).slice(0, 3),
     },
   ].filter((group) => group.tags.length > 0)
 
@@ -304,15 +311,32 @@ function SongMetadataCard({ song }: { song: SongDoc }) {
                   {group.label}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {group.tags.map((tag) => (
-                    <Badge
-                      key={`${group.label}-${tag}`}
-                      variant="outline"
-                      className="h-7 rounded-sm px-2 font-mono text-[10px] tracking-widest uppercase"
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
+                  {group.tags.map((tag) => {
+                    const category = FIELD_TO_CATEGORY[group.field]
+                    const href =
+                      tag.slug && category
+                        ? tagLandingHref(category, tag.slug)
+                        : null
+                    const badge = (
+                      <Badge
+                        variant="outline"
+                        className="h-7 rounded-sm px-2 font-mono text-[10px] tracking-widest uppercase"
+                      >
+                        {tag.name}
+                      </Badge>
+                    )
+                    return href ? (
+                      <Link
+                        key={`${group.label}-${tag.id}`}
+                        href={href}
+                        aria-label={`Browse ${group.label}: ${tag.name}`}
+                      >
+                        {badge}
+                      </Link>
+                    ) : (
+                      <span key={`${group.label}-${tag.id}`}>{badge}</span>
+                    )
+                  })}
                 </div>
               </div>
             ))}
@@ -382,11 +406,20 @@ export async function generateMetadata({
 
   if (!song) return generateMeta({ doc: null })
 
+  const featuredArtistNames =
+    song.featuredArtists
+      ?.map((entry) => entry.name?.trim())
+      .filter((name): name is string => Boolean(name)) ?? []
+
+  const pageTitle = buildSongPageTitle(song.title, featuredArtistNames)
+  const canonicalUrl = `${ARTIST_HOMEPAGE}/music/${slug}`
+
   // 1. DESCRIPTION — built from the 11-layer Sonic Tag Ontology by the
   //    canonical generator. See `lib/seo/songToMetaDescription.ts`.
   const finalDescription = buildSongMetaDescription({
     title: song.title,
     tagline: song.tagline,
+    featuredArtists: featuredArtistNames,
     genres: resolveTags(song.genres),
     subGenres: resolveTags(song.subGenres),
     moods: resolveTags(song.moods),
@@ -415,18 +448,32 @@ export async function generateMetadata({
   ].join(', ')
 
   const coverUrl = (song.coverArt as Media | null | undefined)?.url || undefined
+  const ogImage = coverUrl
+    ? coverUrl.startsWith('/')
+      ? `${ARTIST_HOMEPAGE}${coverUrl}`
+      : coverUrl
+    : `${ARTIST_HOMEPAGE}/imgs/michael-today.jpg`
 
   return {
-    title: `${song.title} | The Second Messenger`,
+    title: pageTitle,
     description: finalDescription,
     keywords: allKeywords,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: mergeOpenGraph({
-      title: `${song.title} | The Second Messenger`,
+      title: pageTitle,
       description: finalDescription,
-      url: `/songs/${slug}`,
-      images: coverUrl ? [{ url: coverUrl }] : undefined,
+      url: canonicalUrl,
+      images: [{ url: ogImage }],
       type: 'music.song',
     }),
+    twitter: {
+      card: 'summary_large_image',
+      title: pageTitle,
+      description: finalDescription,
+      images: [ogImage],
+    },
   }
 }
 
