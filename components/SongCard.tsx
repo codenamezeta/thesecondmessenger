@@ -536,9 +536,31 @@ export const SongCard = ({ song, className }: SongCardProps) => {
               <span>{song.compositionType}</span>
             </div>
 
+            {/* Arrangement "ability" keywords */}
+            {keywords.length > 0 ? (
+              <div className="mb-1.5 flex flex-wrap gap-1">
+                {keywords.map((kw) => (
+                  <span
+                    key={`${kw.field}-${kw.tagId}`}
+                    className="flex items-center gap-1 rounded-sm border border-accent/40 bg-accent/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-accent uppercase"
+                  >
+                    <kw.icon className="size-2.5" aria-hidden />
+                    {kw.text}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+
             {song.tagline ? (
               <p className="line-clamp-2 border-l-2 border-accent/50 pl-2 font-body text-xs leading-snug text-muted-foreground italic">
                 {song.tagline}
+              </p>
+            ) : fragment ? (
+              <p
+                className="line-clamp-2 border-l-2 border-border/60 pl-2 font-mono text-[10px] leading-snug tracking-wide text-muted-foreground/80"
+                aria-label="Tag-derived summary"
+              >
+                {fragment}
               </p>
             ) : null}
           </div>

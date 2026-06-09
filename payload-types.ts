@@ -739,6 +739,71 @@ export interface Tag {
     | 'other';
   slug?: string | null;
   /**
+   * Optional. Glyph shown on song cards and the Sonic DNA panel for this tag. Leave empty to use the sensible default for this category (e.g. a guitar tag without an icon falls back to the instrument default).
+   */
+  icon?:
+    | (
+        | 'music'
+        | 'guitar'
+        | 'piano'
+        | 'drum'
+        | 'bass'
+        | 'mic'
+        | 'synth'
+        | 'headphones'
+        | 'keyboard'
+        | 'speaker'
+        | 'waveform'
+        | 'sliders'
+        | 'volume'
+        | 'radio'
+        | 'disc'
+        | 'cpu'
+        | 'activity'
+        | 'dumbbell'
+        | 'running'
+        | 'car'
+        | 'gamepad'
+        | 'book'
+        | 'code'
+        | 'coffee'
+        | 'plane'
+        | 'party'
+        | 'zap'
+        | 'heart'
+        | 'heart-crack'
+        | 'rain'
+        | 'flame'
+        | 'skull'
+        | 'sparkles'
+        | 'moon'
+        | 'sun'
+        | 'sunrise'
+        | 'globe'
+        | 'swords'
+        | 'users'
+        | 'user'
+        | 'map-pin'
+        | 'gift'
+        | 'snowflake'
+        | 'trees'
+        | 'mountain'
+        | 'ghost'
+        | 'star'
+        | 'history'
+        | 'crown'
+        | 'layers'
+        | 'branch'
+        | 'repeat'
+        | 'clock'
+        | 'rocket'
+        | 'telescope'
+        | 'satellite'
+        | 'orbit'
+        | 'tag'
+      )
+    | null;
+  /**
    * Optional. Renders above the song grid on /music/tag/<category>/<slug> landing pages. Use to give context for the tag (e.g. why a sub-genre matters, when a particular activity-tag is appropriate). Leave empty for tags that don’t need editorial framing.
    */
   description?: {
@@ -1591,6 +1656,7 @@ export interface TagsSelect<T extends boolean = true> {
   name?: T;
   category?: T;
   slug?: T;
+  icon?: T;
   description?: T;
   featuredImage?: T;
   updatedAt?: T;

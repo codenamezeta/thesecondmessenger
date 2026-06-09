@@ -84,6 +84,17 @@ export function pickCardTagGroups(song: Song, perGroup = 3): CardTagGroup[] {
   return groups
 }
 
+/**
+ * Arrangement tags ("Instrumental", "Guitar Solo", "Odd Time Signature")
+ * read like trading-card abilities/keywords. Surfaced separately from the
+ * generic chip strip so they can get a distinct, bolder treatment.
+ */
+export function getArrangementKeywords(song: Song, max = 3): CardChip[] {
+  return getResolvedTags(getSongTagField(song, 'arrangements'))
+    .slice(0, max)
+    .map((tag) => chipFromTag(tag, 'arrangements'))
+}
+
 /** Convenience: derive the Payload tag category for a chip. */
 export function chipCategory(chip: CardChip) {
   return FIELD_TO_CATEGORY[chip.field]
