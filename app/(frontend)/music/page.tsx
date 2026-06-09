@@ -7,6 +7,10 @@ import { StreamingPlatformDirectory } from '@/components/music/StreamingPlatform
 import { parseSearchParams } from '@/lib/music/filterState'
 import DotField from '@/components/DotField'
 import { ARTIST_HOMEPAGE, PRIMARY_ARTIST } from '@/lib/branding'
+import {
+  buildBreadcrumbListJsonLd,
+  buildJsonLdGraph,
+} from '@/lib/seo/breadcrumbJsonLd'
 import type { Song } from '@/payload-types'
 
 export const revalidate = 600
@@ -63,36 +67,44 @@ interface MusicPageProps {
 }
 
 function buildMusicArchiveJsonLd(songs: Song[]): Record<string, unknown> {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: `Music by ${PRIMARY_ARTIST}`,
-    description: MUSIC_ARCHIVE_DESCRIPTION,
-    url: `${ARTIST_HOMEPAGE}/music`,
-    isPartOf: {
-      '@type': 'WebSite',
-      name: PRIMARY_ARTIST,
-      url: ARTIST_HOMEPAGE,
-    },
-    mainEntity: {
-      '@type': 'ItemList',
-      numberOfItems: songs.length,
-      itemListElement: songs.map((song, idx) => ({
-        '@type': 'ListItem',
-        position: idx + 1,
-        item: {
-          '@type': 'MusicRecording',
-          name: song.title,
-          url: song.slug ? `${ARTIST_HOMEPAGE}/music/${song.slug}` : undefined,
-          byArtist: {
-            '@type': 'MusicGroup',
-            name: PRIMARY_ARTIST,
-            url: ARTIST_HOMEPAGE,
+  const url = `${ARTIST_HOMEPAGE}/music`
+  const description = `${MUSIC_ARCHIVE_DESCRIPTION} ${songs.length} tracks in the archive.`
+
+  return buildJsonLdGraph([
+    {
+      '@type': 'CollectionPage',
+      name: `Music by ${PRIMARY_ARTIST}`,
+      description,
+      url,
+      isPartOf: {
+        '@type': 'WebSite',
+        name: PRIMARY_ARTIST,
+        url: ARTIST_HOMEPAGE,
+      },
+      mainEntity: {
+        '@type': 'ItemList',
+        numberOfItems: songs.length,
+        itemListElement: songs.map((song, idx) => ({
+          '@type': 'ListItem',
+          position: idx + 1,
+          item: {
+            '@type': 'MusicRecording',
+            name: song.title,
+            url: song.slug ? `${ARTIST_HOMEPAGE}/music/${song.slug}` : undefined,
+            byArtist: {
+              '@type': 'MusicGroup',
+              name: PRIMARY_ARTIST,
+              url: ARTIST_HOMEPAGE,
+            },
           },
-        },
-      })),
+        })),
+      },
     },
-  }
+    buildBreadcrumbListJsonLd([
+      { name: PRIMARY_ARTIST, item: ARTIST_HOMEPAGE },
+      { name: 'Music', item: url },
+    ]),
+  ])
 }
 
 export default async function MusicPage({ searchParams }: MusicPageProps) {

@@ -196,6 +196,29 @@ export function tagLandingHref(category: TagCategory, slug: string): string {
   return `/music/tag/${category}/${slug}`
 }
 
+type ArchiveHrefInput = FilterState | string | undefined
+
+function archiveQueryString(input: ArchiveHrefInput): string {
+  if (!input) return ''
+  if (typeof input === 'string') return input
+  return serializeFilterState(input).toString()
+}
+
+/** `/music` with optional filter/sort/view query string preserved. */
+export function musicArchiveHref(state?: ArchiveHrefInput): string {
+  const query = archiveQueryString(state)
+  return query ? `/music?${query}` : '/music'
+}
+
+/** Song detail URL carrying archive context as query params for return navigation. */
+export function songHrefFromArchive(
+  slug: string,
+  archiveState?: ArchiveHrefInput,
+): string {
+  const query = archiveQueryString(archiveState)
+  return query ? `/music/${slug}?${query}` : `/music/${slug}`
+}
+
 /**
  * Build a URL string for navigating to `/music` with a single tag
  * pre-applied as a client-side filter. Prefer {@link tagLandingHref} for
