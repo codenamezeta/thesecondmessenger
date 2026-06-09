@@ -12,7 +12,7 @@ import {
 import type { Song, Tag } from '@/payload-types'
 import { FIELD_TO_CATEGORY, type SongTagField } from '@/lib/songs/tagFields'
 import { resolveTagIcon } from '@/lib/songs/tagIcons'
-import { musicHrefForTag } from '@/lib/music/filterState'
+import { tagLandingHref } from '@/lib/music/filterState'
 
 const isTag = (tag: unknown): tag is Tag =>
   typeof tag === 'object' && tag !== null && 'name' in tag
@@ -107,7 +107,7 @@ export const SonicDNA = ({ song }: { song: Song }) => {
               <div className="flex flex-wrap gap-2">
                 {section.chips.map(({ field, tag }) => {
                   const href = tag.slug
-                    ? musicHrefForTag(FIELD_TO_CATEGORY[field], tag.slug)
+                    ? tagLandingHref(FIELD_TO_CATEGORY[field], tag.slug)
                     : null
                   const TagGlyph = resolveTagIcon(tag.category)
                   const badge = (
@@ -123,7 +123,7 @@ export const SonicDNA = ({ song }: { song: Song }) => {
                     <Link
                       key={tag.id}
                       href={href}
-                      aria-label={`Browse ${section.label}: ${tag.name} in /music`}
+                      aria-label={`Browse ${section.label}: ${tag.name}`}
                     >
                       {badge}
                     </Link>
