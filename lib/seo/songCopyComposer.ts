@@ -10,15 +10,11 @@
 import { formatList } from './formatList'
 
 /**
- * Resolved tag-name arrays per ontology layer. The `production`,
- * `arrangements`, `gear`, and `otherTags` layers are deliberately
- * absent — they read awkwardly inside a sentence and live in
- * `keywords` on the JSON-LD instead.
+ * Resolved tag-name arrays per ontology layer plus optional technical
+ * metadata. Taglines are UI-only and intentionally excluded here.
  */
 export type SongCopyInput = {
   title: string
-  /** Optional human-written hook used as a lead-in in meta descriptions. */
-  tagline?: string | null
   /** Guest artist display names — composed into the artist clause when present. */
   featuredArtists?: string[] | null
   genres?: string[] | null
@@ -28,6 +24,11 @@ export type SongCopyInput = {
   instruments?: string[] | null
   activities?: string[] | null
   influences?: string[] | null
+  production?: string[] | null
+  arrangements?: string[] | null
+  /** Optional technical metadata woven into the closing clause when present. */
+  bpm?: number | null
+  key?: string | null
 }
 
 export type SongCopyCaps = {
@@ -38,13 +39,12 @@ export type SongCopyCaps = {
   themes?: number
   activities?: number
   influences?: number
+  production?: number
+  arrangements?: number
 }
 
 /** Default Google snippet sweet spot for `<meta name="description">`. */
 export const DEFAULT_META_MAX_LENGTH = 155
-
-/** Max characters kept from a CMS tagline before it becomes the meta lead-in. */
-export const DEFAULT_TAGLINE_MAX_LENGTH = 60
 
 /** Take the first `n` non-empty entries from a string array. */
 export function take(items: string[] | null | undefined, n: number): string[] {
@@ -66,21 +66,6 @@ export function articleFor(word: string): string {
  */
 export function softLower(s: string): string {
   return s.toLowerCase()
-}
-
-/** Strip trailing punctuation from a tagline so it composes without ".." artifacts. */
-export function normalizeTagline(
-  tagline: string | null | undefined,
-  maxLength = DEFAULT_TAGLINE_MAX_LENGTH,
-): string | null {
-  const t = tagline?.trim()
-  if (!t) return null
-  let normalized = t.replace(/[.!?]+$/u, '').trim()
-  if (!normalized) return null
-  if (maxLength > 0 && normalized.length > maxLength) {
-    normalized = truncateAtWord(normalized, maxLength)
-  }
-  return normalized || null
 }
 
 /** Truncate at the last word boundary, appending an ellipsis when shortened. */
