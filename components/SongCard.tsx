@@ -22,11 +22,7 @@ import {
 import { cn } from '@/utilities/ui'
 import type { Song, Media } from '@/payload-types'
 import { getSongTagField, getTagNames } from '@/lib/songs/tagFields'
-import {
-  chipCategory,
-  getArrangementKeywords,
-  pickCardChips,
-} from '@/lib/songs/pickCardChips'
+import { chipCategory, pickCardTagGroups } from '@/lib/songs/pickCardChips'
 import { buildCardFragment } from '@/lib/songs/cardFragment'
 import { getCardRarity, type RarityVariant } from '@/lib/songs/cardRarity'
 import { tempoMarkingForBpm } from '@/lib/songs/tempoDescriptor'
@@ -99,6 +95,24 @@ function compositionAbbrev(t: Song['compositionType']): string {
       return 'SMP'
     case 'Other':
       return 'OTH'
+    default: {
+      const _exhaustive: never = t
+      return _exhaustive
+    }
+  }
+}
+
+/** Single-letter recording-type code for the catalog number. */
+function recordingCode(t: Song['recordingType']): string {
+  switch (t) {
+    case 'Studio':
+      return 'S'
+    case 'Live':
+      return 'L'
+    case 'Demo':
+      return 'D'
+    case 'Other':
+      return 'X'
     default: {
       const _exhaustive: never = t
       return _exhaustive
@@ -265,14 +279,11 @@ export const SongCard = ({ song, className }: SongCardProps) => {
   const showGem = rarity.level >= 1
   const gemColor = gemColorFor(rarity.variant, rarity.tier)
 
-  // One chip per layer (round-robin) for variety; arrangements get their
-  // own "ability" treatment below the type line.
-  const chips = pickCardChips(song, 6)
-  const keywords = getArrangementKeywords(song, 3)
-
-  // Flavor: the human tagline IS the lore quote. When absent, fall back
-  // to a non-prose "dossier" fragment that can't be grammatically wrong.
-  const fragment = song.tagline ? null : buildCardFragment(song)
+  // Labeled tag groups ("Mood", "Sounds like", "Great for", "About",
+  // "Also") — each heading tells the listener what its chips mean, so the
+  // tags carry the description instead of duplicating a prose line.
+  const tagGroups = pickCardTagGroups(song)
+  const fragment = buildCardFragment(song)
 
   const duration = song.duration
     ? `${Math.floor(song.duration / 60)}:${Math.round(song.duration % 60)
@@ -281,7 +292,10 @@ export const SongCard = ({ song, className }: SongCardProps) => {
     : '--:--'
   const tempo = tempoMarkingForBpm(song.bpm)
 
-  const serialNumber = `LOG-${releaseYear}-${compositionAbbrev(song.compositionType)}-${song.id.toString().padStart(3, '0')}`
+  const catalogSeq = (song.catalogSequence ?? song.id)
+    .toString()
+    .padStart(3, '0')
+  const serialNumber = `TSM-${releaseYear}-${compositionAbbrev(song.compositionType)}-${catalogSeq}-${recordingCode(song.recordingType)}`
   const rec = recordingTypePresentation(song.recordingType)
   const RecIcon = rec.Icon
 
@@ -310,7 +324,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
   const cardSurface = (
     <div
       className={cn(
-        'relative flex h-full flex-col overflow-hidden rounded-lg border-t border-r-2 border-b-2 border-l-2 border-border border-r-border/50 border-b-border/60 border-l-border bg-card/30 shadow-sm backdrop-blur-sm transition-[transform,box-shadow,border-color] duration-500 ease-out',
+        'relative flex h-full flex-col overflow-hidden rounded-lg border-t border-r-2 border-b-2 border-l-2 border-border border-r-border/50 border-b-border/60 border-l-border bg-card shadow-sm transition-[transform,box-shadow,border-color] duration-500 ease-out',
         'group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-[0_20px_50px_-20px] group-hover:shadow-primary/25',
         rarity.level >= 1 && 'border-t-primary/40',
         rarity.level >= 2 && 'shadow-[0_0_0_1px] shadow-primary/10',
@@ -400,7 +414,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
             )}
             style={{
               transform:
-                'translate3d(calc((var(--mx, 50%) - 50%) * -0.05), calc((var(--my, 0%) - 50%) * -0.05), 0)',
+                'translate(calc((var(--mx, 50%) - 50%) * -0.05), calc((var(--my, 0%) - 50%) * -0.05))',
             }}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
@@ -423,7 +437,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
             onClick={handlePlay}
             aria-label={isCurrent ? 'Pause' : `Play ${song.title}`}
             className={cn(
-              'size-12 min-h-12 min-w-12 rounded-full border-primary/60 bg-background/85 text-primary shadow-lg backdrop-blur-sm transition-all duration-300',
+              'size-12 min-h-12 min-w-12 rounded-full border-primary/60 bg-background/90 text-primary shadow-lg transition-all duration-300',
               'max-sm:scale-100 max-sm:opacity-95 sm:scale-90 sm:opacity-0 sm:group-hover:scale-100 sm:group-hover:opacity-100',
               'hover:bg-primary hover:text-primary-foreground hover:shadow-primary/30',
               'focus-visible:scale-100 focus-visible:opacity-100 active:scale-95',
@@ -440,7 +454,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
         </div>
 
         <div className="absolute top-2 right-2 left-2 z-30 flex items-start justify-between gap-2">
-          <div className="rounded-sm border border-border/80 bg-background/70 px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-muted-foreground uppercase backdrop-blur-md">
+          <div className="rounded-sm border border-border/80 bg-background/85 px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-muted-foreground uppercase">
             <DecryptedText
               text={serialNumber}
               animateOn="view"
@@ -469,7 +483,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
             ) : null}
             <div
               className={cn(
-                'flex items-center gap-0.5 rounded-sm border px-1.5 py-0.5 font-mono text-[8px] font-bold tracking-widest uppercase backdrop-blur-md',
+                'flex items-center gap-0.5 rounded-sm border px-1.5 py-0.5 font-mono text-[8px] font-bold tracking-widest uppercase',
                 rec.chipClass,
               )}
             >
@@ -477,7 +491,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
               {rec.label}
             </div>
             {song.isExplicit ? (
-              <div className="flex items-center gap-0.5 rounded-sm border border-destructive/40 bg-destructive/15 px-1.5 py-0.5 text-[9px] font-bold text-destructive backdrop-blur-md">
+              <div className="flex items-center gap-0.5 rounded-sm border border-destructive/40 bg-destructive/25 px-1.5 py-0.5 text-[9px] font-bold text-destructive">
                 <AlertCircle className="size-2.5" aria-hidden />
                 EXP
               </div>
@@ -523,21 +537,6 @@ export const SongCard = ({ song, className }: SongCardProps) => {
               </span>
               <span>{song.compositionType}</span>
             </div>
-
-            {/* Arrangement "ability" keywords */}
-            {keywords.length > 0 ? (
-              <div className="mb-1.5 flex flex-wrap gap-1">
-                {keywords.map((kw) => (
-                  <span
-                    key={`${kw.field}-${kw.tagId}`}
-                    className="flex items-center gap-1 rounded-sm border border-accent/40 bg-accent/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-accent uppercase"
-                  >
-                    <kw.icon className="size-2.5" aria-hidden />
-                    {kw.text}
-                  </span>
-                ))}
-              </div>
-            ) : null}
 
             {song.tagline ? (
               <p className="line-clamp-2 border-l-2 border-accent/50 pl-2 font-body text-xs leading-snug text-muted-foreground italic">
@@ -590,39 +589,54 @@ export const SongCard = ({ song, className }: SongCardProps) => {
             <StatCell Icon={Clock} value={duration} label="Time" />
           </div>
 
-          {chips.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5 pt-0.5">
-              {chips.map((tag) => {
-                const filterHref = tag.slug
-                  ? musicHrefForTag(chipCategory(tag), tag.slug)
-                  : null
-                const tagLabel = `${tag.field}: ${tag.text}`
+          {tagGroups.length > 0 ? (
+            <div className="flex flex-col gap-1.5 pt-0.5">
+              {tagGroups.map((group) => {
+                const HeadingIcon = group.icon
                 return (
-                  <button
-                    key={`${tag.field}-${tag.tagId}`}
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      if (filterHref) router.push(filterHref)
-                    }}
-                    aria-label={
-                      filterHref ? `Browse ${tagLabel} in /music` : tagLabel
-                    }
-                    disabled={!filterHref}
-                    className={cn(
-                      'flex items-center gap-1 rounded-sm border border-border/60 bg-muted/20 px-1.5 py-0.5 font-mono text-[9px] tracking-wider text-muted-foreground uppercase transition-colors',
-                      filterHref &&
-                        'cursor-pointer hover:border-primary/60 hover:bg-primary/15 hover:text-primary',
-                      'group-hover:border-primary/35',
-                    )}
+                  <div
+                    key={group.field}
+                    className="flex flex-wrap items-center gap-x-1.5 gap-y-1"
                   >
-                    <tag.icon
-                      className={cn('size-2.5', tag.color)}
-                      aria-hidden
-                    />
-                    {tag.text}
-                  </button>
+                    <span className="flex shrink-0 items-center gap-1 font-mono text-[9px] font-semibold tracking-widest text-muted-foreground/70 uppercase">
+                      <HeadingIcon
+                        className="size-2.5 shrink-0 text-muted-foreground/55"
+                        aria-hidden
+                      />
+                      {group.label}
+                    </span>
+                    {group.chips.map((tag) => {
+                      const filterHref = tag.slug
+                        ? musicHrefForTag(chipCategory(tag), tag.slug)
+                        : null
+                      const tagLabel = `${group.label}: ${tag.text}`
+                      return (
+                        <button
+                          key={`${tag.field}-${tag.tagId}`}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            if (filterHref) router.push(filterHref)
+                          }}
+                          aria-label={
+                            filterHref
+                              ? `Browse ${tagLabel} in /music`
+                              : tagLabel
+                          }
+                          disabled={!filterHref}
+                          className={cn(
+                            'rounded-sm border border-border/60 bg-muted/20 px-1.5 py-0.5 font-mono text-[9px] tracking-wider text-foreground/80 uppercase transition-colors',
+                            filterHref &&
+                              'cursor-pointer hover:border-primary/60 hover:bg-primary/15 hover:text-primary',
+                            'group-hover:border-primary/35',
+                          )}
+                        >
+                          {tag.text}
+                        </button>
+                      )
+                    })}
+                  </div>
                 )
               })}
             </div>
@@ -658,6 +672,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
             <div className="shrink-0 pb-1 text-right font-mono text-[7px] leading-tight tracking-widest text-muted-foreground uppercase">
               {song.isrc ? (
                 <>
+                  <span className="block opacity-70">ISRC</span>
                   <span className="block text-foreground/80">
                     <DecryptedText
                       text={song.isrc}
@@ -670,7 +685,6 @@ export const SongCard = ({ song, className }: SongCardProps) => {
                       encryptedClassName="text-primary/50"
                     />
                   </span>
-                  <span className="opacity-70">ISRC</span>
                 </>
               ) : (
                 <span className="opacity-70">No ISRC</span>
