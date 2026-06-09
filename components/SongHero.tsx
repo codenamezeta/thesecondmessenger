@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { Song } from '@/payload-types'
 import { usePlayer } from '@/context/PlayerContext'
 import { Button } from '@/components/ui/button'
@@ -9,8 +10,18 @@ import { cn } from '@/utilities/ui'
 import formatTime from '@/utilities/formatTime'
 import type { Media } from '@/payload-types'
 import placeholderArt from '@/public/imgs/placeholder-art.png'
+import { PRIMARY_ARTIST } from '@/lib/branding'
 
-export const SongHero = ({ song }: { song: Song }) => {
+type SongHeroProps = {
+  song: Song
+  /** Filter-aware return link to `/music` (defaults to bare archive). */
+  archiveReturnHref?: string
+}
+
+export const SongHero = ({
+  song,
+  archiveReturnHref = '/music',
+}: SongHeroProps) => {
   const { playMedia, currentSong, isPlaying, togglePlay } = usePlayer()
 
   const isCurrent = currentSong?.id === song.id
@@ -37,6 +48,43 @@ export const SongHero = ({ song }: { song: Song }) => {
       </div>
 
       <div className="relative z-10 container py-12 md:py-20">
+        <nav aria-label="Breadcrumb" className="mb-4">
+          {/*
+            Global base styles set `ol { text-base md:text-lg }`, so size
+            must be declared on the list itself — not just the nav wrapper.
+          */}
+          <ol className="my-0 flex flex-wrap items-center gap-x-1.5 gap-y-1 font-mono text-[10px] leading-none tracking-widest uppercase md:text-[11px]">
+            <li className="my-0">
+              <Link
+                href="/"
+                className="font-normal text-muted-foreground no-underline transition-colors hover:text-primary"
+              >
+                {PRIMARY_ARTIST}
+              </Link>
+            </li>
+            <li aria-hidden className="my-0 text-muted-foreground/40">
+              /
+            </li>
+            <li className="my-0">
+              <Link
+                href={archiveReturnHref}
+                className="font-normal text-muted-foreground no-underline transition-colors hover:text-primary"
+              >
+                Music Archive
+              </Link>
+            </li>
+            <li aria-hidden className="my-0 text-muted-foreground/40">
+              /
+            </li>
+            <li
+              aria-current="page"
+              className="my-0 font-normal text-foreground"
+            >
+              {song.title}
+            </li>
+          </ol>
+        </nav>
+
         <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-[300px_1fr]">
           {/* 1. ARTWORK */}
           <div className="group relative mx-auto aspect-square w-full max-w-[300px] overflow-hidden rounded-lg border border-accent/25 shadow-[0_0_40px_rgba(var(--color-primary-rgb),0.2)] md:mx-0">

@@ -41,13 +41,17 @@ import { generateMeta } from '@/utilities/generateMeta'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
 import { buildSongMetaDescription, buildSongPageTitle } from '@/lib/seo/songToMetaDescription'
-import { ARTIST_HOMEPAGE } from '@/lib/branding'
 import {
   FIELD_TO_CATEGORY,
   getResolvedTags,
   type SongTagField,
 } from '@/lib/songs/tagFields'
-import { tagLandingHref } from '@/lib/music/filterState'
+import {
+  musicArchiveHref,
+  parseSearchParams,
+  tagLandingHref,
+} from '@/lib/music/filterState'
+import { ARTIST_HOMEPAGE, PRIMARY_ARTIST } from '@/lib/branding'
 import { getMeUser } from '@/utilities/getMeUser'
 import { SongGatedBonusSection } from '@/components/SongGatedBonusSection'
 import { userMeetsGatedFileAccess } from '@/access/crewRanks'
@@ -57,6 +61,7 @@ type Args = {
   params: Promise<{
     slug: string
   }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
 type SongDoc = NonNullable<Awaited<ReturnType<typeof querySongBySlug>>>
@@ -478,8 +483,12 @@ export async function generateMetadata({
   }
 }
 
-export default async function SongPage({ params }: Args) {
+export default async function SongPage({ params, searchParams }: Args) {
   const { slug } = await params
+  const resolvedSearchParams = await searchParams
+  const archiveReturnHref = musicArchiveHref(
+    parseSearchParams(resolvedSearchParams),
+  )
   const initialSong = await querySongBySlug(slug)
 
   if (!initialSong) return notFound()
@@ -567,9 +576,19 @@ export default async function SongPage({ params }: Args) {
 
   return (
     <article className="min-h-screen bg-transparent pb-12">
-      <MusicRecordingSchema song={song} />
+      <MusicRecordingSchema
+        song={song}
+        breadcrumbs={[
+          { name: PRIMARY_ARTIST, item: ARTIST_HOMEPAGE },
+          { name: 'Music', item: `${ARTIST_HOMEPAGE}/music` },
+          {
+            name: song.title,
+            item: `${ARTIST_HOMEPAGE}/music/${slug}`,
+          },
+        ]}
+      />
       <PayloadRedirects disableNotFound url={`/music/${slug}`} />
-      <SongHero song={song} />
+      <SongHero song={song} archiveReturnHref={archiveReturnHref} />
 
       <div className="container bg-transparent py-10 md:py-16">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10">

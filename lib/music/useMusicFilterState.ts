@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import {
+  isFilterStateEmpty,
   parseSearchParams,
   serializeFilterState,
   type FilterState,
@@ -10,23 +11,46 @@ import {
 
 type Updater = FilterState | ((prev: FilterState) => FilterState)
 
+const STORAGE_KEY = 'tsm:music-archive-filters'
+
+function readStoredFilters(): FilterState | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as FilterState
+    return parseSearchParams(serializeFilterState(parsed))
+  } catch {
+    return null
+  }
+}
+
+function persistFilters(state: FilterState): void {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  } catch {
+    // Quota or privacy mode — non-fatal.
+  }
+}
+
 /**
  * Source of truth for the `/music` page's filter state, with two-way
- * sync to the URL.
+ * sync to the URL via the Next.js router (so back/forward stays aligned).
  *
- * State lives in React `useState` (instant in-memory updates). The URL
- * is mirrored in a `useEffect` via `window.history.replaceState` so we
- * never touch the Next.js Router during render (which triggers the
- * "Cannot update Router while rendering MusicArchive" error).
- *
- * Browser back / forward (popstate) re-syncs state from the URL so
- * the in-page state never drifts from what the address bar shows.
+ * When the URL has no active filters, the last in-session archive state
+ * is restored from `sessionStorage` as a fallback.
  */
 export function useMusicFilterState(initial: FilterState) {
+  const router = useRouter()
   const pathname = usePathname()
   const [state, setStateRaw] = useState<FilterState>(initial)
-  /** Skip the URL-write effect right after popstate — URL is already correct. */
   const skipNextUrlSync = useRef(false)
+  const isFirstMount = useRef(true)
+
+  const initialKey = useMemo(
+    () => serializeFilterState(initial).toString(),
+    [initial],
+  )
 
   const setState = useCallback((next: Updater) => {
     setStateRaw((prev) =>
@@ -35,6 +59,26 @@ export function useMusicFilterState(initial: FilterState) {
         : next,
     )
   }, [])
+
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false
+      if (isFilterStateEmpty(initial)) {
+        const stored = readStoredFilters()
+        if (stored && !isFilterStateEmpty(stored)) {
+          setStateRaw(stored)
+          return
+        }
+      }
+    }
+
+    skipNextUrlSync.current = true
+    setStateRaw(initial)
+  }, [initialKey, initial])
+
+  useEffect(() => {
+    persistFilters(state)
+  }, [state])
 
   useEffect(() => {
     if (skipNextUrlSync.current) {
@@ -47,8 +91,8 @@ export function useMusicFilterState(initial: FilterState) {
     if (window.location.search === nextSearch) return
 
     const url = params ? `${pathname}?${params}` : pathname
-    window.history.replaceState(null, '', url)
-  }, [state, pathname])
+    router.replace(url, { scroll: false })
+  }, [state, pathname, router])
 
   useEffect(() => {
     const handlePopState = () => {

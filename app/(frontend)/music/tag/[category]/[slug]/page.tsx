@@ -19,6 +19,10 @@ import {
   tagLandingTitle,
 } from '@/lib/music/tagLanding'
 import { ARTIST_HOMEPAGE, PRIMARY_ARTIST } from '@/lib/branding'
+import {
+  buildBreadcrumbListJsonLd,
+  buildJsonLdGraph,
+} from '@/lib/seo/breadcrumbJsonLd'
 import type { Media, Song, Tag } from '@/payload-types'
 import type { DefaultTypedEditorState } from '@payloadcms/richtext-lexical'
 
@@ -220,53 +224,47 @@ function buildTagCollectionJsonLd(args: {
 }): Record<string, unknown> {
   const { tag, category, songs } = args
   const url = `${ARTIST_HOMEPAGE}/music/tag/${category}/${tag.slug}`
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: tagLandingTitle(category, tag.name),
-    description: tagLandingMetaDescription(category, tag.name, songs.length),
-    url,
-    isPartOf: {
-      '@type': 'WebSite',
-      name: PRIMARY_ARTIST,
-      url: ARTIST_HOMEPAGE,
-    },
-    mainEntity: {
-      '@type': 'ItemList',
-      numberOfItems: songs.length,
-      itemListElement: songs.map((song, idx) => ({
-        '@type': 'ListItem',
-        position: idx + 1,
-        item: {
-          '@type': 'MusicRecording',
-          name: song.title,
-          url: song.slug ? `${ARTIST_HOMEPAGE}/music/${song.slug}` : undefined,
-          byArtist: {
-            '@type': 'MusicGroup',
-            name: PRIMARY_ARTIST,
-            url: ARTIST_HOMEPAGE,
+  const musicUrl = `${ARTIST_HOMEPAGE}/music`
+
+  return buildJsonLdGraph([
+    {
+      '@type': 'CollectionPage',
+      name: tagLandingTitle(category, tag.name),
+      description: tagLandingMetaDescription(category, tag.name, songs.length),
+      url,
+      isPartOf: {
+        '@type': 'WebSite',
+        name: PRIMARY_ARTIST,
+        url: ARTIST_HOMEPAGE,
+      },
+      mainEntity: {
+        '@type': 'ItemList',
+        numberOfItems: songs.length,
+        itemListElement: songs.map((song, idx) => ({
+          '@type': 'ListItem',
+          position: idx + 1,
+          item: {
+            '@type': 'MusicRecording',
+            name: song.title,
+            url: song.slug ? `${ARTIST_HOMEPAGE}/music/${song.slug}` : undefined,
+            byArtist: {
+              '@type': 'MusicGroup',
+              name: PRIMARY_ARTIST,
+              url: ARTIST_HOMEPAGE,
+            },
           },
-        },
-      })),
+        })),
+      },
     },
-    breadcrumb: {
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        {
-          '@type': 'ListItem',
-          position: 1,
-          name: 'Music',
-          item: `${ARTIST_HOMEPAGE}/music`,
-        },
-        {
-          '@type': 'ListItem',
-          position: 2,
-          name: `${tagLandingEyebrow(category)} \u2013 ${tag.name}`,
-          item: url,
-        },
-      ],
-    },
-  }
+    buildBreadcrumbListJsonLd([
+      { name: PRIMARY_ARTIST, item: ARTIST_HOMEPAGE },
+      { name: 'Music', item: musicUrl },
+      {
+        name: `${tagLandingEyebrow(category)} \u2013 ${tag.name}`,
+        item: url,
+      },
+    ]),
+  ])
 }
 
 // Re-export for `generateStaticParams` callers in layouts.
