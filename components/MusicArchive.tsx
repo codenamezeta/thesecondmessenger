@@ -18,6 +18,8 @@ import { applyFilterState } from '@/lib/music/applyFilters'
 import { computeFacetGroups } from '@/lib/music/facetCounts'
 import {
   DEFAULT_FILTER_STATE,
+  serializeFilterState,
+  songHrefFromArchive,
   type FilterState,
   removeTagFilter,
   toggleTagFilter,
@@ -66,6 +68,11 @@ export const MusicArchive = ({
     [initialSongs, state],
   )
 
+  const archiveQuery = useMemo(
+    () => serializeFilterState(state).toString(),
+    [state],
+  )
+
   const handleToggleTag = (field: SongTagField, slug: string) =>
     setState((prev) => toggleTagFilter(prev, field, slug))
 
@@ -83,7 +90,7 @@ export const MusicArchive = ({
   //- 1. GRID CARD
   const GridItem = ({ song }: { song: Song }) => (
     <li className="h-full">
-      <SongCard song={song} />
+      <SongCard song={song} archiveQuery={archiveQuery} />
     </li>
   )
 
@@ -91,7 +98,7 @@ export const MusicArchive = ({
   const ListItem = ({ song }: { song: Song }) => (
     <li>
       <Link
-        href={`/music/${song.slug}`}
+        href={songHrefFromArchive(song.slug ?? '', archiveQuery)}
         className="group flex items-center gap-6 border-b border-border p-4 transition-colors hover:bg-card"
       >
         <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/50 bg-white/5 text-muted-foreground transition-transform duration-500 group-hover:scale-105">
@@ -156,7 +163,7 @@ export const MusicArchive = ({
           )}
         >
           <Link
-            href={`/music/${song.slug}`}
+            href={songHrefFromArchive(song.slug ?? '', archiveQuery)}
             className="group inline-block max-w-lg rounded p-4 hover:border"
           >
             {song.coverArt && (

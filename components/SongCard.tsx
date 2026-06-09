@@ -26,7 +26,7 @@ import { chipCategory, pickCardTagGroups } from '@/lib/songs/pickCardChips'
 import { buildCardFragment } from '@/lib/songs/cardFragment'
 import { getCardRarity, type RarityVariant } from '@/lib/songs/cardRarity'
 import { tempoMarkingForBpm } from '@/lib/songs/tempoDescriptor'
-import { tagLandingHref } from '@/lib/music/filterState'
+import { songHrefFromArchive, tagLandingHref } from '@/lib/music/filterState'
 import { usePlayer } from '@/context/PlayerContext'
 import { Button } from '@/components/ui/button'
 import DecryptedText from '@/components/DecryptedText'
@@ -34,6 +34,8 @@ import DecryptedText from '@/components/DecryptedText'
 interface SongCardProps {
   song: Song
   className?: string
+  /** Serialized `/music` filter query — preserved for archive return navigation. */
+  archiveQuery?: string
 }
 
 /** FNV-1a 32-bit — deterministic fingerprint for visuals (SSR-safe). */
@@ -213,7 +215,7 @@ function StatCell({
   )
 }
 
-export const SongCard = ({ song, className }: SongCardProps) => {
+export const SongCard = ({ song, className, archiveQuery }: SongCardProps) => {
   const router = useRouter()
   const { playMedia, isPlaying, currentSong } = usePlayer()
   const prefersReducedMotion = useReducedMotion()
@@ -268,7 +270,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
     ? new Date(song.releaseDate).getFullYear()
     : '----'
   const isCurrent = isPlaying && currentSong?.id === song.id
-  const href = song.slug ? `/music/${song.slug}` : null
+  const href = song.slug ? songHrefFromArchive(song.slug, archiveQuery) : null
 
   const subGenre =
     getTagNames(getSongTagField(song, 'subGenres'))[0] ??
