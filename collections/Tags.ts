@@ -8,7 +8,6 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 import { formatSlug } from './utils/formatSlug'
-import { TAG_ICON_OPTIONS } from '@/lib/songs/tagIconOptions'
 
 export const Tags: CollectionConfig = {
   slug: 'tags',
@@ -57,20 +56,6 @@ export const Tags: CollectionConfig = {
       },
       hooks: {
         beforeValidate: [formatSlug('name')],
-      },
-    },
-    {
-      name: 'icon',
-      type: 'select',
-      // Curated Lucide subset. Single source of truth is
-      // `lib/songs/tagIconOptions.ts` (mirrored by the component registry
-      // in `lib/songs/tagIcons.ts`). Front-end falls back to a per-category
-      // default when unset, so this is always optional.
-      options: [...TAG_ICON_OPTIONS],
-      admin: {
-        position: 'sidebar',
-        description:
-          'Optional. Glyph shown on song cards and the Sonic DNA panel for this tag. Leave empty to use the sensible default for this category (e.g. a guitar tag without an icon falls back to the instrument default).',
       },
     },
     {

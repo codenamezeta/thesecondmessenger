@@ -445,12 +445,18 @@
    calm static state when motion is reduced or there's no fine pointer.
    ============================================================ */
 
-/* Pointer-tracked 3D tilt. Children parallax off the same --mx/--my. */
+/* Pointer-tracked 3D tilt. Perspective comes from the parent shell's
+   `perspective` property (not baked in here) and children parallax off
+   the same --mx/--my.
+
+   Intentionally NO `will-change` / `transform-style: preserve-3d`: those
+   promoted every card to its own GPU layer, and a gridful of them caused
+   layer eviction + blank-card flicker on weaker GPUs (older Intel Macs,
+   some Android tablets) during scroll. At rest the transform resolves to
+   `rotate*(0)` so idle cards stay un-promoted. */
 .tsm-card-tilt {
-  transform: perspective(1100px) rotateX(var(--ry, 0deg)) rotateY(var(--rx, 0deg));
+  transform: rotateX(var(--ry, 0deg)) rotateY(var(--rx, 0deg));
   transition: transform 0.25s ease-out;
-  transform-style: preserve-3d;
-  will-change: transform;
 }
 
 /* Pointer-reactive holographic foil (holo + secret rarity only). At rest

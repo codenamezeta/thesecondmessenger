@@ -56,7 +56,6 @@ import {
   Waves,
   type LucideIcon,
 } from 'lucide-react'
-import type { Tag } from '@/payload-types'
 import type { TagCategory } from './tagFields'
 import {
   CATEGORY_DEFAULT_ICON,
@@ -149,20 +148,13 @@ export const CATEGORY_COLOR: Record<TagCategory, string> = {
   other: 'text-muted-foreground',
 }
 
-/** A tag-shaped object carrying just what the resolver needs. */
-type IconableTag = Pick<Tag, 'category'> & { icon?: Tag['icon'] }
-
-function isIconKey(value: unknown): value is TagIconKey {
-  return typeof value === 'string' && value in TAG_ICON_REGISTRY
-}
-
 /**
- * Resolve the best icon for a tag: its explicit `icon` when set and
- * valid, otherwise the category default. Never returns undefined.
+ * Resolve the icon for an ontology category. Per-tag icon overrides were
+ * removed along with the editor `icon` field, so every tag now uses the
+ * sensible default glyph for its category.
  */
-export function resolveTagIcon(tag: IconableTag): LucideIcon {
-  if (isIconKey(tag.icon)) return TAG_ICON_REGISTRY[tag.icon]
-  return TAG_ICON_REGISTRY[CATEGORY_DEFAULT_ICON[tag.category]]
+export function resolveTagIcon(category: TagCategory): LucideIcon {
+  return TAG_ICON_REGISTRY[CATEGORY_DEFAULT_ICON[category]]
 }
 
 /** Resolve the Tailwind tint utility for a tag's category. */

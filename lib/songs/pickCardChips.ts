@@ -6,15 +6,11 @@ import {
   getSongTagField,
   type SongTagField,
 } from './tagFields'
-import { resolveTagColor, resolveTagIcon } from './tagIcons'
+import { resolveTagIcon } from './tagIcons'
 
 export type CardChip = {
   /** Display text — the resolved `Tag.name`. */
   text: string
-  /** Lucide icon component for the chip leading-glyph. */
-  icon: LucideIcon
-  /** Tailwind text-color utility for the icon tint. */
-  color: string
   /** Source field on the song. Used for click-through routing. */
   field: SongTagField
   /** Underlying tag id — stable across renders, used as a React key. */
@@ -24,34 +20,44 @@ export type CardChip = {
 }
 
 /**
- * Per-layer presentation ORDER for SongCard chips. Index = priority: the
- * round-robin picker takes one tag from each layer in this order before
- * any layer contributes a second tag, so a song with content in many
- * layers fills its card with maximum variety.
+ * Ordered, LABELED tag groups for the SongCard. Each becomes a
+ * "Question → answers" row (e.g. `Sounds like:  Blink-182  Green Day`)
+ * so the chips themselves carry the description — no prose line restating
+ * the same tags, and no ambiguity about what a bare chip means.
  *
- * Icons + colors are NO LONGER hard-coded per layer — they resolve from
- * each tag's own `icon` field (editor-set, see `tagIcons.ts`) with a
- * per-category fallback, so a "Guitar" instrument shows a guitar rather
- * than a one-size-fits-all microphone.
+ * Sub-genre is intentionally absent: it follows industry convention
+ * (hard-rock, pop-punk) rather than answering a question, so it stays in
+ * the card's title type-line. Genre / instruments / gear / arrangement
+ * are catalog metadata and live on the song page, not the card.
  *
- * `arrangements` is deliberately absent here: it gets a dedicated
- * "keyword / ability" treatment via `getArrangementKeywords`.
+ * `otherTags` is the only catch-all — a narrow "Also" bucket so genuinely
+ * uncategorized tags can surface without dragging the broad, un-enticing
+ * layers back onto the card.
+ *
+ * Order leads with the strongest hooks (mood, sounds-like).
  */
-const LAYER_PRESENTATION: readonly SongTagField[] = [
-  'subGenres',
-  'moods',
-  'activities',
-  'instruments',
-  'influences',
-  'themes',
-  'genres',
+const GROUP_LAYOUT: readonly { field: SongTagField; label: string }[] = [
+  { field: 'moods', label: 'Mood' },
+  { field: 'influences', label: 'Sounds like' },
+  { field: 'activities', label: 'Great for' },
+  { field: 'themes', label: 'About' },
+  { field: 'otherTags', label: 'Also' },
 ]
+
+export type CardTagGroup = {
+  /** Source field — used for click-through routing + React keys. */
+  field: SongTagField
+  /** Heading text shown before the chips (e.g. "Sounds like"). */
+  label: string
+  /** Category-default Lucide icon for the heading glyph. */
+  icon: LucideIcon
+  /** The (capped) tags in this group. */
+  chips: CardChip[]
+}
 
 function chipFromTag(tag: Tag, field: SongTagField): CardChip {
   return {
     text: tag.name,
-    icon: resolveTagIcon(tag),
-    color: resolveTagColor(tag.category),
     field,
     tagId: tag.id,
     slug: tag.slug ?? null,
@@ -59,44 +65,23 @@ function chipFromTag(tag: Tag, field: SongTagField): CardChip {
 }
 
 /**
- * Pick up to `max` chips from a Song, drawing across layers in priority
- * order so each card feels uniquely characterized rather than bunching
- * up on moods + themes alone.
+ * Build the labeled tag groups for a SongCard. Returns only non-empty
+ * groups (so the card renders a heading only when it has answers), each
+ * capped at `perGroup` tags to keep card heights even across a grid.
  */
-export function pickCardChips(song: Song, max = 6): CardChip[] {
-  const cursors = new Map<SongTagField, number>()
-  for (const field of LAYER_PRESENTATION) cursors.set(field, 0)
-
-  const chips: CardChip[] = []
-  let progressed = true
-
-  while (chips.length < max && progressed) {
-    progressed = false
-    for (const field of LAYER_PRESENTATION) {
-      if (chips.length >= max) break
-      const tags = getResolvedTags(getSongTagField(song, field))
-      const idx = cursors.get(field) ?? 0
-      const next = tags[idx]
-      if (next) {
-        chips.push(chipFromTag(next, field))
-        cursors.set(field, idx + 1)
-        progressed = true
-      }
-    }
+export function pickCardTagGroups(song: Song, perGroup = 3): CardTagGroup[] {
+  const groups: CardTagGroup[] = []
+  for (const { field, label } of GROUP_LAYOUT) {
+    const tags = getResolvedTags(getSongTagField(song, field)).slice(0, perGroup)
+    if (tags.length === 0) continue
+    groups.push({
+      field,
+      label,
+      icon: resolveTagIcon(FIELD_TO_CATEGORY[field]),
+      chips: tags.map((tag) => chipFromTag(tag, field)),
+    })
   }
-
-  return chips
-}
-
-/**
- * Arrangement tags ("Instrumental", "Guitar Solo", "Odd Time Signature")
- * read like trading-card abilities/keywords. Surfaced separately from the
- * generic chip strip so they can get a distinct, bolder treatment.
- */
-export function getArrangementKeywords(song: Song, max = 3): CardChip[] {
-  return getResolvedTags(getSongTagField(song, 'arrangements'))
-    .slice(0, max)
-    .map((tag) => chipFromTag(tag, 'arrangements'))
+  return groups
 }
 
 /** Convenience: derive the Payload tag category for a chip. */
