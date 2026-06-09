@@ -1,24 +1,29 @@
 import type { Metadata } from 'next'
-import { getServerSideURL } from './getURL'
+import { ARTIST_HOMEPAGE, PRIMARY_ARTIST } from '@/lib/branding'
 
 const defaultOpenGraph: Metadata['openGraph'] = {
   type: 'website',
-  description: 'An open-source website built with Payload and Next.js.',
+  description:
+    'Independent artist. Music built from scratch with real instruments. Enter the archive.',
   images: [
     {
-      url: `${getServerSideURL()}/website-template-OG.webp`,
+      url: `${ARTIST_HOMEPAGE}/imgs/michael-today.jpg`,
     },
   ],
-  siteName: 'Payload Website Template',
-  title: 'Payload Website Template',
+  siteName: PRIMARY_ARTIST,
+  title: PRIMARY_ARTIST,
+  url: ARTIST_HOMEPAGE,
+  locale: 'en_US',
 }
 
 export const mergeOpenGraph = (
   og?: Metadata['openGraph'],
 ): Metadata['openGraph'] => {
+  const fallbackImage = `${ARTIST_HOMEPAGE}/imgs/michael-today.jpg`
+
   return {
     ...defaultOpenGraph,
     ...og,
-    images: og?.images ? og.images : defaultOpenGraph.images,
+    images: og?.images ? og.images : [{ url: fallbackImage }],
   }
 }

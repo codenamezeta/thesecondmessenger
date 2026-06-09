@@ -239,6 +239,7 @@ function buildTagCollectionJsonLd(args: {
         position: idx + 1,
         item: {
           '@type': 'MusicRecording',
+          name: song.title,
           url: song.slug ? `${ARTIST_HOMEPAGE}/music/${song.slug}` : undefined,
           byArtist: {
             '@type': 'MusicGroup',

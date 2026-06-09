@@ -3,12 +3,9 @@ import { getSongTagField, getTagNames } from './tagFields'
 
 /**
  * Non-prose "dossier" fragment used as the SongCard flavor line when a
- * song has no human-written `tagline`.
- *
- * Unlike the retired sentence generator (`lib/seo/songToCardFlavor.ts`,
- * now SEO-only), this never attempts grammar — it joins distinguishing
- * tag fragments with a middot, so it is impossible to render something
- * grammatically wrong ("a energetic", bad list commas, etc.).
+ * song has no human-written `tagline`. Joins distinguishing tag fragments
+ * with a middot — no sentence grammar, so it cannot render broken prose
+ * ("a energetic", bad list commas, etc.).
  *
  *   "ENERGETIC · POP-PUNK · FOR RUNNING · RIYL BLINK-182"
  *

@@ -26,7 +26,7 @@ import { chipCategory, pickCardTagGroups } from '@/lib/songs/pickCardChips'
 import { buildCardFragment } from '@/lib/songs/cardFragment'
 import { getCardRarity, type RarityVariant } from '@/lib/songs/cardRarity'
 import { tempoMarkingForBpm } from '@/lib/songs/tempoDescriptor'
-import { musicHrefForTag } from '@/lib/music/filterState'
+import { tagLandingHref } from '@/lib/music/filterState'
 import { usePlayer } from '@/context/PlayerContext'
 import { Button } from '@/components/ui/button'
 import DecryptedText from '@/components/DecryptedText'
@@ -607,7 +607,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
                     </span>
                     {group.chips.map((tag) => {
                       const filterHref = tag.slug
-                        ? musicHrefForTag(chipCategory(tag), tag.slug)
+                        ? tagLandingHref(chipCategory(tag), tag.slug)
                         : null
                       const tagLabel = `${group.label}: ${tag.text}`
                       return (
@@ -621,7 +621,7 @@ export const SongCard = ({ song, className }: SongCardProps) => {
                           }}
                           aria-label={
                             filterHref
-                              ? `Browse ${tagLabel} in /music`
+                              ? `Browse ${tagLabel} tag archive`
                               : tagLabel
                           }
                           disabled={!filterHref}

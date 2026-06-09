@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import { Header } from '@/components/Header'
@@ -5,37 +6,93 @@ import { MusicArchive } from '@/components/MusicArchive'
 import { StreamingPlatformDirectory } from '@/components/music/StreamingPlatformDirectory'
 import { parseSearchParams } from '@/lib/music/filterState'
 import DotField from '@/components/DotField'
-import { Metadata } from 'next'
+import { ARTIST_HOMEPAGE, PRIMARY_ARTIST } from '@/lib/branding'
+import type { Song } from '@/payload-types'
 
-// Reading `searchParams` opts the page into dynamic rendering per
-// request (Next 15 behavior). Filtering is purely client-side from
-// `initialFilters`, so URL changes stay snappy without re-fetching.
-// If catalog growth ever makes the per-request `payload.find` a
-// bottleneck, wrap it in `unstable_cache` keyed on the song list
-// rather than the URL — the song fetch is independent of filters.
 export const revalidate = 600
 
-export const metadata: Metadata = {
-  title: 'Music by The Second Messenger',
-  description: 'Full music archive and audio logs.',
-  openGraph: {
-    images: [
-      {
-        url: 'https://thesecondmessenger.com/imgs/michael-today.jpg',
-      },
-    ],
-  },
-  twitter: {
-    images: [
-      {
-        url: 'https://thesecondmessenger.com/imgs/michael-today.jpg',
-      },
-    ],
-  },
+const RELEASED_SONG_WHERE = {
+  and: [
+    { releaseDate: { exists: true } },
+    { releaseDate: { not_equals: null } },
+  ],
+}
+
+const MUSIC_ARCHIVE_DESCRIPTION =
+  'Browse every released track by The Second Messenger — rock, pop-punk, synthwave, acoustic, and more. Filter by mood, activity, theme, and instrument.'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const payload = await getPayload({ config: configPromise })
+  const { totalDocs } = await payload.find({
+    collection: 'songs',
+    where: RELEASED_SONG_WHERE,
+    limit: 0,
+  })
+
+  const title = `Music by ${PRIMARY_ARTIST}`
+  const description = `${MUSIC_ARCHIVE_DESCRIPTION} ${totalDocs} tracks in the archive.`
+  const canonicalUrl = `${ARTIST_HOMEPAGE}/music`
+  const ogImage = `${ARTIST_HOMEPAGE}/imgs/michael-today.jpg`
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: PRIMARY_ARTIST,
+      locale: 'en_US',
+      type: 'website',
+      images: [{ url: ogImage }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage],
+    },
+  }
 }
 
 interface MusicPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+function buildMusicArchiveJsonLd(songs: Song[]): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `Music by ${PRIMARY_ARTIST}`,
+    description: MUSIC_ARCHIVE_DESCRIPTION,
+    url: `${ARTIST_HOMEPAGE}/music`,
+    isPartOf: {
+      '@type': 'WebSite',
+      name: PRIMARY_ARTIST,
+      url: ARTIST_HOMEPAGE,
+    },
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: songs.length,
+      itemListElement: songs.map((song, idx) => ({
+        '@type': 'ListItem',
+        position: idx + 1,
+        item: {
+          '@type': 'MusicRecording',
+          name: song.title,
+          url: song.slug ? `${ARTIST_HOMEPAGE}/music/${song.slug}` : undefined,
+          byArtist: {
+            '@type': 'MusicGroup',
+            name: PRIMARY_ARTIST,
+            url: ARTIST_HOMEPAGE,
+          },
+        },
+      })),
+    },
+  }
 }
 
 export default async function MusicPage({ searchParams }: MusicPageProps) {
@@ -44,22 +101,24 @@ export default async function MusicPage({ searchParams }: MusicPageProps) {
   const resolvedSearchParams = await searchParams
   const initialFilters = parseSearchParams(resolvedSearchParams)
 
-  // Fetch ALL songs (we will handle sorting/filtering on the client for instant feedback)
   const songs = await payload.find({
     collection: 'songs',
-    where: {
-      and: [
-        { releaseDate: { exists: true } },
-        { releaseDate: { not_equals: null } },
-      ],
-    },
-    sort: '-releaseDate', // Default to newest first
+    where: RELEASED_SONG_WHERE,
+    sort: '-releaseDate',
     limit: 100,
-    depth: 1, // We just need basic info (title, slug, date, cover)
+    depth: 1,
   })
+
+  const jsonLd = buildMusicArchiveJsonLd(songs.docs)
 
   return (
     <article className="bg-linear-to-br from-primary/10 via-transparent to-accent/15 pb-24">
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <div className="fixed inset-0 -z-10 bg-background">
         <DotField
           dotRadius={1}
