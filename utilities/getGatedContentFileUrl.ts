@@ -3,6 +3,9 @@ import { getMediaUrl } from '@/utilities/getMediaUrl'
 
 const GATED_COLLECTION_SLUG = 'gated-content' as const
 
+/** Matches `payload.config.ts` s3Storage `gated-content` prefix (not a CMS field). */
+const GATED_OBJECT_PREFIX = process.env.R2_PREFIX || 'gated-content'
+
 /** Must match `payload.config.ts` `s3Storage({ enabled: … })` and `GatedContent` upload mode. */
 function isGatedObjectStorageEnabled(): boolean {
   return Boolean(process.env.R2_BUCKET && process.env.R2_ENDPOINT)
@@ -13,11 +16,7 @@ function payloadFileRoute(asset: GatedContent): string {
   if (!filename) return ''
 
   const path = `/api/${GATED_COLLECTION_SLUG}/file/${encodeURIComponent(filename)}`
-  const prefix = asset.prefix
-  if (prefix) {
-    return `${path}?${new URLSearchParams({ prefix }).toString()}`
-  }
-  return path
+  return `${path}?${new URLSearchParams({ prefix: GATED_OBJECT_PREFIX }).toString()}`
 }
 
 /**
