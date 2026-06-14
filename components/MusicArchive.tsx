@@ -42,8 +42,9 @@ import { MusicFilterDrawer } from './music/MusicFilterDrawer'
 import { ActiveFilterChips } from './music/ActiveFilterChips'
 import { ArchiveSongPlayButton } from './music/ArchiveSongPlayButton'
 import { ArchiveSongMeta } from './music/ArchiveSongMeta'
+import { ArchivePlayResultsButton } from './music/ArchivePlayResultsButton'
 
-// type CompositionFilter = FilterState['composition']
+type CompositionFilter = FilterState['composition']
 // type RecordingFilter = FilterState['recording']
 type SortMode = FilterState['sort']
 
@@ -278,7 +279,7 @@ export const MusicArchive = ({
             /> */}
 
             {/* Composition Type */}
-            {/* <div className="flex gap-1">
+            <div className="flex gap-1">
               <Label htmlFor="music-archive-composition" className="sr-only">
                 Composition type
               </Label>
@@ -299,12 +300,12 @@ export const MusicArchive = ({
                   <SelectValue placeholder="Composition type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Composition Types</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
                   <SelectItem value="Original">Originals</SelectItem>
                   <SelectItem value="Cover">Covers</SelectItem>
                 </SelectContent>
               </Select>
-            </div> */}
+            </div>
 
             {/* Recording Type */}
             {/* <div className="flex flex-col gap-1">
@@ -418,6 +419,8 @@ export const MusicArchive = ({
               <List className="size-4" />
             </Button>
           </div>
+
+          <ArchivePlayResultsButton songs={filteredSongs} />
 
           <div className="hidden flex-1 sm:block" />
 

@@ -30,13 +30,14 @@ export function ArchiveSongPlayButton({
     playMedia(song)
   }
 
-  const dim = size === 'sm' ? 'size-9 min-h-9 min-w-9' : 'size-11 min-h-11 min-w-11'
+  const dim =
+    size === 'sm' ? 'size-9 min-h-9 min-w-9' : 'size-11 min-h-11 min-w-11'
   const iconSize = size === 'sm' ? 'size-4' : 'size-5'
 
   return (
     <Button
       type="button"
-      size="icon"
+      size="default"
       variant="outline"
       onClick={handleClick}
       aria-label={isCurrent ? `Pause ${song.title}` : `Play ${song.title}`}
@@ -51,7 +52,11 @@ export function ArchiveSongPlayButton({
       {isCurrent ? (
         <Pause className={iconSize} fill="currentColor" aria-hidden />
       ) : (
-        <Play className={cn(iconSize, 'ml-0.5')} fill="currentColor" aria-hidden />
+        <Play
+          className={cn(iconSize, 'ml-0.5')}
+          fill="currentColor"
+          aria-hidden
+        />
       )}
     </Button>
   )

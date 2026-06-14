@@ -404,6 +404,10 @@ export interface MailingList {
 export interface Playlist {
   id: number;
   title: string;
+  /**
+   * Lower numbers appear first in the player. The auto-generated "Discography" always leads, so start your custom playlists at 1+.
+   */
+  displayOrder?: number | null;
   slug?: string | null;
   description?: string | null;
   coverArt?: (number | null) | Media;
@@ -1494,6 +1498,7 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface PlaylistsSelect<T extends boolean = true> {
   title?: T;
+  displayOrder?: T;
   slug?: T;
   description?: T;
   coverArt?: T;
