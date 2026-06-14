@@ -1,0 +1,8 @@
+# pnpm 11+ — allow native build scripts for deps that need them (was package.json "pnpm.onlyBuiltDependencies").
+allowBuilds:
+  bufferutil: true
+  esbuild: true
+  msw: true
+  sharp: true
+  unrs-resolver: true
+  utf-8-validate: true
