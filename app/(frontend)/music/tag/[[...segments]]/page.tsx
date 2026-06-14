@@ -1,5 +1,5 @@
 import { cache } from 'react'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
@@ -18,6 +18,7 @@ import {
   tagLandingMetaDescription,
   tagLandingTitle,
 } from '@/lib/music/tagLanding'
+import { pickCanonicalTag, queryTagsBySlug } from '@/lib/routing/slugLookups'
 import { ARTIST_HOMEPAGE, PRIMARY_ARTIST } from '@/lib/branding'
 import {
   buildBreadcrumbListJsonLd,
@@ -26,10 +27,9 @@ import {
 import type { Media, Song, Tag } from '@/payload-types'
 import type { DefaultTypedEditorState } from '@payloadcms/richtext-lexical'
 
-interface TagLandingParams {
+interface TagRouteParams {
   params: Promise<{
-    category: string
-    slug: string
+    segments?: string[]
   }>
 }
 
@@ -51,7 +51,7 @@ export async function generateStaticParams() {
   })
   return tags.docs
     .filter((t): t is Tag & { slug: string } => Boolean(t.slug))
-    .map((t) => ({ category: t.category, slug: t.slug }))
+    .map((t) => ({ segments: [t.category, t.slug] }))
 }
 
 const queryTagWithSongs = cache(async (category: string, slug: string) => {
@@ -88,10 +88,46 @@ const queryTagWithSongs = cache(async (category: string, slug: string) => {
   return { tag, category, songs: songsResult.docs }
 })
 
+async function resolveTagRoute(
+  segments: string[],
+): Promise<
+  | { kind: 'landing'; category: string; slug: string }
+  | { kind: 'redirect'; destination: string }
+  | null
+> {
+  if (segments.length === 2) {
+    const [category, slug] = segments
+    const result = await queryTagWithSongs(category, slug)
+    if (result) {
+      return { kind: 'landing', category, slug }
+    }
+    return null
+  }
+
+  if (segments.length === 1) {
+    const [tagSlug] = segments
+    const tags = await queryTagsBySlug(tagSlug)
+    if (tags.length === 0) return null
+
+    const tag = pickCanonicalTag(tags)
+    if (!tag.category || !tag.slug) return null
+
+    return {
+      kind: 'redirect',
+      destination: `/music/tag/${tag.category}/${tag.slug}`,
+    }
+  }
+
+  return null
+}
+
 export async function generateMetadata({
   params,
-}: TagLandingParams): Promise<Metadata> {
-  const { category, slug } = await params
+}: TagRouteParams): Promise<Metadata> {
+  const { segments = [] } = await params
+  if (segments.length !== 2) return {}
+
+  const [category, slug] = segments
   const result = await queryTagWithSongs(category, slug)
   if (!result) return {}
 
@@ -126,9 +162,17 @@ export async function generateMetadata({
   }
 }
 
-export default async function TagLandingPage({ params }: TagLandingParams) {
-  const { category, slug } = await params
-  const result = await queryTagWithSongs(category, slug)
+export default async function TagRoutePage({ params }: TagRouteParams) {
+  const { segments = [] } = await params
+  const resolved = await resolveTagRoute(segments)
+
+  if (!resolved) notFound()
+
+  if (resolved.kind === 'redirect') {
+    redirect(resolved.destination)
+  }
+
+  const result = await queryTagWithSongs(resolved.category, resolved.slug)
   if (!result) notFound()
 
   const { tag, category: cat, songs } = result
