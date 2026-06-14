@@ -1,7 +1,7 @@
 import { cache } from 'react'
 import { cookies } from 'next/headers'
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { RelatedSongs } from '@/components/RelatedSongs'
@@ -40,6 +40,10 @@ import { MusicRecordingSchema } from '@/schema/MusicRecording'
 import { generateMeta } from '@/utilities/generateMeta'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
+import {
+  pickCanonicalTag,
+  queryTagsBySlug,
+} from '@/lib/routing/slugLookups'
 import { buildSongMetaDescription, buildSongPageTitle } from '@/lib/seo/songToMetaDescription'
 import {
   FIELD_TO_CATEGORY,
@@ -491,7 +495,17 @@ export default async function SongPage({ params, searchParams }: Args) {
   )
   const initialSong = await querySongBySlug(slug)
 
-  if (!initialSong) return notFound()
+  if (!initialSong) {
+    const tags = await queryTagsBySlug(slug)
+    if (tags.length > 0) {
+      const tag = pickCanonicalTag(tags)
+      if (tag.category && tag.slug) {
+        redirect(`/music/tag/${tag.category}/${tag.slug}`)
+      }
+    }
+
+    return <PayloadRedirects url={`/music/${slug}`} />
+  }
 
   const payload = await getPayload({ config: configPromise })
 

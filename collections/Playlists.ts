@@ -9,12 +9,25 @@ export const Playlists: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
+    defaultColumns: ['title', 'displayOrder', 'isFeatured'],
   },
+  defaultSort: 'displayOrder',
   fields: [
     {
       name: 'title',
       type: 'text',
       required: true,
+    },
+    {
+      name: 'displayOrder',
+      type: 'number',
+      label: 'Display Order',
+      defaultValue: 100,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Lower numbers appear first in the player. The auto-generated "Discography" always leads, so start your custom playlists at 1+.',
+      },
     },
     {
       name: 'slug',
