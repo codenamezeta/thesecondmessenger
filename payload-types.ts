@@ -853,7 +853,6 @@ export interface GatedContent {
    * Fans at this rank or higher can access the file (Vault + direct file routes). Matches Lieutenant / Commander / Captain Vault clearance in crew rules.
    */
   tierRequired: 'lieutenant' | 'commander' | 'captain';
-  prefix?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -1640,7 +1639,6 @@ export interface GatedContentSelect<T extends boolean = true> {
   description?: T;
   relatedSong?: T;
   tierRequired?: T;
-  prefix?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
