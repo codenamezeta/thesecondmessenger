@@ -42,6 +42,7 @@ import { MusicFilterDrawer } from './music/MusicFilterDrawer'
 import { ActiveFilterChips } from './music/ActiveFilterChips'
 import { ArchiveSongPlayButton } from './music/ArchiveSongPlayButton'
 import { ArchiveSongMeta } from './music/ArchiveSongMeta'
+import { ArchivePlayResultsButton } from './music/ArchivePlayResultsButton'
 
 type CompositionFilter = FilterState['composition']
 // type RecordingFilter = FilterState['recording']
@@ -418,6 +419,8 @@ export const MusicArchive = ({
               <List className="size-4" />
             </Button>
           </div>
+
+          <ArchivePlayResultsButton songs={filteredSongs} />
 
           <div className="hidden flex-1 sm:block" />
 

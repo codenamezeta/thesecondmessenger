@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo, useEffect } from 'react'
-import { Layers } from 'lucide-react'
 import { type DefaultTypedEditorState } from '@payloadcms/richtext-lexical'
 import { usePlayer } from '@/context/PlayerContext'
 import { cn } from '@/utilities/ui'
@@ -28,11 +27,6 @@ const InfoContent = () => {
     if (!currentSong) return ['about']
     const tabs: string[] = ['about']
     if ((currentSong as { lyrics?: string }).lyrics) tabs.push('lyrics')
-    if (
-      Array.isArray((currentSong as { stems?: unknown[] }).stems) &&
-      ((currentSong as { stems?: unknown[] }).stems?.length ?? 0) > 0
-    )
-      tabs.push('stems')
     if (
       Array.isArray((currentSong as { credits?: unknown[] }).credits) &&
       ((currentSong as { credits?: unknown[] }).credits?.length ?? 0) > 0
@@ -119,17 +113,6 @@ const InfoContent = () => {
           <pre className="p-3 pb-12 font-mono text-xs whitespace-pre-wrap text-foreground/50">
             {(currentSong as { lyrics?: string })?.lyrics}
           </pre>
-        )}
-
-        {activeInfoTab === 'stems' && (
-          <div className="flex h-full flex-col items-center justify-center gap-4 text-foreground/50">
-            <Layers size={48} className="opacity-50" />
-            <p className="text-center text-sm">
-              Stem Player functionality
-              <br />
-              is currently under development.
-            </p>
-          </div>
         )}
 
         {activeInfoTab === 'credits' && (

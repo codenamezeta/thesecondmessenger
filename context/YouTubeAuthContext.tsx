@@ -71,6 +71,13 @@ const YouTubeAuthContext = createContext<YouTubeAuthContextValue | undefined>(
 
 const GIS_SCOPE = 'https://www.googleapis.com/auth/youtube.force-ssl'
 
+/**
+ * Last-resort safety net: if neither GIS `callback` nor `error_callback` fires
+ * (rare, but possible across browser/extension edge cases), resolve the token
+ * promise with null after this long so the UI never spins forever.
+ */
+const TOKEN_PROMPT_TIMEOUT_MS = 120_000
+
 type GoogleTokenClient = {
   requestAccessToken: (overrideConfig?: { prompt?: string }) => void
 }
@@ -79,6 +86,18 @@ type GoogleTokenResponse = {
   access_token?: string
   expires_in?: number
   error?: string
+}
+
+/**
+ * GIS fires `error_callback` when the consent popup fails to open or is closed
+ * before completion (e.g. the user signs in but navigates away/returns without
+ * granting). The success `callback` does NOT fire in those cases, so without
+ * this the token promise would hang forever and any action button would spin
+ * indefinitely.
+ */
+type GoogleTokenErrorResponse = {
+  type?: 'popup_closed' | 'popup_failed_to_open' | string
+  message?: string
 }
 
 declare global {
@@ -90,6 +109,7 @@ declare global {
             client_id: string
             scope: string
             callback: (response: GoogleTokenResponse) => void
+            error_callback?: (error: GoogleTokenErrorResponse) => void
           }) => GoogleTokenClient
         }
       }
@@ -160,6 +180,13 @@ export const YouTubeAuthProvider = ({ children }: { children: ReactNode }) => {
     expiresAtRef.current = 0
   }, [])
 
+  /** Resolve every pending `ensureToken` caller with null (cancel / error / timeout). */
+  const resolvePendingWithNull = useCallback(() => {
+    const waiters = pendingResolversRef.current
+    pendingResolversRef.current = []
+    waiters.forEach((resolve) => resolve(null))
+  }, [])
+
   // Bootstrap: try the server endpoint for a persistent (TSM-linked) token.
   useEffect(() => {
     let cancelled = false
@@ -209,15 +236,19 @@ export const YouTubeAuthProvider = ({ children }: { children: ReactNode }) => {
           applyToken(response.access_token, response.expires_in, 'gis')
         } else {
           // User cancelled / errored out. Resolve pending waiters with null.
-          const waiters = pendingResolversRef.current
-          pendingResolversRef.current = []
-          waiters.forEach((resolve) => resolve(null))
+          resolvePendingWithNull()
         }
+      },
+      // Fired when the popup fails to open or is dismissed without completing.
+      // The success `callback` never fires in these cases, so we must unblock
+      // any awaiting `ensureToken` callers here or the UI hangs in "loading".
+      error_callback: () => {
+        resolvePendingWithNull()
       },
     })
     tokenClientRef.current = client
     return client
-  }, [CLIENT_ID, applyToken])
+  }, [CLIENT_ID, applyToken, resolvePendingWithNull])
 
   // If GIS loaded before the provider mounted, init now.
   useEffect(() => {
@@ -247,7 +278,24 @@ export const YouTubeAuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       return new Promise<string | null>((resolve) => {
-        pendingResolversRef.current.push(resolve)
+        let settled = false
+        // Wrap the resolver so the success/cancel/error paths and the timeout
+        // can't double-resolve, and so resolving clears the safety timer.
+        const wrapped = (value: string | null) => {
+          if (settled) return
+          settled = true
+          clearTimeout(timeoutId)
+          resolve(value)
+        }
+        const timeoutId = setTimeout(() => {
+          if (settled) return
+          pendingResolversRef.current = pendingResolversRef.current.filter(
+            (r) => r !== wrapped,
+          )
+          wrapped(null)
+        }, TOKEN_PROMPT_TIMEOUT_MS)
+
+        pendingResolversRef.current.push(wrapped)
         // `select_account` forces the account-picker UI so a user with
         // multiple Google accounts can explicitly pick the one that owns their
         // YouTube channel. Without it, GIS silently reuses whichever account

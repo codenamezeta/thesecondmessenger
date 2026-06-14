@@ -15,6 +15,9 @@ import { Song, Release } from '@/payload-types'
 export type ViewMode = 'audio' | 'medium' | 'fullscreen'
 export type VideoMode = 'theater' | 'mini'
 
+/** Seconds into a track past which "previous" restarts instead of skipping back. */
+const PREVIOUS_RESTART_THRESHOLD = 3
+
 export interface YouTubePlayerRef {
   seekTo: (seconds: number, allowSeekAhead: boolean) => void
   getIframe?: () => HTMLIFrameElement | null
@@ -91,6 +94,8 @@ interface PlayerActions {
   playPlaylist: (queue: (PlayableMedia | string)[], startIndex?: number) => void
   playNext: () => void
   playPrevious: () => void
+  /** Randomize upcoming tracks, keeping the current song playing at the top. */
+  shuffleQueue: () => void
   togglePlay: () => void
   /** Independent video enabled toggle */
   toggleVideo: () => void
@@ -222,7 +227,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const fetchAllSongs = async () => {
       try {
-        const req = await fetch('/api/songs?limit=100&sort=-releaseDate')
+        const req = await fetch(
+          '/api/songs?limit=100&sort=-popularity,-releaseDate',
+        )
         const res = await req.json()
         if (res.docs) setAllSongs(res.docs)
       } catch (e) {
@@ -363,12 +370,36 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }, [currentSongIndex, queue])
 
   const playPrevious = useCallback(() => {
-    if (queue.length === 0 || currentSongIndex <= 0) return
+    if (queue.length === 0) return
+    // Spotify-style behavior: if we're more than a few seconds into the track
+    // (or there is no earlier track), restart the current one instead of
+    // skipping back. Only an early press jumps to the previous track.
+    if (currentTime >= PREVIOUS_RESTART_THRESHOLD || currentSongIndex <= 0) {
+      seekTo(0)
+      setIsPlaying(true)
+      return
+    }
     const prevIndex = currentSongIndex - 1
     setCurrentSongIndex(prevIndex)
     setCurrentSong(queue[prevIndex] ?? null)
     setIsPlaying(true)
-  }, [currentSongIndex, queue])
+  }, [currentSongIndex, queue, currentTime, seekTo])
+
+  const shuffleQueue = useCallback(() => {
+    setQueue((prev) => {
+      if (prev.length <= 1) return prev
+      const current = prev[currentSongIndex]
+      const rest = prev.filter((_, i) => i !== currentSongIndex)
+      // Fisher–Yates shuffle of the remaining tracks.
+      for (let i = rest.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[rest[i], rest[j]] = [rest[j], rest[i]]
+      }
+      const next = current ? [current, ...rest] : rest
+      setCurrentSongIndex(current ? 0 : currentSongIndex)
+      return next
+    })
+  }, [currentSongIndex])
 
   const setInlineTarget = useCallback((target: InlineTarget) => {
     setInlineTargetState(target)
@@ -427,6 +458,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       playPlaylist,
       playNext,
       playPrevious,
+      shuffleQueue,
       togglePlay,
       toggleVideo,
       setVideoEnabled,
@@ -483,6 +515,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       playPlaylist,
       playNext,
       playPrevious,
+      shuffleQueue,
       togglePlay,
       toggleVideo,
       setVideoEnabled,

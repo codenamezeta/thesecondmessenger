@@ -24,6 +24,7 @@ import {
   CATALOG_UPDATE_CONTEXT,
   recomputeCatalogSequences,
 } from '@/lib/songs/catalogNumbers'
+import { userHasLieutenantOrHigher } from '@/access/crewRanks'
 
 /** hasMany → `tags` relationships on Song; duplicate IDs can appear as duplicate `_rels` rows. */
 const SONG_TAG_RELATIONSHIP_KEYS = [
@@ -72,7 +73,20 @@ function dedupeManyRelationshipArray(value: unknown): unknown {
 export const Songs: CollectionConfig = {
   slug: 'songs',
   access: {
-    read: () => true,
+    // Works-in-progress (no release date, null, or a future date) are members-only.
+    // Lieutenant+ (and admins) see everything; everyone else — including the public
+    // Global Player queue via `/api/songs` — only sees released songs. Server-rendered
+    // pages use the local API (overrideAccess) and are unaffected by this constraint.
+    read: ({ req: { user } }) => {
+      if (userHasLieutenantOrHigher(user)) return true
+      return {
+        and: [
+          { releaseDate: { exists: true } },
+          { releaseDate: { not_equals: null } },
+          { releaseDate: { less_than_equal: new Date().toISOString() } },
+        ],
+      }
+    },
   },
   admin: {
     useAsTitle: 'title',
