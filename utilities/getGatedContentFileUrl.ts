@@ -23,8 +23,8 @@ function payloadFileRoute(asset: GatedContent): string {
  * Vault file URL for `<audio>` / `<video>` / downloads.
  *
  * When R2/S3 is enabled (same as production), use `/api/gated-content/file/…` so
- * Payload’s storage handler streams from the bucket and `gatedContentReadAccess`
- * runs with cookies.
+ * `gatedContentReadAccess` runs with cookies, then Payload 302-redirects to a
+ * short-lived presigned R2 URL for delivery (avoids proxying bytes through Vercel).
  *
  * When those env vars are missing (common local dev), `s3Storage` is disabled and
  * Payload falls back to `staticDir` — files that only exist in R2 will 500. In
