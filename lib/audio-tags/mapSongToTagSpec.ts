@@ -20,6 +20,15 @@ type SongCredit = NonNullable<Song['credits']>[number] & {
   legalName?: string | null
 }
 
+type MusicBrainzIds = {
+  recordingId?: string | null
+  trackId?: string | null
+  releaseId?: string | null
+  releaseGroupId?: string | null
+  artistId?: string | null
+  workId?: string | null
+}
+
 type SongForTagging = Omit<Song, 'credits'> & {
   featuredArtists?: FeaturedArtist[] | null
   primaryRelease?: number | Release | null
@@ -31,6 +40,9 @@ type SongForTagging = Omit<Song, 'credits'> & {
   comment?: string | null
   discNumber?: number | null
   credits?: SongCredit[] | null
+  musicBrainz?: MusicBrainzIds | null
+  masterAudioFlac?: number | Media | null
+  masterAudioWav?: number | Media | null
 }
 
 const TERMS_OF_USE_PRESETS: Record<
@@ -81,6 +93,22 @@ function buildCopyright(
     return `℗ © ${year} ${phonogramOwner}`
   }
   return `℗ ${year} ${phonogramOwner} | © ${year} ${compositionOwner}`
+}
+
+function buildMusicBrainz(
+  mb: MusicBrainzIds | null | undefined,
+): TagSpec['musicBrainz'] {
+  if (!mb) return undefined
+  const clean = (v: string | null | undefined) => v?.trim() || undefined
+  const out = {
+    recordingId: clean(mb.recordingId),
+    trackId: clean(mb.trackId),
+    releaseId: clean(mb.releaseId),
+    releaseGroupId: clean(mb.releaseGroupId),
+    artistId: clean(mb.artistId),
+    workId: clean(mb.workId),
+  }
+  return Object.values(out).some(Boolean) ? out : undefined
 }
 
 function buildTermsOfUse(song: SongForTagging): string | undefined {
@@ -323,6 +351,7 @@ export function mapSongToTagSpec({
       typeof song.duration === 'number'
         ? Math.round(song.duration * 1000)
         : undefined,
+    musicBrainz: buildMusicBrainz(song.musicBrainz),
   }
 
   return spec
@@ -345,19 +374,40 @@ export function coverArtMediaUrl(
   return cover.url.startsWith('/') ? `${serverUrl}${cover.url}` : cover.url
 }
 
-export function masterAudioMediaInfo(song: SongForTagging): {
+export type MasterMediaInfo = {
   id: number
   url: string | null
   mimeType: string | null
   filename: string | null
-} | null {
-  const audio = song.masterAudio
-  if (!audio) return null
-  if (!isResolved<Media>(audio)) return null
+}
+
+function mediaInfo(value: number | Media | null | undefined): MasterMediaInfo | null {
+  if (!value) return null
+  if (!isResolved<Media>(value)) return null
   return {
-    id: audio.id,
-    url: audio.url ?? null,
-    mimeType: audio.mimeType ?? null,
-    filename: audio.filename ?? null,
+    id: value.id,
+    url: value.url ?? null,
+    mimeType: value.mimeType ?? null,
+    filename: value.filename ?? null,
   }
+}
+
+export function masterAudioMediaInfo(
+  song: SongForTagging,
+): MasterMediaInfo | null {
+  return mediaInfo(song.masterAudio)
+}
+
+/**
+ * All taggable master files for a song, keyed by format. MP3 + FLAC support
+ * rich embedded tags via taglib-wasm; WAV is intentionally excluded from the
+ * tag-write pipeline because its tag support is minimal and lossy across tools.
+ */
+export function taggableMasterMedia(song: SongForTagging): MasterMediaInfo[] {
+  const out: MasterMediaInfo[] = []
+  const mp3 = mediaInfo(song.masterAudio)
+  if (mp3) out.push(mp3)
+  const flac = mediaInfo(song.masterAudioFlac)
+  if (flac) out.push(flac)
+  return out
 }

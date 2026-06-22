@@ -1,6 +1,12 @@
 import type { CollectionConfig } from 'payload'
 import { anyone } from '@/access/anyone'
+import {
+  buildForgotPasswordEmailHTML,
+  EMAIL_FROM_NAME,
+} from '@/lib/email'
 import { THEME_SELECT_OPTIONS } from '@/lib/themes'
+import { notifyOwnerNewAccount } from '@/utilities/notifications'
+import { upsertAudienceContact } from '@/utilities/resendAudience'
 
 const RANK_LABELS: Record<string, string> = {
   ensign: 'Ensign',
@@ -28,7 +34,19 @@ export const Users: CollectionConfig = {
     defaultColumns: ['displayName', 'email', 'role', 'crewRank'],
     useAsTitle: 'displayName',
   },
-  auth: true,
+  auth: {
+    forgotPassword: {
+      generateEmailSubject: () => `Reset your ${EMAIL_FROM_NAME} password`,
+      generateEmailHTML: (args) => {
+        const token = args?.token
+        const email = args?.user?.email
+        if (!token || !email) {
+          return '<p>Password reset link is unavailable. Please request a new reset email.</p>'
+        }
+        return buildForgotPasswordEmailHTML({ token, email })
+      },
+    },
+  },
   access: {
     create: anyone,
     // Public profiles: anyone can read user docs; sensitive fields restrict themselves
@@ -70,6 +88,41 @@ export const Users: CollectionConfig = {
         const computedDisplayName = formats[format]?.trim()
         data.displayName = computedDisplayName || username || 'Messenger'
         return data
+      },
+    ],
+    afterChange: [
+      async ({ doc, previousDoc, operation, req }) => {
+        const wantsNewsletter = doc.notificationSettings?.newsletter !== false
+
+        if (operation === 'create') {
+          // Best-effort: never let alerting/audience sync break signup.
+          await notifyOwnerNewAccount(req.payload, {
+            id: doc.id,
+            username: doc.username,
+            email: doc.email,
+          })
+          await upsertAudienceContact({
+            email: doc.email,
+            firstName: doc.firstName ?? null,
+            lastName: doc.lastName ?? null,
+            unsubscribed: !wantsNewsletter,
+          })
+          return
+        }
+
+        // On update, keep the Resend audience in sync when the newsletter
+        // opt-in (or email) changes.
+        const previousNewsletter =
+          previousDoc?.notificationSettings?.newsletter !== false
+        const emailChanged = doc.email !== previousDoc?.email
+        if (wantsNewsletter !== previousNewsletter || emailChanged) {
+          await upsertAudienceContact({
+            email: doc.email,
+            firstName: doc.firstName ?? null,
+            lastName: doc.lastName ?? null,
+            unsubscribed: !wantsNewsletter,
+          })
+        }
       },
     ],
   },
@@ -154,9 +207,50 @@ export const Users: CollectionConfig = {
       required: false,
     },
     {
+      // Public: fans can proudly show their favorite TSM track on their profile.
+      name: 'favoriteSong',
+      type: 'relationship',
+      relationTo: 'songs',
+      required: false,
+      admin: {
+        description: 'Your favorite TSM track, shown on your public profile.',
+      },
+    },
+    {
       name: 'zipCode',
       type: 'number',
       required: false,
+      access: {
+        read: canReadPrivateUserField,
+      },
+    },
+    // --- DEMOGRAPHICS (private; used for aggregate audience insights) ---
+    {
+      name: 'birthdate',
+      type: 'date',
+      required: false,
+      admin: {
+        description: 'Private. Used for age demographics only.',
+        date: { pickerAppearance: 'dayOnly', displayFormat: 'yyyy-MM-dd' },
+      },
+      access: {
+        read: canReadPrivateUserField,
+      },
+    },
+    {
+      name: 'gender',
+      type: 'select',
+      required: false,
+      options: [
+        { label: 'Female', value: 'female' },
+        { label: 'Male', value: 'male' },
+        { label: 'Non-binary', value: 'non_binary' },
+        { label: 'Other', value: 'other' },
+        { label: 'Prefer not to say', value: 'prefer_not_to_say' },
+      ],
+      admin: {
+        description: 'Private. Used for aggregate demographics only.',
+      },
       access: {
         read: canReadPrivateUserField,
       },
@@ -174,6 +268,34 @@ export const Users: CollectionConfig = {
         description:
           'Preferred site color theme. Leave empty to follow the featured theme.',
       },
+    },
+    // --- NOTIFICATION / NEWSLETTER PREFERENCES ---
+    {
+      name: 'notificationSettings',
+      type: 'group',
+      admin: {
+        description: 'Control which emails and alerts you receive.',
+      },
+      fields: [
+        {
+          name: 'newsletter',
+          type: 'checkbox',
+          defaultValue: true,
+          label: 'Newsletter & new release announcements',
+        },
+        {
+          name: 'productUpdates',
+          type: 'checkbox',
+          defaultValue: true,
+          label: 'Product updates & feature news',
+        },
+        {
+          name: 'accountActivity',
+          type: 'checkbox',
+          defaultValue: true,
+          label: 'Account & billing activity',
+        },
+      ],
     },
     // --- AUTH ---
     {

@@ -54,6 +54,8 @@ function AuthPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectPath = getSafeRedirectPath(searchParams.get('redirect'))
+  const initialTab =
+    searchParams.get('tab') === 'register' ? 'register' : 'login'
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -63,6 +65,9 @@ function AuthPageContent() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [username, setUsername] = useState('')
+  const [zipCode, setZipCode] = useState('')
+  const [birthdate, setBirthdate] = useState('')
+  const [gender, setGender] = useState('')
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -109,6 +114,9 @@ function AuthPageContent() {
           firstName,
           lastName,
           username,
+          ...(zipCode.trim() ? { zipCode: Number(zipCode) } : {}),
+          ...(birthdate ? { birthdate } : {}),
+          ...(gender ? { gender } : {}),
         }),
       })
 
@@ -145,7 +153,7 @@ function AuthPageContent() {
 
   return (
     <div className="container flex min-h-[80vh] items-center justify-center py-20">
-      <Tabs defaultValue="login" className="w-full max-w-[400px]">
+      <Tabs defaultValue={initialTab} className="w-full max-w-[400px]">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="login">Login</TabsTrigger>
           <TabsTrigger value="register">Register</TabsTrigger>
@@ -188,6 +196,14 @@ function AuthPageContent() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
+                  <div className="text-right">
+                    <a
+                      href="/forgot-password"
+                      className="text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </a>
+                  </div>
                 </div>
               </CardContent>
               <CardFooter>
@@ -278,6 +294,47 @@ function AuthPageContent() {
                     required
                     minLength={8}
                   />
+                </div>
+
+                <p className="pt-2 font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
+                  {'// Optional — helps us tailor your experience'}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="reg-zip">Zip code</Label>
+                    <Input
+                      id="reg-zip"
+                      type="text"
+                      inputMode="numeric"
+                      value={zipCode}
+                      placeholder="90210"
+                      onChange={(e) => setZipCode(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reg-birthdate">Birthdate</Label>
+                    <Input
+                      id="reg-birthdate"
+                      type="date"
+                      value={birthdate}
+                      onChange={(e) => setBirthdate(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="reg-gender">Gender</Label>
+                  <select
+                    id="reg-gender"
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                  >
+                    <option value="">Prefer not to say</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                    <option value="non_binary">Non-binary</option>
+                    <option value="other">Other</option>
+                  </select>
                 </div>
               </CardContent>
               <CardFooter>

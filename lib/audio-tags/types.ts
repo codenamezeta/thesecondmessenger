@@ -78,4 +78,19 @@ export type TagSpec = {
   paymentUrl?: string
   /** TLEN — milliseconds. */
   lengthMs?: number
+
+  /**
+   * MusicBrainz identifiers. Written via taglib's standardized PropertyMap
+   * keys (MUSICBRAINZ_*), which map to TXXX:* frames for MP3 and the
+   * matching Vorbis comments for FLAC. The recording id additionally rides
+   * along as a UFID frame (owner `http://musicbrainz.org`).
+   */
+  musicBrainz?: {
+    recordingId?: string
+    trackId?: string
+    releaseId?: string
+    releaseGroupId?: string
+    artistId?: string
+    workId?: string
+  }
 }

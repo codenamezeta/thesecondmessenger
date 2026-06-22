@@ -467,10 +467,32 @@ export const Songs: CollectionConfig = {
               name: 'masterAudio',
               type: 'upload',
               relationTo: 'media',
-              label: 'Master Recording (MP3/FLAC/WAV)',
+              label: 'Master Recording — MP3 (free download)',
               admin: {
                 description:
-                  'The canonical audio file for this song. After every save, a background job rewrites this file\'s ID3v2.3 / Vorbis tags to match the CMS fields below. See "Tag Sync Status" in the sidebar for the latest run.',
+                  'The canonical MP3 master. This is the file fans get from the free "pay-what-you-want" download. After every save, a background job rewrites its ID3v2.3 tags to match the CMS fields below. See "Tag Sync Status" in the sidebar.',
+              },
+            },
+            {
+              name: 'masterAudioFlac',
+              type: 'upload',
+              relationTo: 'media',
+              label: 'Master Recording — FLAC (lossless)',
+              required: false,
+              admin: {
+                description:
+                  'Optional lossless FLAC of the same master. Tagged with the same CMS metadata (Vorbis comments) on save. Reserve for members / gated download tiers.',
+              },
+            },
+            {
+              name: 'masterAudioWav',
+              type: 'upload',
+              relationTo: 'media',
+              label: 'Master Recording — WAV (uncompressed)',
+              required: false,
+              admin: {
+                description:
+                  'Optional uncompressed WAV of the same master. Archival / highest-tier download. WAV carries limited embedded tags compared to MP3/FLAC.',
               },
             },
             {
@@ -856,6 +878,70 @@ export const Songs: CollectionConfig = {
                     description:
                       'Free-form usage terms written verbatim to the USER frame.',
                   },
+                },
+              ],
+            },
+            {
+              type: 'group',
+              name: 'musicBrainz',
+              label: 'MusicBrainz IDs',
+              admin: {
+                description:
+                  'Optional MusicBrainz identifiers. Written to the file as standard MusicBrainz frames (TXXX/UFID for MP3, MUSICBRAINZ_* Vorbis comments for FLAC) so Picard and streaming aggregators recognize the recording. Leave blank until the song is registered on MusicBrainz.',
+              },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'recordingId',
+                      type: 'text',
+                      label: 'Recording MBID',
+                      admin: {
+                        description:
+                          'The recording (master audio) MBID. Also written to the UFID frame with owner http://musicbrainz.org.',
+                      },
+                    },
+                    {
+                      name: 'trackId',
+                      type: 'text',
+                      label: 'Release Track MBID',
+                      admin: {
+                        description:
+                          'The track MBID specific to the release (MusicBrainz Release Track Id).',
+                      },
+                    },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'releaseId',
+                      type: 'text',
+                      label: 'Release (Album) MBID',
+                    },
+                    {
+                      name: 'releaseGroupId',
+                      type: 'text',
+                      label: 'Release Group MBID',
+                    },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'artistId',
+                      type: 'text',
+                      label: 'Artist MBID',
+                    },
+                    {
+                      name: 'workId',
+                      type: 'text',
+                      label: 'Work MBID',
+                    },
+                  ],
                 },
               ],
             },

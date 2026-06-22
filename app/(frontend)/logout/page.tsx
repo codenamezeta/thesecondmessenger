@@ -2,6 +2,9 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
+
+import { notifyAuthChanged } from '@/components/Nav/AdminBar'
 import { getClientSideURL } from '@/utilities/getURL'
 
 export default function LogoutPage() {
@@ -19,8 +22,9 @@ export default function LogoutPage() {
         })
       } finally {
         if (!cancelled) {
-          router.replace('/')
+          notifyAuthChanged()
           router.refresh()
+          router.replace('/')
         }
       }
     }
@@ -33,10 +37,13 @@ export default function LogoutPage() {
   }, [router])
 
   return (
-    <section className="container flex min-h-[50vh] flex-col items-center justify-center p-12 text-center">
-      <p className="font-mono text-xs tracking-widest text-muted-foreground uppercase">
-        Signing out…
-      </p>
-    </section>
+    <div className="container flex min-h-[60vh] items-center justify-center py-20">
+      <div className="flex items-center gap-3 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        <span className="font-mono text-xs tracking-widest uppercase">
+          Signing out…
+        </span>
+      </div>
+    </div>
   )
 }

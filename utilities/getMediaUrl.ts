@@ -1,5 +1,36 @@
 import { getClientSideURL } from '@/utilities/getURL'
 
+function stripQueryString(url: string): string {
+  const queryIndex = url.indexOf('?')
+  return queryIndex >= 0 ? url.slice(0, queryIndex) : url
+}
+
+/**
+ * Normalize a Payload media URL for `next/image`. Same-site absolute URLs
+ * (e.g. saved against production `serverURL`) become root-relative paths so
+ * local dev serves them from the current origin without extra remotePatterns.
+ */
+export function normalizeMediaUrlForImage(
+  url: string | null | undefined,
+): string {
+  if (!url) return ''
+
+  if (url.startsWith('/')) {
+    return stripQueryString(url)
+  }
+
+  try {
+    const parsed = new URL(url)
+    if (parsed.pathname.startsWith('/api/media/')) {
+      return stripQueryString(parsed.pathname)
+    }
+  } catch {
+    // Not a parseable absolute URL — return as-is below.
+  }
+
+  return stripQueryString(url)
+}
+
 /**
  * Processes media resource URL to ensure proper formatting
  * @param url The original URL from the resource

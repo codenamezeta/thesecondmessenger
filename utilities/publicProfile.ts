@@ -1,4 +1,4 @@
-import type { Media, User } from '@/payload-types'
+import type { Media, Song, User } from '@/payload-types'
 
 export type PublicProfile = {
   id: number
@@ -8,6 +8,7 @@ export type PublicProfile = {
   crewRank: User['crewRank']
   avatarUrl: string | null
   avatarAlt: string
+  favoriteSong: { title: string; slug: string | null } | null
   createdAt: string
   updatedAt: string
 }
@@ -20,6 +21,7 @@ type PublicProfileSource = Pick<
   | 'bio'
   | 'crewRank'
   | 'avatar'
+  | 'favoriteSong'
   | 'createdAt'
   | 'updatedAt'
 >
@@ -42,6 +44,18 @@ function readAvatar(avatar: User['avatar']): {
   }
 }
 
+function readFavoriteSong(
+  favoriteSong: User['favoriteSong'],
+): { title: string; slug: string | null } | null {
+  if (favoriteSong && typeof favoriteSong === 'object') {
+    const song = favoriteSong as Song
+    const title = song.title?.trim()
+    if (!title) return null
+    return { title, slug: song.slug ?? null }
+  }
+  return null
+}
+
 export function mapUserToPublicProfile(
   user: PublicProfileSource,
 ): PublicProfile {
@@ -55,6 +69,7 @@ export function mapUserToPublicProfile(
     crewRank: user.crewRank,
     avatarUrl: avatar.avatarUrl,
     avatarAlt: avatar.avatarAlt,
+    favoriteSong: readFavoriteSong(user.favoriteSong),
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   }

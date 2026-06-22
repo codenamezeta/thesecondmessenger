@@ -12,6 +12,7 @@ const exploreLinks = [
 
 const accessLinks = [
   { label: 'Join the Crew', href: '/crew' },
+  { label: 'Memberships', href: '/memberships' },
   { label: 'Members', href: '/login' },
 ] as const
 

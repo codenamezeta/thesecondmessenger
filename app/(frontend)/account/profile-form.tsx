@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -34,7 +35,27 @@ type AccountProfileInitialData = {
   avatarId: number | null
   avatarUrl: string | null
   avatarAlt: string
+  favoriteSongId: number | null
+  birthdate: string
+  gender: string
+  notifications: {
+    newsletter: boolean
+    productUpdates: boolean
+    accountActivity: boolean
+  }
 }
+
+type SongOption = { id: number; title: string }
+
+const GENDER_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: '', label: 'Prefer not to say' },
+  { value: 'female', label: 'Female' },
+  { value: 'male', label: 'Male' },
+  { value: 'non_binary', label: 'Non-binary' },
+  { value: 'other', label: 'Other' },
+]
+
+const NO_FAVORITE_SONG = 'none'
 
 const MAX_AVATAR_BYTES = 1024 * 1024
 const MAX_BIO_LENGTH = 500
@@ -73,7 +94,14 @@ type ProfileFormBaseline = Pick<
   | 'bio'
   | 'displayNameFormat'
   | 'avatarId'
->
+  | 'favoriteSongId'
+  | 'birthdate'
+  | 'gender'
+> & {
+  newsletter: boolean
+  productUpdates: boolean
+  accountActivity: boolean
+}
 
 function baselineFromInitial(
   data: AccountProfileInitialData,
@@ -87,6 +115,12 @@ function baselineFromInitial(
     bio: data.bio,
     displayNameFormat: data.displayNameFormat,
     avatarId: data.avatarId,
+    favoriteSongId: data.favoriteSongId,
+    birthdate: data.birthdate,
+    gender: data.gender,
+    newsletter: data.notifications.newsletter,
+    productUpdates: data.notifications.productUpdates,
+    accountActivity: data.notifications.accountActivity,
   }
 }
 
@@ -173,8 +207,10 @@ function validateForm(values: {
 
 export function AccountProfileForm({
   initialData,
+  songs,
 }: {
   initialData: AccountProfileInitialData
+  songs: SongOption[]
 }) {
   const [username, setUsername] = useState(initialData.username)
   const [firstName, setFirstName] = useState(initialData.firstName)
@@ -185,6 +221,20 @@ export function AccountProfileForm({
   const [displayNameFormat, setDisplayNameFormat] = useState<
     User['displayNameFormat']
   >(initialData.displayNameFormat)
+  const [favoriteSongId, setFavoriteSongId] = useState<number | null>(
+    initialData.favoriteSongId,
+  )
+  const [birthdate, setBirthdate] = useState(initialData.birthdate)
+  const [gender, setGender] = useState(initialData.gender)
+  const [newsletter, setNewsletter] = useState(
+    initialData.notifications.newsletter,
+  )
+  const [productUpdates, setProductUpdates] = useState(
+    initialData.notifications.productUpdates,
+  )
+  const [accountActivity, setAccountActivity] = useState(
+    initialData.notifications.accountActivity,
+  )
   const [isSaving, setIsSaving] = useState(false)
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
   const [error, setError] = useState<string | null>(null)
@@ -210,6 +260,12 @@ export function AccountProfileForm({
     if (bio.trim() !== baseline.bio.trim()) return true
     if (displayNameFormat !== baseline.displayNameFormat) return true
     if (currentAvatarId !== baseline.avatarId) return true
+    if (favoriteSongId !== baseline.favoriteSongId) return true
+    if (birthdate !== baseline.birthdate) return true
+    if (gender !== baseline.gender) return true
+    if (newsletter !== baseline.newsletter) return true
+    if (productUpdates !== baseline.productUpdates) return true
+    if (accountActivity !== baseline.accountActivity) return true
     return false
   }, [
     avatarFile,
@@ -221,6 +277,12 @@ export function AccountProfileForm({
     bio,
     displayNameFormat,
     currentAvatarId,
+    favoriteSongId,
+    birthdate,
+    gender,
+    newsletter,
+    productUpdates,
+    accountActivity,
     baseline,
   ])
 
@@ -361,6 +423,14 @@ export function AccountProfileForm({
           bio: trimmedBio ? trimmedBio : null,
           displayNameFormat,
           avatar: uploadedAvatarId,
+          favoriteSong: favoriteSongId,
+          birthdate: birthdate || null,
+          gender: gender || null,
+          notificationSettings: {
+            newsletter,
+            productUpdates,
+            accountActivity,
+          },
         }),
       })
 
@@ -396,6 +466,12 @@ export function AccountProfileForm({
         bio: trimmedBio,
         displayNameFormat,
         avatarId: uploadedAvatarId,
+        favoriteSongId,
+        birthdate,
+        gender,
+        newsletter,
+        productUpdates,
+        accountActivity,
       })
       setSuccess('Account settings saved successfully.')
     } catch (err: unknown) {
@@ -589,6 +665,39 @@ export function AccountProfileForm({
             </p>
           )}
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="account-favorite-song">Favorite TSM Track</Label>
+          <Select
+            value={
+              favoriteSongId === null ? NO_FAVORITE_SONG : String(favoriteSongId)
+            }
+            onValueChange={(value) =>
+              setFavoriteSongId(
+                value === NO_FAVORITE_SONG ? null : Number(value),
+              )
+            }
+            disabled={isSaving}
+          >
+            <SelectTrigger
+              id="account-favorite-song"
+              className="w-full rounded-none"
+            >
+              <SelectValue placeholder="Choose your favorite track" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_FAVORITE_SONG}>No favorite yet</SelectItem>
+              {songs.map((song) => (
+                <SelectItem key={song.id} value={String(song.id)}>
+                  {song.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Optional. Shown proudly on your public Crew profile.
+          </p>
+        </div>
       </section>
 
       <section className="space-y-4 border border-border/50 bg-background/20 p-5">
@@ -684,6 +793,101 @@ export function AccountProfileForm({
               formats.
             </p>
           </div>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="account-birthdate">Birthdate</Label>
+            <Input
+              id="account-birthdate"
+              name="birthdate"
+              type="date"
+              value={birthdate}
+              onChange={(event) => setBirthdate(event.target.value)}
+              className="rounded-none"
+              disabled={isSaving}
+            />
+            <p className="text-xs text-muted-foreground">
+              Optional and private. Used only for aggregate age demographics.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="account-gender">Gender</Label>
+            <Select
+              value={gender === '' ? 'prefer_not_to_say' : gender}
+              onValueChange={(value) =>
+                setGender(value === 'prefer_not_to_say' ? '' : value)
+              }
+              disabled={isSaving}
+            >
+              <SelectTrigger id="account-gender" className="w-full rounded-none">
+                <SelectValue placeholder="Prefer not to say" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="prefer_not_to_say">
+                  Prefer not to say
+                </SelectItem>
+                {GENDER_OPTIONS.filter((o) => o.value !== '').map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Optional and private. Used only for aggregate demographics.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4 border border-border/50 bg-background/20 p-5">
+        <div className="flex items-center gap-2">
+          <p className="font-mono text-[10px] tracking-[0.2em] text-primary uppercase">
+            Email & Notifications
+          </p>
+        </div>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Choose what The Second Messenger may send you. You can change these
+          anytime.
+        </p>
+        <div className="space-y-3">
+          <label className="flex items-start gap-3">
+            <Checkbox
+              checked={newsletter}
+              onCheckedChange={(checked) => setNewsletter(checked === true)}
+              disabled={isSaving}
+              className="mt-0.5"
+            />
+            <span className="text-sm text-foreground">
+              Newsletter & new release announcements
+            </span>
+          </label>
+          <label className="flex items-start gap-3">
+            <Checkbox
+              checked={productUpdates}
+              onCheckedChange={(checked) => setProductUpdates(checked === true)}
+              disabled={isSaving}
+              className="mt-0.5"
+            />
+            <span className="text-sm text-foreground">
+              Product updates & feature news
+            </span>
+          </label>
+          <label className="flex items-start gap-3">
+            <Checkbox
+              checked={accountActivity}
+              onCheckedChange={(checked) =>
+                setAccountActivity(checked === true)
+              }
+              disabled={isSaving}
+              className="mt-0.5"
+            />
+            <span className="text-sm text-foreground">
+              Account & billing activity
+            </span>
+          </label>
         </div>
       </section>
 

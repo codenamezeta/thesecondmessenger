@@ -30,6 +30,22 @@ type AccountProfileInitialData = {
   avatarId: number | null
   avatarUrl: string | null
   avatarAlt: string
+  favoriteSongId: number | null
+  birthdate: string
+  gender: string
+  notifications: {
+    newsletter: boolean
+    productUpdates: boolean
+    accountActivity: boolean
+  }
+}
+
+type SongOption = { id: number; title: string }
+
+function readFavoriteSongId(favoriteSong: User['favoriteSong']): number | null {
+  if (typeof favoriteSong === 'number') return favoriteSong
+  if (favoriteSong && typeof favoriteSong === 'object') return favoriteSong.id
+  return null
 }
 
 function readAvatar(avatar: User['avatar']): {
@@ -80,9 +96,32 @@ export default async function AccountPage() {
   })
   const avatar = readAvatar(userWithAvatar.avatar)
 
+  // `stripeCustomerId` is admin-only at the field level, so the access-checked
+  // read above strips it for normal users. Re-read it with access overridden so
+  // the owner can see their own subscription + invoices on the billing tab.
+  const billingIdentity = await payload.findByID({
+    collection: 'users',
+    id: user.id,
+    depth: 0,
+    overrideAccess: true,
+  })
+
   const billing = await getBillingSummaryForCustomer(
-    userWithAvatar.stripeCustomerId,
+    billingIdentity.stripeCustomerId,
   )
+
+  const songsResult = await payload.find({
+    collection: 'songs',
+    depth: 0,
+    limit: 300,
+    sort: 'title',
+    pagination: false,
+  })
+  const songOptions: SongOption[] = songsResult.docs
+    .map((song) => ({ id: song.id, title: song.title }))
+    .filter((song): song is SongOption => Boolean(song.title))
+
+  const notificationSettings = userWithAvatar.notificationSettings
 
   const initialData: AccountProfileInitialData = {
     id: userWithAvatar.id,
@@ -102,6 +141,17 @@ export default async function AccountPage() {
     avatarId: avatar.avatarId,
     avatarUrl: avatar.avatarUrl,
     avatarAlt: avatar.avatarAlt,
+    favoriteSongId: readFavoriteSongId(userWithAvatar.favoriteSong),
+    birthdate:
+      typeof userWithAvatar.birthdate === 'string'
+        ? userWithAvatar.birthdate.slice(0, 10)
+        : '',
+    gender: userWithAvatar.gender ?? '',
+    notifications: {
+      newsletter: notificationSettings?.newsletter ?? true,
+      productUpdates: notificationSettings?.productUpdates ?? true,
+      accountActivity: notificationSettings?.accountActivity ?? true,
+    },
   }
 
   return (
@@ -143,7 +193,7 @@ export default async function AccountPage() {
           </p>
         </header>
 
-        <AccountProfileForm initialData={initialData} />
+        <AccountProfileForm initialData={initialData} songs={songOptions} />
 
         <section className="mt-8 space-y-4 border border-border/50 bg-card/20 p-6 backdrop-blur-sm">
           <div>

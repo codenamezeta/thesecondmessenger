@@ -33,7 +33,7 @@ const navItems: NavItem[] = [
 ]
 
 export const memberNavItems: NavItem[] = [
-  // { type: 'link', label: 'Memberships', href: '/memberships' },
+  { type: 'link', label: 'Memberships', href: '/memberships' },
   { type: 'link', label: 'Crew', href: '/crew' },
   { type: 'link', label: 'Account', href: '/account' },
   { type: 'link', label: 'Unreleased Content', href: '/music/unreleased' },

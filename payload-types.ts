@@ -348,11 +348,31 @@ export interface User {
   displayName?: string | null;
   avatar?: (number | null) | Media;
   bio?: string | null;
+  /**
+   * Your favorite TSM track, shown on your public profile.
+   */
+  favoriteSong?: (number | null) | Song;
   zipCode?: number | null;
+  /**
+   * Private. Used for age demographics only.
+   */
+  birthdate?: string | null;
+  /**
+   * Private. Used for aggregate demographics only.
+   */
+  gender?: ('female' | 'male' | 'non_binary' | 'other' | 'prefer_not_to_say') | null;
   /**
    * Preferred site color theme. Leave empty to follow the featured theme.
    */
   themePreference?: ('dark' | 'light' | 'interstellar' | 'kelly_come_home' | 'nebula' | 'distress') | null;
+  /**
+   * Control which emails and alerts you receive.
+   */
+  notificationSettings?: {
+    newsletter?: boolean | null;
+    productUpdates?: boolean | null;
+    accountActivity?: boolean | null;
+  };
   role: 'admin' | 'user';
   crewRank: 'ensign' | 'lieutenant' | 'commander' | 'captain' | 'admiral';
   /**
@@ -384,40 +404,6 @@ export interface User {
     | null;
   password?: string | null;
   collection: 'users';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "mailing-list".
- */
-export interface MailingList {
-  id: number;
-  email: string;
-  source?: ('spotify_presave' | 'newsletter_signup' | 'merch_purchase') | null;
-  tags?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "playlists".
- */
-export interface Playlist {
-  id: number;
-  title: string;
-  /**
-   * Lower numbers appear first in the player. The auto-generated "Discography" always leads, so start your custom playlists at 1+.
-   */
-  displayOrder?: number | null;
-  slug?: string | null;
-  description?: string | null;
-  coverArt?: (number | null) | Media;
-  /**
-   * Add and reorder songs. Updates instantly on the site.
-   */
-  tracks?: (number | Song)[] | null;
-  isFeatured?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -488,9 +474,17 @@ export interface Song {
   tagSyncError?: string | null;
   tagsSyncedHash?: string | null;
   /**
-   * The canonical audio file for this song. After every save, a background job rewrites this file's ID3v2.3 / Vorbis tags to match the CMS fields below. See "Tag Sync Status" in the sidebar for the latest run.
+   * The canonical MP3 master. This is the file fans get from the free "pay-what-you-want" download. After every save, a background job rewrites its ID3v2.3 tags to match the CMS fields below. See "Tag Sync Status" in the sidebar.
    */
   masterAudio?: (number | null) | Media;
+  /**
+   * Optional lossless FLAC of the same master. Tagged with the same CMS metadata (Vorbis comments) on save. Reserve for members / gated download tiers.
+   */
+  masterAudioFlac?: (number | null) | Media;
+  /**
+   * Optional uncompressed WAV of the same master. Archival / highest-tier download. WAV carries limited embedded tags compared to MP3/FLAC.
+   */
+  masterAudioWav?: (number | null) | Media;
   /**
    * The 11-character ID (e.g., dQw4w9WgXcQ). Required for the Global Player.
    */
@@ -585,6 +579,23 @@ export interface Song {
    * Free-form usage terms written verbatim to the USER frame.
    */
   termsOfUseCustom?: string | null;
+  /**
+   * Optional MusicBrainz identifiers. Written to the file as standard MusicBrainz frames (TXXX/UFID for MP3, MUSICBRAINZ_* Vorbis comments for FLAC) so Picard and streaming aggregators recognize the recording. Leave blank until the song is registered on MusicBrainz.
+   */
+  musicBrainz?: {
+    /**
+     * The recording (master audio) MBID. Also written to the UFID frame with owner http://musicbrainz.org.
+     */
+    recordingId?: string | null;
+    /**
+     * The track MBID specific to the release (MusicBrainz Release Track Id).
+     */
+    trackId?: string | null;
+    releaseId?: string | null;
+    releaseGroupId?: string | null;
+    artistId?: string | null;
+    workId?: string | null;
+  };
   /**
    * Used for sorting "Popular" lists. 1000 = Biggest Hit.
    */
@@ -724,6 +735,28 @@ export interface Release {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "playlists".
+ */
+export interface Playlist {
+  id: number;
+  title: string;
+  /**
+   * Lower numbers appear first in the player. The auto-generated "Discography" always leads, so start your custom playlists at 1+.
+   */
+  displayOrder?: number | null;
+  slug?: string | null;
+  description?: string | null;
+  coverArt?: (number | null) | Media;
+  /**
+   * Add and reorder songs. Updates instantly on the site.
+   */
+  tracks?: (number | Song)[] | null;
+  isFeatured?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tags".
  */
 export interface Tag {
@@ -853,6 +886,7 @@ export interface GatedContent {
    * Fans at this rank or higher can access the file (Vault + direct file routes). Matches Lieutenant / Commander / Captain Vault clearance in crew rules.
    */
   tierRequired: 'lieutenant' | 'commander' | 'captain';
+  prefix?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -864,6 +898,18 @@ export interface GatedContent {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mailing-list".
+ */
+export interface MailingList {
+  id: number;
+  email: string;
+  source?: ('spotify_presave' | 'newsletter_signup' | 'merch_purchase') | null;
+  tags?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1559,6 +1605,8 @@ export interface SongsSelect<T extends boolean = true> {
   tagSyncError?: T;
   tagsSyncedHash?: T;
   masterAudio?: T;
+  masterAudioFlac?: T;
+  masterAudioWav?: T;
   youtubeId?: T;
   spotifyId?: T;
   streamingLinks?:
@@ -1595,6 +1643,16 @@ export interface SongsSelect<T extends boolean = true> {
   publisher?: T;
   termsOfUse?: T;
   termsOfUseCustom?: T;
+  musicBrainz?:
+    | T
+    | {
+        recordingId?: T;
+        trackId?: T;
+        releaseId?: T;
+        releaseGroupId?: T;
+        artistId?: T;
+        workId?: T;
+      };
   popularity?: T;
   genres?: T;
   subGenres?: T;
@@ -1639,6 +1697,7 @@ export interface GatedContentSelect<T extends boolean = true> {
   description?: T;
   relatedSong?: T;
   tierRequired?: T;
+  prefix?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -1677,8 +1736,18 @@ export interface UsersSelect<T extends boolean = true> {
   displayName?: T;
   avatar?: T;
   bio?: T;
+  favoriteSong?: T;
   zipCode?: T;
+  birthdate?: T;
+  gender?: T;
   themePreference?: T;
+  notificationSettings?:
+    | T
+    | {
+        newsletter?: T;
+        productUpdates?: T;
+        accountActivity?: T;
+      };
   role?: T;
   crewRank?: T;
   stripeCustomerId?: T;
