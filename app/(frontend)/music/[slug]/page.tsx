@@ -58,6 +58,7 @@ import {
 import { ARTIST_HOMEPAGE, PRIMARY_ARTIST } from '@/lib/branding'
 import { getMeUser } from '@/utilities/getMeUser'
 import { SongGatedBonusSection } from '@/components/SongGatedBonusSection'
+import { SongDownloadButton } from '@/components/SongDownload/SongDownloadButton'
 import { userMeetsGatedFileAccess } from '@/access/crewRanks'
 
 // --- Types ---
@@ -588,6 +589,13 @@ export default async function SongPage({ params, searchParams }: Args) {
     return { ...row, asset: publicAsset }
   })
 
+  const masterAudio =
+    song.masterAudio && typeof song.masterAudio === 'object'
+      ? (song.masterAudio as Media)
+      : null
+  const masterAudioUrl = masterAudio?.url ?? null
+  const masterAudioFilename = masterAudio?.filename ?? null
+
   return (
     <article className="min-h-screen bg-transparent pb-12">
       <MusicRecordingSchema
@@ -643,6 +651,17 @@ export default async function SongPage({ params, searchParams }: Args) {
                     Subscribe to YouTube Channel
                   </YouTubeSubscribeButton>
                 </div>
+                {masterAudioUrl && (
+                  <div className="mb-3 w-full">
+                    <SongDownloadButton
+                      audioUrl={masterAudioUrl}
+                      filename={masterAudioFilename}
+                      title={song.title}
+                      slug={song.slug ?? null}
+                      isLoggedIn={Boolean(user)}
+                    />
+                  </div>
+                )}
                 {/* <Separator className="mb-8" /> */}
                 <CommentsYT videoId={song.youtubeId} />
               </section>

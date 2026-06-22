@@ -32,10 +32,38 @@ export function AccountBillingActions({
 }: Props) {
   const [portalLoading, setPortalLoading] = useState(false)
   const [changeLoading, setChangeLoading] = useState<PaidCrewRank | null>(null)
+  const [syncLoading, setSyncLoading] = useState(false)
   const [message, setMessage] = useState<{
     type: 'error' | 'success'
     text: string
   } | null>(null)
+
+  const syncFromStripe = async () => {
+    setMessage(null)
+    setSyncLoading(true)
+    try {
+      const res = await fetch('/api/stripe/reconcile', { method: 'POST' })
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        throw new Error(parseError(data) ?? 'Could not sync from Stripe.')
+      }
+      const text =
+        typeof (data as { message?: string })?.message === 'string'
+          ? (data as { message: string }).message
+          : 'Synced from Stripe.'
+      setMessage({ type: 'success', text })
+      if ((data as { changed?: boolean })?.changed) {
+        window.setTimeout(() => window.location.reload(), 1500)
+      }
+    } catch (e: unknown) {
+      setMessage({
+        type: 'error',
+        text: e instanceof Error ? e.message : 'Something went wrong.',
+      })
+    } finally {
+      setSyncLoading(false)
+    }
+  }
 
   const openBillingPortal = async () => {
     setMessage(null)
@@ -126,7 +154,28 @@ export function AccountBillingActions({
             <Link href="/memberships">View membership plans</Link>
           </Button>
         )}
+
+        <Button
+          type="button"
+          variant="ghost"
+          className="rounded-none"
+          disabled={syncLoading}
+          onClick={syncFromStripe}
+        >
+          {syncLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Syncing…
+            </>
+          ) : (
+            'Sync from Stripe'
+          )}
+        </Button>
       </div>
+      <p className="text-xs text-muted-foreground">
+        Paid but your rank looks wrong? Use{' '}
+        <strong>Sync from Stripe</strong> to re-check your subscription.
+      </p>
 
       {hasActiveSubscription && (
         <div className="space-y-2">

@@ -122,6 +122,24 @@ export async function writeTagsToBuffer(
       props['TXXX:Payment Page'] = [spec.paymentUrl]
     }
 
+    // MusicBrainz identifiers. taglib maps these standardized PropertyMap
+    // keys to TXXX:* frames for MP3 and the matching Vorbis comments for
+    // FLAC, so Picard and aggregators recognize the recording.
+    if (spec.musicBrainz) {
+      const mb = spec.musicBrainz
+      if (mb.recordingId) props['MUSICBRAINZ_TRACKID'] = [mb.recordingId]
+      if (mb.trackId) props['MUSICBRAINZ_RELEASETRACKID'] = [mb.trackId]
+      if (mb.releaseId) props['MUSICBRAINZ_ALBUMID'] = [mb.releaseId]
+      if (mb.releaseGroupId) {
+        props['MUSICBRAINZ_RELEASEGROUPID'] = [mb.releaseGroupId]
+      }
+      if (mb.artistId) {
+        props['MUSICBRAINZ_ARTISTID'] = [mb.artistId]
+        props['MUSICBRAINZ_ALBUMARTISTID'] = [mb.artistId]
+      }
+      if (mb.workId) props['MUSICBRAINZ_WORKID'] = [mb.workId]
+    }
+
     // Custom TXXX descriptors from the mapper (credits + ranges + schema).
     if (spec.customText) {
       for (const [descriptor, values] of Object.entries(spec.customText)) {

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, Calendar, Shield, UserRound } from 'lucide-react'
+import { ArrowLeft, Calendar, Music, Shield, UserRound } from 'lucide-react'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 
@@ -218,10 +218,28 @@ export default async function CrewProfilePage({ params }: Args) {
             {/* <InfoRow label="Last Name" value={profile.lastName} /> */}
             <InfoRow label="Username" value={`@${profile.username}`} />
             <InfoRow label="Display Name" value={displayName} />
-            {/* <InfoRow
-              label="Name Format"
-              value={formatDisplayNameFormat(profile.displayNameFormat)}
-            /> */}
+            <InfoRow
+              label="Favorite Track"
+              value={
+                profile.favoriteSong ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Music size={14} className="text-primary" aria-hidden />
+                    {profile.favoriteSong.slug ? (
+                      <Link
+                        href={`/music/${profile.favoriteSong.slug}`}
+                        className="text-primary underline-offset-4 hover:underline"
+                      >
+                        {profile.favoriteSong.title}
+                      </Link>
+                    ) : (
+                      profile.favoriteSong.title
+                    )}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">Not set</span>
+                )
+              }
+            />
           </div>
 
           <div className="border border-border/50 bg-card/20 p-5 backdrop-blur-sm">

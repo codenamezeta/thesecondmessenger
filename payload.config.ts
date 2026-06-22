@@ -1,4 +1,5 @@
 import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
+import { resendAdapter } from '@payloadcms/email-resend'
 import { s3Storage } from '@payloadcms/storage-s3'
 import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
@@ -21,12 +22,20 @@ import { Tags } from './collections/Tags'
 import { Users } from './collections/Users'
 import { SiteSettings } from './globals/SiteSettings'
 import { syncAudioTagsTask } from './lib/audio-tags/syncAudioTagsTask'
+import { EMAIL_FROM_ADDRESS, EMAIL_FROM_NAME } from './lib/email'
 import { patchGatedContentDisableTransactions } from './lib/payload-gated-content-transactions'
+import { getServerSideURL } from './utilities/getURL'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
+  serverURL: getServerSideURL(),
+  email: resendAdapter({
+    defaultFromAddress: EMAIL_FROM_ADDRESS,
+    defaultFromName: EMAIL_FROM_NAME,
+    apiKey: process.env.RESEND_API_KEY || '',
+  }),
   onInit: async (payload) => {
     patchGatedContentDisableTransactions(payload)
   },

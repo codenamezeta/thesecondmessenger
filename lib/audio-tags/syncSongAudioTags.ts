@@ -4,7 +4,8 @@ import { getServerSideURL } from '@/utilities/getURL'
 import {
   coverArtMediaUrl,
   mapSongToTagSpec,
-  masterAudioMediaInfo,
+  taggableMasterMedia,
+  type MasterMediaInfo,
   type SongForTagging,
 } from './mapSongToTagSpec'
 import { hashTagSpec } from './hashTagSpec'
@@ -40,10 +41,11 @@ export async function syncSongAudioTags(
     overrideAccess: true,
   })) as unknown as SongForTagging
 
-  const audio = masterAudioMediaInfo(song)
-  if (!audio || !audio.url) {
+  // MP3 + FLAC masters (WAV is excluded — minimal embedded-tag support).
+  const masters = taggableMasterMedia(song).filter((m) => m.url)
+  if (masters.length === 0) {
     await markStatus(payload, songId, 'idle', null, null)
-    return { status: 'skipped', reason: 'No masterAudio attached.' }
+    return { status: 'skipped', reason: 'No taggable master audio attached.' }
   }
 
   // 1. Resolve cover art (optional).
@@ -76,8 +78,14 @@ export async function syncSongAudioTags(
   }
 
   // 2. Build spec + hash. Short-circuit if nothing meaningful changed.
+  // The hash folds in the set of master file ids so attaching a new FLAC
+  // master busts the cache even when the metadata itself is unchanged.
   const spec = mapSongToTagSpec({ song, coverArt: coverArtPayload })
-  const hash = hashTagSpec(spec)
+  const masterKey = masters
+    .map((m) => m.id)
+    .sort((a, b) => a - b)
+    .join(',')
+  const hash = hashTagSpec(spec, `masters:${masterKey}`)
   const lastHash = (song as { tagsSyncedHash?: string | null }).tagsSyncedHash
   if (lastHash && lastHash === hash) {
     await markStatus(payload, songId, 'synced', hash, null)
@@ -87,41 +95,14 @@ export async function syncSongAudioTags(
   await markStatus(payload, songId, 'syncing', null, null)
 
   try {
-    // 3. Download the master audio.
-    const audioFullUrl = audio.url.startsWith('/')
-      ? `${getServerSideURL()}${audio.url}`
-      : audio.url
-    const audioRes = await fetch(audioFullUrl)
-    if (!audioRes.ok) {
-      throw new Error(
-        `Master audio fetch failed: ${audioRes.status} ${audioRes.statusText}`,
-      )
+    let totalBytesWritten = 0
+    for (const master of masters) {
+      totalBytesWritten += await tagAndReupload(payload, songId, master, spec)
     }
-    const original = new Uint8Array(await audioRes.arrayBuffer())
 
-    // 4. Mutate.
-    const mutated = await writeTagsToBuffer(original, spec)
+    await markStatus(payload, songId, 'synced', hash, null, totalBytesWritten)
 
-    // 5. Re-upload via Payload's Media collection. The storage adapter
-    // (Vercel Blob in our case) overwrites in place by default and the
-    // public URL stays stable.
-    await payload.update({
-      collection: 'media',
-      id: audio.id,
-      data: {},
-      file: {
-        data: Buffer.from(mutated),
-        mimetype: audio.mimeType ?? 'audio/mpeg',
-        name: audio.filename ?? `song-${songId}.mp3`,
-        size: mutated.byteLength,
-      },
-      overwriteExistingFiles: true,
-      overrideAccess: true,
-    })
-
-    await markStatus(payload, songId, 'synced', hash, null, mutated.byteLength)
-
-    return { status: 'synced', hash, bytesWritten: mutated.byteLength }
+    return { status: 'synced', hash, bytesWritten: totalBytesWritten }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     await markStatus(payload, songId, 'error', null, message)
@@ -131,6 +112,47 @@ export async function syncSongAudioTags(
     })
     return { status: 'error', error: message }
   }
+}
+
+/**
+ * Download one master file, rewrite its tags from `spec`, and re-upload it
+ * in place via the Media collection (the storage adapter overwrites and the
+ * public URL stays stable). Returns the byte length written.
+ */
+async function tagAndReupload(
+  payload: Payload,
+  songId: number,
+  master: MasterMediaInfo,
+  spec: ReturnType<typeof mapSongToTagSpec>,
+): Promise<number> {
+  if (!master.url) return 0
+  const fullUrl = master.url.startsWith('/')
+    ? `${getServerSideURL()}${master.url}`
+    : master.url
+  const res = await fetch(fullUrl)
+  if (!res.ok) {
+    throw new Error(
+      `Master audio fetch failed (${master.filename ?? master.id}): ${res.status} ${res.statusText}`,
+    )
+  }
+  const original = new Uint8Array(await res.arrayBuffer())
+  const mutated = await writeTagsToBuffer(original, spec)
+
+  await payload.update({
+    collection: 'media',
+    id: master.id,
+    data: {},
+    file: {
+      data: Buffer.from(mutated),
+      mimetype: master.mimeType ?? 'audio/mpeg',
+      name: master.filename ?? `song-${songId}-${master.id}`,
+      size: mutated.byteLength,
+    },
+    overwriteExistingFiles: true,
+    overrideAccess: true,
+  })
+
+  return mutated.byteLength
 }
 
 async function markStatus(

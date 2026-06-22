@@ -33,8 +33,9 @@ export async function queueAudioTagSync({
   const ctx = (req as unknown as { context?: Record<string, unknown> }).context
   if (ctx?.skipAudioTagSync) return 'skipped'
 
-  // Bail if there's no master audio to write into.
-  if (!doc.masterAudio) return 'skipped'
+  // Bail if there's no taggable master (MP3 or FLAC) to write into.
+  const docIndexable = doc as unknown as Record<string, unknown>
+  if (!doc.masterAudio && !docIndexable.masterAudioFlac) return 'skipped'
 
   // Bail if nothing tag-relevant changed.
   if (previousDoc && !tagRelevantChange(doc, previousDoc)) return 'skipped'
@@ -103,6 +104,9 @@ function tagRelevantChange(a: Song, b: Song): boolean {
     'slug',
     'releaseDate',
     'masterAudio',
+    'masterAudioFlac',
+    'masterAudioWav',
+    'musicBrainz',
     'coverArt',
     'compositionType',
     'isExplicit',

@@ -10,9 +10,20 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { Shield, Sparkles, Star, UserPlus } from 'lucide-react'
+import { Check, Shield, Sparkles, Star, UserPlus } from 'lucide-react'
+
+import { getMeUser } from '@/utilities/getMeUser'
+import type { User } from '@/payload-types'
 
 type SearchParams = Record<string, string | string[] | undefined>
+
+const RANK_WEIGHT: Record<User['crewRank'], number> = {
+  ensign: 0,
+  lieutenant: 1,
+  commander: 2,
+  captain: 3,
+  admiral: 4,
+}
 
 type CrewTier = {
   rank: 'ensign' | 'lieutenant' | 'commander' | 'captain'
@@ -44,7 +55,9 @@ const crewTiers: CrewTier[] = [
       'Unlock early demos, dailys, and first-level Vault clearance.',
     vaultClearance: 'Lieutenant Vault',
     perks: [
-      'Everything in Ensign',
+      'Lieutenant profile badge and rank insignia',
+      'Mailing list alerts for upcoming releases',
+      'Forum post access and restricted replies on official updates',
       'Sonic Time-Lapse checkpoint mixdowns',
       'Lieutenant-level Vault access to demos, alt mixes, and artwork',
       'Voting rights with 1x vote weight',
@@ -60,12 +73,16 @@ const crewTiers: CrewTier[] = [
     vaultClearance: 'Commander Vault',
     featured: true,
     perks: [
-      'Everything in Lieutenant',
+      'Commander profile badge and rank insignia',
+      'Mailing list alerts for upcoming releases',
+      'Forum post access and restricted replies on official updates',
+      'Sonic Time-Lapse checkpoint mixdowns',
+      'Commander-level Vault access to demos, alt mixes, artwork, stems, DI tracks, synth patches, and sheet music',
       'Fly on the Wall monthly screen-share production breakdowns',
-      'Commander-level Vault access (stems, DI tracks, synth patches, sheet music)',
       'Merch discount: 5%',
       'Forum thread and poll creation',
       'Voting rights with 2x vote weight',
+      '1% of proceeds support environmental carbon removal',
     ],
   },
   {
@@ -75,12 +92,19 @@ const crewTiers: CrewTier[] = [
       'Join the inner circle with direct artist access and top-tier influence.',
     vaultClearance: 'Captain Vault + Private Channels',
     perks: [
-      'Everything in Commander',
+      'Captain profile badge and rank insignia',
+      'Mailing list alerts for upcoming releases',
+      'Forum post access and restricted replies on official updates',
+      'Sonic Time-Lapse checkpoint mixdowns',
+      'Captain-level Vault access to demos, alt mixes, artwork, stems, DI tracks, synth patches, and sheet music',
+      'Fly on the Wall monthly screen-share production breakdowns',
+      'Merch discount: 10%',
+      'Forum thread and poll creation',
+      'Voting rights with 3x vote weight',
       'Bridge Crew courtesy credit on YouTube and liner notes',
       'Inner Circle monthly virtual hangout',
       'Annual care package with signed and exclusive merch',
-      'Merch discount: 10%',
-      'Voting rights with 3x vote weight',
+      '1% of proceeds support environmental carbon removal',
     ],
   },
 ]
@@ -114,14 +138,79 @@ function formatRank(value: CrewTier['rank'] | null): string {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-function tierCtaHref(rank: CrewTier['rank']): string {
-  if (rank === 'ensign') return '/login?redirect=/crew'
-  return `${STRIPE_CHECKOUT_PATH}?tier=${rank}`
+type TierCta = {
+  href: string
+  label: string
+  disabled: boolean
+  variant: 'default' | 'outline'
 }
 
-function tierCtaLabel(rank: CrewTier['rank']): string {
-  if (rank === 'ensign') return 'Create Free Crew Account'
-  return `Start ${rank} Subscription`
+/**
+ * Computes the CTA for a tier card based on the viewer's current rank:
+ * - Signed out: register (free) or start a subscription.
+ * - Signed in: "Current Plan", "Upgrade to X", or "Downgrade to X". Tier moves
+ *   for an existing subscriber are routed to /account, where the billing
+ *   actions perform a prorated change; first-time upgrades from Ensign go
+ *   straight to Stripe checkout.
+ */
+function getTierCta(
+  rank: CrewTier['rank'],
+  currentRank: User['crewRank'] | null,
+): TierCta {
+  const isPaid = rank !== 'ensign'
+
+  if (!currentRank) {
+    return {
+      href: isPaid
+        ? `${STRIPE_CHECKOUT_PATH}?tier=${rank}`
+        : '/login?redirect=/crew&tab=register',
+      label: isPaid ? `Start ${formatRank(rank)} Subscription` : 'Create Free Crew Account',
+      disabled: false,
+      variant: isPaid ? 'default' : 'outline',
+    }
+  }
+
+  if (currentRank === 'admiral') {
+    return {
+      href: '/account',
+      label: 'Manage in account',
+      disabled: false,
+      variant: 'outline',
+    }
+  }
+
+  if (rank === currentRank) {
+    return { href: '#', label: 'Current Plan', disabled: true, variant: 'outline' }
+  }
+
+  const currentWeight = RANK_WEIGHT[currentRank]
+  const tierWeight = RANK_WEIGHT[rank]
+  const isUpgrade = tierWeight > currentWeight
+
+  if (isUpgrade) {
+    // First paid subscription comes straight from checkout; tier-to-tier
+    // upgrades for existing subscribers go through the account billing actions.
+    const href =
+      currentRank === 'ensign'
+        ? `${STRIPE_CHECKOUT_PATH}?tier=${rank}`
+        : '/account'
+    return {
+      href,
+      label: `Upgrade to ${formatRank(rank)}`,
+      disabled: false,
+      variant: 'default',
+    }
+  }
+
+  return {
+    href: '/account',
+    label:
+      rank === 'ensign'
+        ? 'Downgrade to Ensign'
+        : `Downgrade to ${formatRank(rank)}`,
+    disabled: false,
+    variant: 'outline',
+  }
 }
 
 export default async function MembershipsPage({
@@ -133,6 +222,9 @@ export default async function MembershipsPage({
   const error = getFirstParam(params.error)
   const canceled = getFirstParam(params.canceled)
   const tier = normalizeRank(getFirstParam(params.tier))
+
+  const { user } = await getMeUser()
+  const currentRank = user?.crewRank ?? null
 
   return (
     <main className="relative overflow-hidden bg-transparent py-20 md:py-24">
@@ -223,10 +315,15 @@ export default async function MembershipsPage({
         </section>
 
         <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-          {crewTiers.map((tier) => (
+          {crewTiers.map((tier) => {
+            const cta = getTierCta(tier.rank, currentRank)
+            const isCurrent = currentRank === tier.rank
+            return (
             <Card
               key={tier.rank}
-              className="rounded-none border border-border/60 bg-card/20 py-0 shadow-none ring-0 backdrop-blur-md"
+              className={`rounded-none border bg-card/20 py-0 shadow-none ring-0 backdrop-blur-md ${
+                isCurrent ? 'border-primary/70' : 'border-border/60'
+              }`}
             >
               <CardHeader className="rounded-none border-b border-border/50 px-5 py-5 md:px-6">
                 <div className="flex items-start justify-between gap-4">
@@ -239,7 +336,14 @@ export default async function MembershipsPage({
                     </CardTitle>
                   </div>
 
-                  {tier.featured ? (
+                  {isCurrent ? (
+                    <Badge
+                      variant="secondary"
+                      className="rounded-none border border-primary/50 bg-primary/20 px-2.5 py-1 font-mono text-[10px] tracking-[0.2em] text-primary uppercase"
+                    >
+                      Your Plan
+                    </Badge>
+                  ) : tier.featured ? (
                     <Badge
                       variant="secondary"
                       className="rounded-none border border-primary/30 bg-primary/15 px-2.5 py-1 font-mono text-[10px] tracking-[0.2em] text-primary uppercase"
@@ -286,24 +390,37 @@ export default async function MembershipsPage({
               </CardContent>
 
               <CardFooter className="rounded-none border-t border-border/50 px-5 py-5 md:px-6">
-                <Button
-                  asChild
-                  variant={tier.rank === 'ensign' ? 'outline' : 'default'}
-                  size="lg"
-                  className="w-full rounded-none border-primary/50 font-mono text-[11px] tracking-[0.2em] uppercase"
-                >
-                  <a href={tierCtaHref(tier.rank)}>
-                    {tier.rank === 'ensign' ? (
-                      <UserPlus data-icon="inline-start" />
-                    ) : (
-                      <Star data-icon="inline-start" />
-                    )}
-                    {tierCtaLabel(tier.rank)}
-                  </a>
-                </Button>
+                {cta.disabled ? (
+                  <Button
+                    variant={cta.variant}
+                    size="lg"
+                    disabled
+                    className="w-full rounded-none border-primary/50 font-mono text-[11px] tracking-[0.2em] uppercase"
+                  >
+                    <Check data-icon="inline-start" />
+                    {cta.label}
+                  </Button>
+                ) : (
+                  <Button
+                    asChild
+                    variant={cta.variant}
+                    size="lg"
+                    className="w-full rounded-none border-primary/50 font-mono text-[11px] tracking-[0.2em] uppercase"
+                  >
+                    <a href={cta.href}>
+                      {tier.rank === 'ensign' ? (
+                        <UserPlus data-icon="inline-start" />
+                      ) : (
+                        <Star data-icon="inline-start" />
+                      )}
+                      {cta.label}
+                    </a>
+                  </Button>
+                )}
               </CardFooter>
             </Card>
-          ))}
+            )
+          })}
         </section>
       </div>
     </main>
