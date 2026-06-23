@@ -8,7 +8,7 @@ import React from 'react'
 
 import type { Props as MediaProps, MediaDisplaySize } from '../types'
 
-import { getMediaUrl } from '@/utilities/getMediaUrl'
+import { getMediaUrl, normalizeMediaUrlForImage } from '@/utilities/getMediaUrl'
 
 const breakpoints = {
   '3xl': 1920,
@@ -109,21 +109,10 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
     }
   }
 
-  // Strip the dev-server origin and any query string from string sources so
-  // next/image's optimizer accepts them. (Originally added to work around
-  // "Private IP" / "localPatterns" errors when serving Vercel Blob URLs that
-  // had been re-prefixed with NEXT_PUBLIC_SERVER_URL.)
+  // Strip dev-server origins and query strings so next/image accepts same-site
+  // Payload media (e.g. http://127.0.0.1:3000/api/media/... → /api/media/...).
   if (typeof src === 'string') {
-    const serverUrl =
-      process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
-
-    if (src.startsWith(serverUrl)) {
-      src = src.replace(serverUrl, '')
-    }
-
-    if (src.includes('?')) {
-      src = src.split('?')[0]
-    }
+    src = normalizeMediaUrlForImage(src)
   }
 
   const loading = loadingFromProps || (!priority ? 'lazy' : undefined)

@@ -659,6 +659,7 @@ export default async function SongPage({ params, searchParams }: Args) {
                       title={song.title}
                       slug={song.slug ?? null}
                       isLoggedIn={Boolean(user)}
+                      userEmail={user?.email ?? null}
                     />
                   </div>
                 )}

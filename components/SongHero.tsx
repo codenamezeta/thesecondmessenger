@@ -11,6 +11,7 @@ import formatTime from '@/utilities/formatTime'
 import type { Media } from '@/payload-types'
 import placeholderArt from '@/public/imgs/placeholder-art.png'
 import { PRIMARY_ARTIST } from '@/lib/branding'
+import { normalizeMediaUrlForImage } from '@/utilities/getMediaUrl'
 
 type SongHeroProps = {
   song: Song
@@ -27,7 +28,7 @@ export const SongHero = ({
   const isCurrent = currentSong?.id === song.id
   const isActive = isCurrent && isPlaying
 
-  const coverArtUrl = (song.coverArt as Media)?.url || ''
+  const coverArtUrl = normalizeMediaUrlForImage((song.coverArt as Media)?.url)
 
   return (
     <section className="backdrop-blur-0 relative w-full overflow-hidden border-b border-white/10 bg-muted/30">

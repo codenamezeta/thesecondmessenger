@@ -28,6 +28,13 @@ export function getStripeWebhookSecret(): string {
   return requireEnvVar('STRIPE_WEBHOOK_SECRET')
 }
 
+export function getStripePublishableKey(): string {
+  return requireEnvVar('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY')
+}
+
+/** Stripe minimum charge for USD one-time payments (50¢). */
+export const STRIPE_MIN_TIP_CENTS = 50
+
 export function parsePaidCrewRank(value: string | null): PaidCrewRank | null {
   if (!value) return null
   if (PAID_CREW_RANKS.includes(value as PaidCrewRank)) {

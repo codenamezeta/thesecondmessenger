@@ -80,7 +80,7 @@ export default function BioPage() {
           blendMode="screen"
         />
         <div className="pointer-events-none absolute inset-0 bg-[url('/imgs/backgrounds/scanlines.png')] opacity-10" />
-        <div className="absolute inset-0 bg-linear-to-tr from-black to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-tr from-background to-transparent" />
 
         <div className="relative z-10 container">
           <div className="max-w-4xl">
