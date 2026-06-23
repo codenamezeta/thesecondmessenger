@@ -29,11 +29,11 @@ const navItems: NavItem[] = [
   { type: 'link', label: 'Videos', href: '/videos' },
   { type: 'link', label: 'Bio', href: '/bio' },
   { type: 'link', label: 'Updates', href: '/posts' },
-  { type: 'link', label: 'Login', href: '/login' },
+  { type: 'link', label: 'Crew', href: '/crew' },
 ]
 
 export const memberNavItems: NavItem[] = [
-  { type: 'link', label: 'Memberships', href: '/memberships' },
+  // { type: 'link', label: 'Memberships', href: '/memberships' },
   { type: 'link', label: 'Crew', href: '/crew' },
   { type: 'link', label: 'Account', href: '/account' },
   { type: 'link', label: 'Unreleased Content', href: '/music/unreleased' },

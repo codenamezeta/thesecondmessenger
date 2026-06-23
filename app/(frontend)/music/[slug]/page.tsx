@@ -1,7 +1,7 @@
 import { cache } from 'react'
 import { cookies } from 'next/headers'
 import type { Metadata } from 'next'
-import { notFound, redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { RelatedSongs } from '@/components/RelatedSongs'
@@ -26,7 +26,6 @@ import {
 import { StreamingLinksCard } from '@/components/music/StreamingLinksCard'
 import type { GatedContent, Media, Release } from '@/payload-types'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -40,11 +39,11 @@ import { MusicRecordingSchema } from '@/schema/MusicRecording'
 import { generateMeta } from '@/utilities/generateMeta'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
+import { pickCanonicalTag, queryTagsBySlug } from '@/lib/routing/slugLookups'
 import {
-  pickCanonicalTag,
-  queryTagsBySlug,
-} from '@/lib/routing/slugLookups'
-import { buildSongMetaDescription, buildSongPageTitle } from '@/lib/seo/songToMetaDescription'
+  buildSongMetaDescription,
+  buildSongPageTitle,
+} from '@/lib/seo/songToMetaDescription'
 import {
   FIELD_TO_CATEGORY,
   getResolvedTags,
@@ -243,7 +242,11 @@ function SongMetadataCard({ song }: { song: SongDoc }) {
   ].filter((row) => Boolean(row.value))
 
   const tagGroups = [
-    { label: 'Genres', field: 'genres' as SongTagField, tags: getResolvedTags(song.genres).slice(0, 3) },
+    {
+      label: 'Genres',
+      field: 'genres' as SongTagField,
+      tags: getResolvedTags(song.genres).slice(0, 3),
+    },
     {
       label: 'Sub-genres',
       field: 'subGenres' as SongTagField,
@@ -254,8 +257,16 @@ function SongMetadataCard({ song }: { song: SongDoc }) {
       field: 'activities' as SongTagField,
       tags: getResolvedTags(song.activities).slice(0, 3),
     },
-    { label: 'Themes', field: 'themes' as SongTagField, tags: getResolvedTags(song.themes).slice(0, 3) },
-    { label: 'Moods', field: 'moods' as SongTagField, tags: getResolvedTags(song.moods).slice(0, 3) },
+    {
+      label: 'Themes',
+      field: 'themes' as SongTagField,
+      tags: getResolvedTags(song.themes).slice(0, 3),
+    },
+    {
+      label: 'Moods',
+      field: 'moods' as SongTagField,
+      tags: getResolvedTags(song.moods).slice(0, 3),
+    },
     {
       label: 'Production',
       field: 'production' as SongTagField,
@@ -266,7 +277,11 @@ function SongMetadataCard({ song }: { song: SongDoc }) {
       field: 'instruments' as SongTagField,
       tags: getResolvedTags(song.instruments).slice(0, 3),
     },
-    { label: 'Gear', field: 'gear' as SongTagField, tags: getResolvedTags(song.gear).slice(0, 3) },
+    {
+      label: 'Gear',
+      field: 'gear' as SongTagField,
+      tags: getResolvedTags(song.gear).slice(0, 3),
+    },
     {
       label: 'Arrangements',
       field: 'arrangements' as SongTagField,
@@ -636,7 +651,7 @@ export default async function SongPage({ params, searchParams }: Args) {
             )}
 
             {song.youtubeId && (
-              <section className="mt-6 px-3 lg:col-span-8">
+              <section className="mt-6 lg:col-span-8">
                 <div className="mb-3 flex w-full flex-col items-center justify-center gap-2 md:flex-row">
                   <YouTubeLikeButton
                     videoId={song.youtubeId}
