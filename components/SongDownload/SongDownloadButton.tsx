@@ -21,7 +21,7 @@ import { getStripeBrowserClient } from '@/lib/stripe/browserClient'
 import { STRIPE_MIN_TIP_CENTS } from '@/utilities/stripe'
 import { SongDownloadTipPayment } from '@/components/SongDownload/SongDownloadTipPayment'
 
-const TIP_PRESETS_CENTS = [200, 500, 1000, 2500] as const
+const TIP_PRESETS_CENTS = [100, 200, 500, 1000] as const
 
 type Props = {
   audioUrl: string | null
@@ -114,11 +114,7 @@ export function SongDownloadButton({
   const resolvedEmail = (isLoggedIn ? userEmail : email)?.trim() ?? ''
   const customCents = parseCustomAmountToCents(customAmount)
   const amountCents =
-    tipMode === 'free'
-      ? 0
-      : useCustomAmount
-        ? (customCents ?? 0)
-        : presetCents
+    tipMode === 'free' ? 0 : useCustomAmount ? (customCents ?? 0) : presetCents
 
   const canStartPaidPayment =
     tipMode === 'paid' &&
@@ -127,7 +123,7 @@ export function SongDownloadButton({
 
   const resetDialogState = useCallback(() => {
     setTipMode('paid')
-    setPresetCents(500)
+    setPresetCents(200)
     setUseCustomAmount(false)
     setCustomAmount('')
     setEmail('')
@@ -179,48 +175,53 @@ export function SongDownloadButton({
     }
 
     let cancelled = false
-    const timer = window.setTimeout(() => {
-      setPaymentLoading(true)
-      setError(null)
+    const timer = window.setTimeout(
+      () => {
+        setPaymentLoading(true)
+        setError(null)
 
-      fetch('/api/stripe/song-tip', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amountCents,
-          email: resolvedEmail,
-          songSlug: slug,
-          songTitle: title,
-        }),
-      })
-        .then(async (res) => {
-          const data = (await res.json().catch(() => null)) as {
-            clientSecret?: string
-            error?: string
-          } | null
-          if (!res.ok) {
-            throw new Error(data?.error ?? 'Could not prepare payment.')
-          }
-          if (!data?.clientSecret) {
-            throw new Error('Could not prepare payment.')
-          }
-          return data.clientSecret
+        fetch('/api/stripe/song-tip', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amountCents,
+            email: resolvedEmail,
+            songSlug: slug,
+            songTitle: title,
+          }),
         })
-        .then((secret) => {
-          if (!cancelled) setClientSecret(secret)
-        })
-        .catch((err: unknown) => {
-          if (!cancelled) {
-            setClientSecret(null)
-            setError(
-              err instanceof Error ? err.message : 'Could not prepare payment.',
-            )
-          }
-        })
-        .finally(() => {
-          if (!cancelled) setPaymentLoading(false)
-        })
-    }, useCustomAmount ? 400 : 0)
+          .then(async (res) => {
+            const data = (await res.json().catch(() => null)) as {
+              clientSecret?: string
+              error?: string
+            } | null
+            if (!res.ok) {
+              throw new Error(data?.error ?? 'Could not prepare payment.')
+            }
+            if (!data?.clientSecret) {
+              throw new Error('Could not prepare payment.')
+            }
+            return data.clientSecret
+          })
+          .then((secret) => {
+            if (!cancelled) setClientSecret(secret)
+          })
+          .catch((err: unknown) => {
+            if (!cancelled) {
+              setClientSecret(null)
+              setError(
+                err instanceof Error
+                  ? err.message
+                  : 'Could not prepare payment.',
+              )
+            }
+          })
+          .finally(() => {
+            if (!cancelled) setPaymentLoading(false)
+          })
+      },
+      useCustomAmount ? 400 : 0,
+    )
 
     return () => {
       cancelled = true
@@ -267,12 +268,12 @@ export function SongDownloadButton({
           className,
         )}
       >
-        <Download size={20} />
-        Download MP3 — pay what you want
+        <Download size={24} />
+        Download MP3
       </Button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="max-h-[90vh] overflow-y-auto border border-special/50 sm:max-w-lg md:max-w-3xl">
           {status === 'done' ? (
             <>
               <DialogHeader>
@@ -304,7 +305,7 @@ export function SongDownloadButton({
                 >
                   <Link href="/memberships">
                     <Heart size={18} className="mr-2" />
-                    Join the Crew for more perks
+                    Join the Crew for more perks!
                   </Link>
                 </Button>
               </div>
@@ -313,9 +314,9 @@ export function SongDownloadButton({
             <>
               <DialogHeader>
                 <DialogTitle>Download {title}</DialogTitle>
-                <DialogDescription>
+                <DialogDescription className="text-lg">
                   This song is yours to keep. Choose a tip amount that feels
-                  fair — every dollar helps fund the next release.
+                  fair — every dollar helps fund the next release. 💖
                 </DialogDescription>
               </DialogHeader>
 
@@ -354,12 +355,12 @@ export function SongDownloadButton({
                     <span className="font-medium text-foreground">
                       {resolvedEmail}
                     </span>
-                    . Consider leaving a tip before you download.
+                    . Consider leaving a tip before you download. 💖
                   </p>
                 )}
 
                 <div className="space-y-3">
-                  <Label>Choose your tip</Label>
+                  <Label>Choose your tip amount</Label>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {TIP_PRESETS_CENTS.map((cents) => (
                       <Button
@@ -403,7 +404,7 @@ export function SongDownloadButton({
                     </Button>
                     <Button
                       type="button"
-                      variant={tipMode === 'free' ? 'default' : 'outline'}
+                      variant={tipMode === 'free' ? 'default' : 'secondary'}
                       className="rounded-none sm:flex-1"
                       onClick={() => {
                         setTipMode('free')
@@ -412,12 +413,14 @@ export function SongDownloadButton({
                         setClientSecret(null)
                       }}
                     >
-                      Download for $0 — no payment
+                      $0 — No payment required.
                     </Button>
                   </div>
                   {tipMode === 'paid' && useCustomAmount && (
                     <div className="space-y-2">
-                      <Label htmlFor="custom-tip">Custom tip amount (USD)</Label>
+                      <Label htmlFor="custom-tip">
+                        Custom tip amount (USD)
+                      </Label>
                       <Input
                         id="custom-tip"
                         type="number"
@@ -434,7 +437,7 @@ export function SongDownloadButton({
 
                 {tipMode === 'paid' ? (
                   <div className="space-y-3 rounded-sm border border-border/60 bg-muted/20 p-4">
-                    <p className="font-mono text-[10px] tracking-widest text-primary uppercase">
+                    <p className="font-mono text-base tracking-widest text-primary uppercase">
                       Payment details
                     </p>
                     {!resolvedEmail ? (
@@ -443,13 +446,13 @@ export function SongDownloadButton({
                       </p>
                     ) : amountCents < STRIPE_MIN_TIP_CENTS ? (
                       <p className="text-sm text-muted-foreground">
-                        Enter at least{' '}
-                        {formatUsd(STRIPE_MIN_TIP_CENTS)} to pay with card.
+                        Enter at least {formatUsd(STRIPE_MIN_TIP_CENTS)} to pay
+                        with card.
                       </p>
                     ) : !process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ? (
                       <p className="text-sm text-destructive">
-                        Card payments are not configured yet. Choose
-                        &ldquo;Download for $0&rdquo; or try again later.
+                        Card payments are currently unavailable. Please choose
+                        the &ldquo;$0&rdquo; option or try again later.
                       </p>
                     ) : paymentLoading ||
                       !clientSecret ||
@@ -480,6 +483,7 @@ export function SongDownloadButton({
                       <div className="flex items-start gap-3">
                         <Checkbox
                           id="confirm-free-download"
+                          className="border-border"
                           checked={confirmFree}
                           onCheckedChange={(checked) =>
                             setConfirmFree(checked === true)
@@ -490,11 +494,10 @@ export function SongDownloadButton({
                             htmlFor="confirm-free-download"
                             className="cursor-pointer leading-snug"
                           >
-                            I want to download for free without leaving a tip
+                            Download for free without leaving a tip.
                           </Label>
                           <p className="text-xs text-muted-foreground">
-                            No payment info needed — just confirm before we start
-                            your download.
+                            No payment info needed.
                           </p>
                         </div>
                       </div>
@@ -514,7 +517,7 @@ export function SongDownloadButton({
                           Preparing download…
                         </>
                       ) : (
-                        `Download ${title} for $0`
+                        `Download "${title}"`
                       )}
                     </Button>
                   </form>
