@@ -30,6 +30,7 @@ import { songHrefFromArchive, tagLandingHref } from '@/lib/music/filterState'
 import { usePlayer } from '@/context/PlayerContext'
 import { Button } from '@/components/ui/button'
 import DecryptedText from '@/components/DecryptedText'
+import { normalizeMediaUrlForImage } from '@/utilities/getMediaUrl'
 
 interface SongCardProps {
   song: Song
@@ -265,7 +266,7 @@ export const SongCard = ({ song, className, archiveQuery }: SongCardProps) => {
     el.style.setProperty('--pointer', '0')
   }, [])
 
-  const coverUrl = (song.coverArt as Media)?.url
+  const coverUrl = normalizeMediaUrlForImage((song.coverArt as Media)?.url)
   const releaseYear = song.releaseDate
     ? new Date(song.releaseDate).getFullYear()
     : '----'

@@ -1,31 +1,39 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { Elements } from '@stripe/react-stripe-js'
 import { Download, Loader2, Check, Heart } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
 import { cn } from '@/utilities/ui'
+import { getStripeBrowserClient } from '@/lib/stripe/browserClient'
+import { STRIPE_MIN_TIP_CENTS } from '@/utilities/stripe'
+import { SongDownloadTipPayment } from '@/components/SongDownload/SongDownloadTipPayment'
+
+const TIP_PRESETS_CENTS = [200, 500, 1000, 2500] as const
 
 type Props = {
   audioUrl: string | null
   filename: string | null
   title: string
   slug: string | null
-  /** When true, the visitor already has an account, so skip the email gate. */
   isLoggedIn: boolean
+  userEmail?: string | null
   className?: string
 }
+
+type TipMode = 'paid' | 'free'
 
 function triggerBrowserDownload(
   audioUrl: string,
@@ -40,13 +48,47 @@ function triggerBrowserDownload(
   document.body.removeChild(link)
 }
 
+function formatUsd(cents: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
+  }).format(cents / 100)
+}
+
+function parseCustomAmountToCents(value: string): number | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  const dollars = Number.parseFloat(trimmed)
+  if (!Number.isFinite(dollars) || dollars <= 0) return null
+  return Math.round(dollars * 100)
+}
+
+async function subscribeEmail(
+  email: string,
+  slug: string | null,
+): Promise<void> {
+  const res = await fetch('/api/newsletter/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email,
+      source: 'newsletter_signup',
+      tags: slug ? `song_download:${slug}` : 'song_download',
+    }),
+  })
+  if (!res.ok) {
+    const data = (await res.json().catch(() => null)) as {
+      error?: string
+    } | null
+    throw new Error(data?.error ?? 'Could not start your download.')
+  }
+}
+
 /**
- * Pay-what-you-want download CTA.
- *
- * Logged-in fans download immediately (we already have their email). Anonymous
- * visitors hit a lightweight email gate that captures them into the mailing
- * list before the free MP3 download, and nudges an optional tip via the
- * membership tiers.
+ * Pay-what-you-want download CTA. Every visitor sees a tip dialog before
+ * downloading — payment details up front for paid amounts, or an explicit
+ * $0 confirmation when they choose not to pay.
  */
 export function SongDownloadButton({
   audioUrl,
@@ -54,62 +96,166 @@ export function SongDownloadButton({
   title,
   slug,
   isLoggedIn,
+  userEmail = null,
   className,
 }: Props) {
   const [open, setOpen] = useState(false)
+  const [tipMode, setTipMode] = useState<TipMode>('paid')
+  const [presetCents, setPresetCents] = useState<number>(500)
+  const [useCustomAmount, setUseCustomAmount] = useState(false)
+  const [customAmount, setCustomAmount] = useState('')
   const [email, setEmail] = useState('')
+  const [confirmFree, setConfirmFree] = useState(false)
   const [status, setStatus] = useState<'idle' | 'loading' | 'done'>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [paymentLoading, setPaymentLoading] = useState(false)
 
-  if (!audioUrl) return null
+  const resolvedEmail = (isLoggedIn ? userEmail : email)?.trim() ?? ''
+  const customCents = parseCustomAmountToCents(customAmount)
+  const amountCents =
+    tipMode === 'free'
+      ? 0
+      : useCustomAmount
+        ? (customCents ?? 0)
+        : presetCents
 
-  const handleDirectDownload = () => {
-    triggerBrowserDownload(audioUrl, filename, title)
+  const canStartPaidPayment =
+    tipMode === 'paid' &&
+    amountCents >= STRIPE_MIN_TIP_CENTS &&
+    Boolean(resolvedEmail)
+
+  const resetDialogState = useCallback(() => {
+    setTipMode('paid')
+    setPresetCents(500)
+    setUseCustomAmount(false)
+    setCustomAmount('')
+    setEmail('')
+    setConfirmFree(false)
+    setStatus('idle')
+    setError(null)
+    setClientSecret(null)
+    setPaymentLoading(false)
+  }, [])
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen)
+    if (!nextOpen) resetDialogState()
   }
 
-  const handleGatedSubmit = async (e: React.FormEvent) => {
+  const completeDownload = useCallback(async () => {
+    if (!audioUrl) return
+    if (!isLoggedIn && resolvedEmail) {
+      await subscribeEmail(resolvedEmail, slug)
+    }
+    triggerBrowserDownload(audioUrl, filename, title)
+    setStatus('done')
+  }, [audioUrl, filename, isLoggedIn, resolvedEmail, slug, title])
+
+  const handleFreeDownload = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    if (!confirmFree) {
+      setError('Please confirm you want to download for free.')
+      return
+    }
+    if (!isLoggedIn && !resolvedEmail) {
+      setError('Email is required to download.')
+      return
+    }
+
     setStatus('loading')
     try {
-      const res = await fetch('/api/newsletter/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          source: 'newsletter_signup',
-          tags: slug ? `song_download:${slug}` : 'song_download',
-        }),
-      })
-      if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as {
-          error?: string
-        } | null
-        throw new Error(data?.error ?? 'Could not start your download.')
-      }
-      triggerBrowserDownload(audioUrl, filename, title)
-      setStatus('done')
+      await completeDownload()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
       setStatus('idle')
     }
   }
 
-  if (isLoggedIn) {
-    return (
-      <Button
-        type="button"
-        onClick={handleDirectDownload}
-        className={cn(
-          'flex w-full items-center justify-center gap-2',
-          className,
-        )}
-      >
-        <Download size={20} />
-        Download MP3 (free)
-      </Button>
-    )
-  }
+  useEffect(() => {
+    if (!open || !canStartPaidPayment) {
+      return
+    }
+
+    let cancelled = false
+    const timer = window.setTimeout(() => {
+      setPaymentLoading(true)
+      setError(null)
+
+      fetch('/api/stripe/song-tip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amountCents,
+          email: resolvedEmail,
+          songSlug: slug,
+          songTitle: title,
+        }),
+      })
+        .then(async (res) => {
+          const data = (await res.json().catch(() => null)) as {
+            clientSecret?: string
+            error?: string
+          } | null
+          if (!res.ok) {
+            throw new Error(data?.error ?? 'Could not prepare payment.')
+          }
+          if (!data?.clientSecret) {
+            throw new Error('Could not prepare payment.')
+          }
+          return data.clientSecret
+        })
+        .then((secret) => {
+          if (!cancelled) setClientSecret(secret)
+        })
+        .catch((err: unknown) => {
+          if (!cancelled) {
+            setClientSecret(null)
+            setError(
+              err instanceof Error ? err.message : 'Could not prepare payment.',
+            )
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setPaymentLoading(false)
+        })
+    }, useCustomAmount ? 400 : 0)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [
+    open,
+    canStartPaidPayment,
+    amountCents,
+    resolvedEmail,
+    slug,
+    title,
+    useCustomAmount,
+  ])
+
+  const stripePromise = useMemo(() => getStripeBrowserClient(), [])
+
+  const elementsOptions = useMemo(() => {
+    if (!clientSecret) return null
+    return {
+      clientSecret,
+      appearance: {
+        theme: 'night' as const,
+        variables: {
+          colorPrimary: 'hsl(var(--primary))',
+          colorBackground: 'hsl(var(--card))',
+          colorText: 'hsl(var(--foreground))',
+          colorDanger: 'hsl(var(--destructive))',
+          borderRadius: '0px',
+        },
+      },
+    }
+  }, [clientSecret])
+
+  if (!audioUrl) return null
 
   return (
     <>
@@ -125,8 +271,8 @@ export function SongDownloadButton({
         Download MP3 — pay what you want
       </Button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           {status === 'done' ? (
             <>
               <DialogHeader>
@@ -144,7 +290,9 @@ export function SongDownloadButton({
                   type="button"
                   variant="secondary"
                   className="w-full rounded-none"
-                  onClick={handleDirectDownload}
+                  onClick={() =>
+                    triggerBrowserDownload(audioUrl, filename, title)
+                  }
                 >
                   <Download size={18} className="mr-2" />
                   Download again
@@ -156,66 +304,223 @@ export function SongDownloadButton({
                 >
                   <Link href="/memberships">
                     <Heart size={18} className="mr-2" />
-                    Tip the artist / join the Crew
+                    Join the Crew for more perks
                   </Link>
                 </Button>
               </div>
             </>
           ) : (
-            <form onSubmit={handleGatedSubmit}>
+            <>
               <DialogHeader>
-                <DialogTitle>Download &ldquo;{title}&rdquo;</DialogTitle>
+                <DialogTitle>Download {title}</DialogTitle>
                 <DialogDescription>
-                  This MP3 is yours for free. Drop your email so we can send you
-                  new releases first — and tip the artist if you&rsquo;d like to
-                  support the work.
+                  This song is yours to keep. Choose a tip amount that feels
+                  fair — every dollar helps fund the next release.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-2">
+
+              <div className="space-y-5 py-1">
                 {error && (
                   <p className="text-sm font-semibold text-destructive">
                     {error}
                   </p>
                 )}
-                <div className="space-y-2">
-                  <Label htmlFor="download-email">Email</Label>
-                  <Input
-                    id="download-email"
-                    type="email"
-                    required
-                    value={email}
-                    placeholder="your@email.com"
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Prefer an account? Free Crew members get instant downloads.{' '}
-                  <Link
-                    href="/login?tab=register"
-                    className="text-primary underline-offset-4 hover:underline"
-                  >
-                    Create a free account
-                  </Link>
-                  .
-                </p>
-              </div>
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  className="w-full rounded-none"
-                  disabled={status === 'loading'}
-                >
-                  {status === 'loading' ? (
-                    <>
-                      <Loader2 size={18} className="mr-2 animate-spin" />
-                      Preparing…
-                    </>
-                  ) : (
-                    'Email me & download'
+
+                {!isLoggedIn ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="download-email">Email</Label>
+                    <Input
+                      id="download-email"
+                      type="email"
+                      required
+                      value={email}
+                      placeholder="your@email.com"
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Required so we can send you updates.{' '}
+                      <Link
+                        href="/login?tab=register"
+                        className="text-primary underline-offset-4 hover:underline"
+                      >
+                        Create a free account
+                      </Link>{' '}
+                      for instant downloads next time.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Signed in as{' '}
+                    <span className="font-medium text-foreground">
+                      {resolvedEmail}
+                    </span>
+                    . Consider leaving a tip before you download.
+                  </p>
+                )}
+
+                <div className="space-y-3">
+                  <Label>Choose your tip</Label>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {TIP_PRESETS_CENTS.map((cents) => (
+                      <Button
+                        key={cents}
+                        type="button"
+                        variant={
+                          tipMode === 'paid' &&
+                          !useCustomAmount &&
+                          presetCents === cents
+                            ? 'default'
+                            : 'outline'
+                        }
+                        className="rounded-none"
+                        onClick={() => {
+                          setTipMode('paid')
+                          setUseCustomAmount(false)
+                          setPresetCents(cents)
+                          setConfirmFree(false)
+                        }}
+                      >
+                        {formatUsd(cents)}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Button
+                      type="button"
+                      variant={
+                        tipMode === 'paid' && useCustomAmount
+                          ? 'default'
+                          : 'outline'
+                      }
+                      className="rounded-none sm:w-1/3"
+                      onClick={() => {
+                        setTipMode('paid')
+                        setUseCustomAmount(true)
+                        setConfirmFree(false)
+                      }}
+                    >
+                      Other amount
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={tipMode === 'free' ? 'default' : 'outline'}
+                      className="rounded-none sm:flex-1"
+                      onClick={() => {
+                        setTipMode('free')
+                        setUseCustomAmount(false)
+                        setConfirmFree(false)
+                        setClientSecret(null)
+                      }}
+                    >
+                      Download for $0 — no payment
+                    </Button>
+                  </div>
+                  {tipMode === 'paid' && useCustomAmount && (
+                    <div className="space-y-2">
+                      <Label htmlFor="custom-tip">Custom tip amount (USD)</Label>
+                      <Input
+                        id="custom-tip"
+                        type="number"
+                        min={STRIPE_MIN_TIP_CENTS / 100}
+                        step="0.01"
+                        inputMode="decimal"
+                        placeholder={`${(STRIPE_MIN_TIP_CENTS / 100).toFixed(2)} minimum`}
+                        value={customAmount}
+                        onChange={(e) => setCustomAmount(e.target.value)}
+                      />
+                    </div>
                   )}
-                </Button>
-              </DialogFooter>
-            </form>
+                </div>
+
+                {tipMode === 'paid' ? (
+                  <div className="space-y-3 rounded-sm border border-border/60 bg-muted/20 p-4">
+                    <p className="font-mono text-[10px] tracking-widest text-primary uppercase">
+                      Payment details
+                    </p>
+                    {!resolvedEmail ? (
+                      <p className="text-sm text-muted-foreground">
+                        Enter your email above to load secure payment fields.
+                      </p>
+                    ) : amountCents < STRIPE_MIN_TIP_CENTS ? (
+                      <p className="text-sm text-muted-foreground">
+                        Enter at least{' '}
+                        {formatUsd(STRIPE_MIN_TIP_CENTS)} to pay with card.
+                      </p>
+                    ) : !process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ? (
+                      <p className="text-sm text-destructive">
+                        Card payments are not configured yet. Choose
+                        &ldquo;Download for $0&rdquo; or try again later.
+                      </p>
+                    ) : paymentLoading ||
+                      !clientSecret ||
+                      !elementsOptions ||
+                      !canStartPaidPayment ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 size={16} className="animate-spin" />
+                        Preparing secure checkout…
+                      </div>
+                    ) : (
+                      <Elements
+                        key={clientSecret}
+                        stripe={stripePromise}
+                        options={elementsOptions}
+                      >
+                        <SongDownloadTipPayment
+                          amountCents={amountCents}
+                          title={title}
+                          disabled={!resolvedEmail}
+                          onSuccess={completeDownload}
+                        />
+                      </Elements>
+                    )}
+                  </div>
+                ) : (
+                  <form onSubmit={handleFreeDownload} className="space-y-4">
+                    <div className="rounded-sm border border-border/60 bg-muted/20 p-4">
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          id="confirm-free-download"
+                          checked={confirmFree}
+                          onCheckedChange={(checked) =>
+                            setConfirmFree(checked === true)
+                          }
+                        />
+                        <div className="space-y-1">
+                          <Label
+                            htmlFor="confirm-free-download"
+                            className="cursor-pointer leading-snug"
+                          >
+                            I want to download for free without leaving a tip
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            No payment info needed — just confirm before we start
+                            your download.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full rounded-none"
+                      disabled={
+                        status === 'loading' ||
+                        !confirmFree ||
+                        (!isLoggedIn && !resolvedEmail)
+                      }
+                    >
+                      {status === 'loading' ? (
+                        <>
+                          <Loader2 size={18} className="mr-2 animate-spin" />
+                          Preparing download…
+                        </>
+                      ) : (
+                        `Download ${title} for $0`
+                      )}
+                    </Button>
+                  </form>
+                )}
+              </div>
+            </>
           )}
         </DialogContent>
       </Dialog>

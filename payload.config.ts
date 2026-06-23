@@ -128,19 +128,12 @@ export default buildConfig({
               ? `${path}?prefix=${encodeURIComponent(prefix)}`
               : path
           },
-          // Signed GET redirects only affect *delivery*, not upload. Keeping this
-          // narrow avoids divergent code paths vs MP3/PNG (which were stable here).
-          // Vault access is still enforced on `/api/gated-content/file/...` routes.
+          // Signed GET redirects: auth + tier check run on `/api/gated-content/file/...`,
+          // then the handler 302s to a short-lived presigned R2 URL so bytes stream
+          // from Cloudflare R2 instead of proxying through Vercel (Fast Origin Transfer).
           signedDownloads: {
             expiresIn: 3600,
-            shouldUseSignedURL: ({ filename }) => {
-              const lower = filename.toLowerCase()
-              return (
-                lower.endsWith('.zip') ||
-                lower.endsWith('.7z') ||
-                lower.endsWith('.rar')
-              )
-            },
+            shouldUseSignedURL: () => true,
           },
         },
       },
