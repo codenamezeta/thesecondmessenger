@@ -122,8 +122,12 @@ export default buildConfig({
           ? {
               media: {
                 prefix: process.env.R2_MEDIA_PREFIX || 'media',
-                // Public files: serve from R2 CDN when R2_PUBLIC_MEDIA_BASE_URL is set.
-                disablePayloadAccessControl: true,
+                /**
+                 * Do not set `disablePayloadAccessControl: true` when `clientUploads`
+                 * is enabled — that registers the R2 static handler only for upload
+                 * callbacks, and GET `/api/media/file/...` falls back to local disk.
+                 * Public read is already open via `Media` collection access.
+                 */
                 generateFileURL: ({ filename, prefix }) =>
                   buildR2PublicMediaUrl(filename, prefix ?? undefined),
               },
