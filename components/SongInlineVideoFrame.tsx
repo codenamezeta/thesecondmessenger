@@ -7,7 +7,7 @@ import type { Song, Media } from '@/payload-types'
 import { usePlayer } from '@/context/PlayerContext'
 import { cn } from '@/utilities/ui'
 import placeholderArt from '@/public/imgs/placeholder-art.png'
-import { normalizeMediaUrlForImage } from '@/utilities/getMediaUrl'
+import { pickMediaImageUrl } from '@/utilities/getMediaUrl'
 
 /**
  * The Song page's in-flow "viewscreen" frame.
@@ -57,9 +57,8 @@ export const SongInlineVideoFrame = ({
   }, [youtubeId, setInlineTarget, clearInlineTarget])
 
   const coverArtUrl =
-    normalizeMediaUrlForImage(
-      (song.coverArt as Media | null | undefined)?.url,
-    ) || null
+    pickMediaImageUrl(song.coverArt as Media | null | undefined, 'thumbnail') ||
+    null
 
   const handleClick = () => {
     if (isCurrent) togglePlay()

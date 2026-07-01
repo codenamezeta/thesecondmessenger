@@ -224,6 +224,7 @@ export interface Post {
 export interface Media {
   id: number;
   alt?: string | null;
+  prefix?: string | null;
   folder?: (number | null) | FolderInterface;
   updatedAt: string;
   createdAt: string;
@@ -478,13 +479,13 @@ export interface Song {
    */
   masterAudio?: (number | null) | Media;
   /**
-   * Optional lossless FLAC of the same master. Tagged with the same CMS metadata (Vorbis comments) on save. Reserve for members / gated download tiers.
+   * Optional lossless FLAC of the same master. Stored in the Vault (Lieutenant+). Tagged with the same CMS metadata (Vorbis comments) on save.
    */
-  masterAudioFlac?: (number | null) | Media;
+  masterAudioFlac?: (number | null) | GatedContent;
   /**
-   * Optional uncompressed WAV of the same master. Archival / highest-tier download. WAV carries limited embedded tags compared to MP3/FLAC.
+   * Optional uncompressed WAV of the same master. Vault archival / Captain-tier download.
    */
-  masterAudioWav?: (number | null) | Media;
+  masterAudioWav?: (number | null) | GatedContent;
   /**
    * The 11-character ID (e.g., dQw4w9WgXcQ). Required for the Global Player.
    */
@@ -518,7 +519,7 @@ export interface Song {
   stems?:
     | {
         stemName: string;
-        audioFile: number | Media;
+        audioFile: number | GatedContent;
         volume?: number | null;
         id?: string | null;
       }[]
@@ -756,6 +757,40 @@ export interface Playlist {
   createdAt: string;
 }
 /**
+ * One minimum crew rank per file. Eligible fans can view or play media in the Vault; archives and documents get a download button.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gated-content".
+ */
+export interface GatedContent {
+  id: number;
+  title: string;
+  /**
+   * A brief description of the content.
+   */
+  description?: string | null;
+  /**
+   * Optional. Link this Vault file to a song. Song pages and the Song editor can surface linked files through this relationship.
+   */
+  relatedSong?: (number | null) | Song;
+  /**
+   * Fans at this rank or higher can access the file (Vault + direct file routes). Matches Lieutenant / Commander / Captain Vault clearance in crew rules.
+   */
+  tierRequired: 'lieutenant' | 'commander' | 'captain';
+  prefix?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tags".
  */
@@ -864,40 +899,6 @@ export interface Tag {
   featuredImage?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * One minimum crew rank per file. Eligible fans can view or play media in the Vault; archives and documents get a download button.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "gated-content".
- */
-export interface GatedContent {
-  id: number;
-  title: string;
-  /**
-   * A brief description of the content.
-   */
-  description?: string | null;
-  /**
-   * Optional. Link this Vault file to a song. Song pages and the Song editor can surface linked files through this relationship.
-   */
-  relatedSong?: (number | null) | Song;
-  /**
-   * Fans at this rank or higher can access the file (Vault + direct file routes). Matches Lieutenant / Commander / Captain Vault clearance in crew rules.
-   */
-  tierRequired: 'lieutenant' | 'commander' | 'captain';
-  prefix?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1480,6 +1481,7 @@ export interface MailingListSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  prefix?: T;
   folder?: T;
   updatedAt?: T;
   createdAt?: T;

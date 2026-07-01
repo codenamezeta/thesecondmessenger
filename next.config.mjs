@@ -1,4 +1,21 @@
 import { withPayload } from '@payloadcms/next/withPayload'
+
+function r2ImageRemotePatterns() {
+  const raw = process.env.R2_PUBLIC_MEDIA_BASE_URL?.trim()
+  if (!raw) return []
+  try {
+    const parsed = new URL(raw)
+    return [
+      {
+        protocol: parsed.protocol.replace(':', ''),
+        hostname: parsed.hostname,
+      },
+    ]
+  } catch {
+    return []
+  }
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async redirects() {
@@ -55,6 +72,7 @@ const nextConfig = {
     // to [75] only if omitted — see next-image-unconfigured-qualities.
     qualities: [40, 75, 80, 85],
     remotePatterns: [
+      ...r2ImageRemotePatterns(),
       {
         protocol: 'https',
         hostname: 'img.youtube.com',

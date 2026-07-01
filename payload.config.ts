@@ -24,10 +24,17 @@ import { SiteSettings } from './globals/SiteSettings'
 import { syncAudioTagsTask } from './lib/audio-tags/syncAudioTagsTask'
 import { EMAIL_FROM_ADDRESS, EMAIL_FROM_NAME } from './lib/email'
 import { patchGatedContentDisableTransactions } from './lib/payload-gated-content-transactions'
+import {
+  buildGatedContentApiUrl,
+  buildR2PublicMediaUrl,
+  isR2StorageEnabled,
+} from './lib/storage/r2Env'
 import { getServerSideURL } from './utilities/getURL'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+const r2StorageEnabled = isR2StorageEnabled()
 
 export default buildConfig({
   serverURL: getServerSideURL(),
@@ -84,7 +91,7 @@ export default buildConfig({
   },
   db: vercelPostgresAdapter({
     pool: {
-      connectionString: process.env.POSTGRES_URL || '',
+      connectionString: process.env.DATABASE_URL || '',
     },
     // Migrations live in /migrations at the repo root. Generate new ones with
     // `pnpm migrate:create <name>`; apply pending ones with `pnpm migrate`.
@@ -93,24 +100,35 @@ export default buildConfig({
   sharp,
   plugins: [
     ...plugins,
-    vercelBlobStorage({
-      // Browser → Blob directly; avoids Vercel's ~4.5 MB serverless request-body
-      // cap on POST /api/media (required for MP3 masters in admin).
-      clientUploads: true,
-      collections: {
-        media: true,
-      },
-      token: process.env.BLOB_READ_WRITE_TOKEN || '',
-    }),
+    // Legacy fallback when R2 is not configured (local dev without object storage).
+    ...(r2StorageEnabled
+      ? []
+      : [
+          vercelBlobStorage({
+            clientUploads: true,
+            collections: {
+              media: true,
+            },
+            token: process.env.BLOB_READ_WRITE_TOKEN || '',
+          }),
+        ]),
     s3Storage({
-      enabled: Boolean(process.env.R2_BUCKET && process.env.R2_ENDPOINT),
+      enabled: r2StorageEnabled,
       bucket: process.env.R2_BUCKET || '',
-      // Browser → R2 PUT requires a matching bucket CORS policy. If uploads fail
-      // with "Failed to fetch" after storage-s3-generate-signed-url 200, set
-      // R2_DISABLE_CLIENT_UPLOADS=true (small files only on Vercel) or fix CORS
-      // (see r2-cors-policy.example.json).
+      // Browser → R2 PUT requires bucket CORS (see docs/r2-cors-policy.example.json).
       clientUploads: process.env.R2_DISABLE_CLIENT_UPLOADS !== 'true',
       collections: {
+        ...(r2StorageEnabled
+          ? {
+              media: {
+                prefix: process.env.R2_MEDIA_PREFIX || 'media',
+                // Public files: serve from R2 CDN when R2_PUBLIC_MEDIA_BASE_URL is set.
+                disablePayloadAccessControl: true,
+                generateFileURL: ({ filename, prefix }) =>
+                  buildR2PublicMediaUrl(filename, prefix ?? undefined),
+              },
+            }
+          : {}),
         'gated-content': {
           /**
            * Do not set `disablePayloadAccessControl: true` here. With `clientUploads`
@@ -120,17 +138,12 @@ export default buildConfig({
            * the full R2 proxy handler. Vault tier checks still run via
            * `gatedContentReadAccess` + `checkFileAccess(isReadingStaticFile: true)`.
            */
-          prefix: process.env.R2_PREFIX || 'gated-content',
-          /** Keep admin + API `url` on the same-origin file route (not raw R2). */
-          generateFileURL: ({ filename, prefix }) => {
-            const path = `/api/gated-content/file/${encodeURIComponent(filename)}`
-            return prefix
-              ? `${path}?prefix=${encodeURIComponent(prefix)}`
-              : path
-          },
-          // Signed GET redirects: auth + tier check run on `/api/gated-content/file/...`,
-          // then the handler 302s to a short-lived presigned R2 URL so bytes stream
-          // from Cloudflare R2 instead of proxying through Vercel (Fast Origin Transfer).
+          prefix:
+            process.env.R2_PREFIX ||
+            process.env.R2_GATED_CONTENT_PREFIX ||
+            'gated-content',
+          generateFileURL: ({ filename, prefix }) =>
+            buildGatedContentApiUrl(filename, prefix ?? undefined),
           signedDownloads: {
             expiresIn: 3600,
             shouldUseSignedURL: () => true,

@@ -19,7 +19,7 @@ import {
   Music,
 } from 'lucide-react'
 import { cn } from '@/utilities/ui'
-import { normalizeMediaUrlForImage } from '@/utilities/getMediaUrl'
+import { pickMediaImageUrl } from '@/utilities/getMediaUrl'
 import SpotlightCard from '@/components/SpotlightCard'
 import DecryptedText from '@/components/DecryptedText'
 import {
@@ -100,7 +100,7 @@ function SongTile({
 }) {
   const { playMedia } = usePlayer()
   const coverArt = song.coverArt as Media | null
-  const coverUrl = normalizeMediaUrlForImage(coverArt?.url) || null
+  const coverUrl = pickMediaImageUrl(coverArt, featured ? 'feature' : 'card') || null
   const coverAlt = coverArt?.alt ?? song.title ?? 'Cover art'
   const releaseYear = song.releaseDate
     ? new Date(song.releaseDate).getFullYear()
