@@ -476,23 +476,29 @@ export const Songs: CollectionConfig = {
             {
               name: 'masterAudioFlac',
               type: 'upload',
-              relationTo: 'media',
+              relationTo: 'gated-content',
               label: 'Master Recording — FLAC (lossless)',
               required: false,
               admin: {
                 description:
-                  'Optional lossless FLAC of the same master. Tagged with the same CMS metadata (Vorbis comments) on save. Reserve for members / gated download tiers.',
+                  'Optional lossless FLAC of the same master. Stored in the Vault (Lieutenant+). Tagged with the same CMS metadata (Vorbis comments) on save.',
+              },
+              filterOptions: {
+                mimeType: { contains: 'audio' },
               },
             },
             {
               name: 'masterAudioWav',
               type: 'upload',
-              relationTo: 'media',
+              relationTo: 'gated-content',
               label: 'Master Recording — WAV (uncompressed)',
               required: false,
               admin: {
                 description:
-                  'Optional uncompressed WAV of the same master. Archival / highest-tier download. WAV carries limited embedded tags compared to MP3/FLAC.',
+                  'Optional uncompressed WAV of the same master. Vault archival / Captain-tier download.',
+              },
+              filterOptions: {
+                mimeType: { contains: 'audio' },
               },
             },
             {
@@ -582,8 +588,11 @@ export const Songs: CollectionConfig = {
                 {
                   name: 'audioFile',
                   type: 'upload',
-                  relationTo: 'media',
+                  relationTo: 'gated-content',
                   required: true,
+                  filterOptions: {
+                    mimeType: { contains: 'audio' },
+                  },
                 },
                 {
                   name: 'volume',

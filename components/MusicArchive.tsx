@@ -43,7 +43,7 @@ import { ActiveFilterChips } from './music/ActiveFilterChips'
 import { ArchiveSongPlayButton } from './music/ArchiveSongPlayButton'
 import { ArchiveSongMeta } from './music/ArchiveSongMeta'
 import { ArchivePlayResultsButton } from './music/ArchivePlayResultsButton'
-import { normalizeMediaUrlForImage } from '@/utilities/getMediaUrl'
+import { pickMediaImageUrl } from '@/utilities/getMediaUrl'
 
 type CompositionFilter = FilterState['composition']
 // type RecordingFilter = FilterState['recording']
@@ -100,7 +100,7 @@ export const MusicArchive = ({
 
   //- 2. LIST ROW
   const ListItem = ({ song }: { song: Song }) => {
-    const coverUrl = normalizeMediaUrlForImage((song.coverArt as Media)?.url)
+    const coverUrl = pickMediaImageUrl(song.coverArt as Media | undefined, 'thumbnail')
 
     return (
     <li className="group flex items-center gap-3 border-b border-border p-4 transition-colors hover:bg-card sm:gap-4">
@@ -160,7 +160,7 @@ export const MusicArchive = ({
   // 3. TIMELINE NODE
   const TimelineItem = ({ song, index }: { song: Song; index: number }) => {
     const isLeft = index % 2 === 0
-    const coverUrl = normalizeMediaUrlForImage((song.coverArt as Media)?.url)
+    const coverUrl = pickMediaImageUrl(song.coverArt as Media | undefined, 'thumbnail')
     return (
       <li className="relative my-0 py-6 pl-8 md:pl-0">
         <div className="absolute top-0 bottom-0 left-[0.38rem] -ml-px w-[2px] bg-foreground/50 md:left-1/2 md:block"></div>

@@ -20,9 +20,14 @@
     "migrate:fresh": "payload migrate:fresh",
     "compress:images": "node scripts/compress-public-images.mjs",
     "compress:images:apply": "node scripts/compress-public-images.mjs --apply",
-    "compress:images:in-place": "node scripts/compress-public-images.mjs --in-place"
+    "compress:images:in-place": "node scripts/compress-public-images.mjs --in-place",
+    "media:audit": "tsx scripts/audit-media-orphans.mjs",
+    "media:migrate-blob-to-r2": "tsx scripts/migrate-blob-to-r2.mjs",
+    "media:migrate-gated-masters": "tsx scripts/migrate-gated-masters.mjs",
+    "r2:sync-buckets": "tsx scripts/sync-r2-buckets.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1075.0",
     "@gsap/react": "^2.1.2",
     "@payloadcms/admin-bar": "^3.84.1",
     "@payloadcms/db-vercel-postgres": "^3.84.1",
@@ -76,6 +81,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.168.0",
+    "@vercel/blob": "^2.5.0",
     "eslint": "^9.39.4",
     "eslint-config-next": "16.2.4",
     "postcss": "^8.5.14",

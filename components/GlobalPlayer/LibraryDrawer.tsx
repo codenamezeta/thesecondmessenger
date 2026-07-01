@@ -5,7 +5,8 @@ import Image from 'next/image'
 import { ArrowLeft, Library, Play, Shuffle } from 'lucide-react'
 import { usePlayer, PlayableMedia } from '@/context/PlayerContext'
 import { Playlist } from '@/payload-types'
-import { normalizeMediaUrlForImage } from '@/utilities/getMediaUrl'
+import type { Media } from '@/payload-types'
+import { pickMediaImageUrl } from '@/utilities/getMediaUrl'
 import { cn } from '@/utilities/ui'
 import {
   Sheet,
@@ -34,17 +35,13 @@ const isReleased = (song: PlayableMedia): boolean => {
 
 const coverUrlOf = (media: PlayableMedia | undefined | null): string | null => {
   if (!media) return null
-  const raw =
-    media.coverImage ??
-    (() => {
-      const art = (media as { coverArt?: unknown }).coverArt
-      if (art && typeof art === 'object' && 'url' in art) {
-        return (art as { url?: string }).url ?? null
-      }
-      return null
-    })()
-  const normalized = normalizeMediaUrlForImage(raw)
-  return normalized || null
+  const art = (media as { coverArt?: Media }).coverArt
+  if (art && typeof art === 'object' && 'url' in art) {
+    const url = pickMediaImageUrl(art as Media, 'thumbnail')
+    if (url) return url
+  }
+  const raw = media.coverImage ?? null
+  return raw ? pickMediaImageUrl({ url: raw } as Media, 'thumbnail') : null
 }
 
 /** Inner content shared between the desktop Sheet and mobile inline panel */
@@ -115,13 +112,9 @@ const LibraryContent = () => {
       title: playlist.title,
       description: playlist.description ?? undefined,
       coverUrl:
-        normalizeMediaUrlForImage(
-          playlist.coverArt &&
-            typeof playlist.coverArt === 'object' &&
-            'url' in playlist.coverArt
-            ? (playlist.coverArt.url ?? null)
-            : null,
-        ) || null,
+        playlist.coverArt && typeof playlist.coverArt === 'object'
+          ? pickMediaImageUrl(playlist.coverArt as Media, 'thumbnail') || null
+          : null,
       tracks: (playlist.tracks || []) as unknown as PlayableMedia[],
       kind: 'cms',
     }))

@@ -8,7 +8,7 @@ import type { Media } from '@/payload-types'
 /**
  * Backfill route — regenerates the WebP / AVIF derivatives defined under
  * `collections/Media.ts > upload.imageSizes` for media docs that pre-date
- * that config. The original master file in Vercel Blob is left untouched.
+ * that config. The original master file in object storage is left untouched.
  *
  * Workflow per doc:
  *   1. Fetch the original bytes from the resource's public URL.

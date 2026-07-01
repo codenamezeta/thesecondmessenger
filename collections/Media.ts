@@ -3,10 +3,13 @@ import type { CollectionConfig } from 'payload'
 /**
  * Media collection.
  *
- * Storage: Vercel Blob (configured via plugin in payload.config.ts).
+ * Storage: Cloudflare R2 public prefix (see `payload.config.ts` + `R2_PUBLIC_MEDIA_BASE_URL`).
+ * Falls back to Vercel Blob only when R2 env vars are missing.
  *
- * Also stores song masters and stems (`Songs.masterAudio`, stem `audioFile`)
- * via `relationTo: 'media'`. Audio MIME types are whitelisted; `imageSizes`
+ * Public site assets: cover art (+ sharp derivatives), public MP3 masters
+ * (`Songs.masterAudio`), post images, avatars, playlist art.
+ *
+ * Lossless masters (FLAC/WAV) and interactive stems live in `gated-content`.
  * only run for images.
  *
  * Optimization workflow:
@@ -47,7 +50,7 @@ export const Media: CollectionConfig = {
       'video/mp4',
       'video/webm',
       'video/quicktime',
-      // Audio — Songs.masterAudio and stems use relationTo: 'media'
+      // Audio — public MP3 masters (`Songs.masterAudio`) only
       'audio/mpeg',
       'audio/mp3',
       'audio/wav',

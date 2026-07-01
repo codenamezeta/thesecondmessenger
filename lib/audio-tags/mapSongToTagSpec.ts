@@ -1,4 +1,4 @@
-import type { Media, Release, Song, Tag } from '@/payload-types'
+import type { GatedContent, Media, Release, Song, Tag } from '@/payload-types'
 import {
   ARTIST_HOMEPAGE,
   PRIMARY_ARTIST,
@@ -6,6 +6,19 @@ import {
 } from '@/lib/branding'
 import type { TagSpec, TrackPosition } from './types'
 import { normalizeKey } from './normalizeKey'
+
+export type TaggableUploadCollection = 'media' | 'gated-content'
+
+export type TaggableUploadInfo = {
+  collection: TaggableUploadCollection
+  id: number
+  url: string | null
+  mimeType: string | null
+  filename: string | null
+  prefix?: string | null
+}
+
+type MasterMediaInfo = TaggableUploadInfo
 
 /**
  * Fields the mapper expects to see on a Song doc. The auto-generated
@@ -41,8 +54,8 @@ type SongForTagging = Omit<Song, 'credits'> & {
   discNumber?: number | null
   credits?: SongCredit[] | null
   musicBrainz?: MusicBrainzIds | null
-  masterAudioFlac?: number | Media | null
-  masterAudioWav?: number | Media | null
+  masterAudioFlac?: number | GatedContent | null
+  masterAudioWav?: number | GatedContent | null
 }
 
 const TERMS_OF_USE_PRESETS: Record<
@@ -374,21 +387,30 @@ export function coverArtMediaUrl(
   return cover.url.startsWith('/') ? `${serverUrl}${cover.url}` : cover.url
 }
 
-export type MasterMediaInfo = {
-  id: number
-  url: string | null
-  mimeType: string | null
-  filename: string | null
-}
-
 function mediaInfo(value: number | Media | null | undefined): MasterMediaInfo | null {
   if (!value) return null
   if (!isResolved<Media>(value)) return null
   return {
+    collection: 'media',
     id: value.id,
     url: value.url ?? null,
     mimeType: value.mimeType ?? null,
     filename: value.filename ?? null,
+  }
+}
+
+function gatedInfo(
+  value: number | GatedContent | null | undefined,
+): MasterMediaInfo | null {
+  if (!value) return null
+  if (!isResolved<GatedContent>(value)) return null
+  return {
+    collection: 'gated-content',
+    id: value.id,
+    url: value.url ?? null,
+    mimeType: value.mimeType ?? null,
+    filename: value.filename ?? null,
+    prefix: value.prefix ?? null,
   }
 }
 
@@ -407,7 +429,7 @@ export function taggableMasterMedia(song: SongForTagging): MasterMediaInfo[] {
   const out: MasterMediaInfo[] = []
   const mp3 = mediaInfo(song.masterAudio)
   if (mp3) out.push(mp3)
-  const flac = mediaInfo(song.masterAudioFlac)
+  const flac = gatedInfo(song.masterAudioFlac)
   if (flac) out.push(flac)
   return out
 }

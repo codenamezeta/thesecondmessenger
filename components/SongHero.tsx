@@ -11,7 +11,7 @@ import formatTime from '@/utilities/formatTime'
 import type { Media } from '@/payload-types'
 import placeholderArt from '@/public/imgs/placeholder-art.png'
 import { PRIMARY_ARTIST } from '@/lib/branding'
-import { normalizeMediaUrlForImage } from '@/utilities/getMediaUrl'
+import { pickMediaImageUrl } from '@/utilities/getMediaUrl'
 
 type SongHeroProps = {
   song: Song
@@ -28,15 +28,17 @@ export const SongHero = ({
   const isCurrent = currentSong?.id === song.id
   const isActive = isCurrent && isPlaying
 
-  const coverArtUrl = normalizeMediaUrlForImage((song.coverArt as Media)?.url)
+  const coverArt = song.coverArt as Media | null | undefined
+  const coverArtUrl = pickMediaImageUrl(coverArt, 'card')
+  const coverArtBlurUrl = pickMediaImageUrl(coverArt, 'thumbnail')
 
   return (
     <section className="backdrop-blur-0 relative w-full overflow-hidden border-b border-white/10 bg-muted/30">
       {/* Background ambience — tiny srcSet + heavy blur; not a second full-viewport decode */}
       <div className="pointer-events-none absolute inset-0 opacity-20">
-        {coverArtUrl && (
+        {coverArtBlurUrl && (
           <Image
-            src={coverArtUrl}
+            src={coverArtBlurUrl}
             alt=""
             aria-hidden
             fill

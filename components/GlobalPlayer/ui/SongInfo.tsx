@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { useRef } from 'react'
 import { motion, type PanInfo } from 'motion/react'
 import { usePlayer } from '@/context/PlayerContext'
-import { normalizeMediaUrlForImage } from '@/utilities/getMediaUrl'
+import type { Media } from '@/payload-types'
+import { pickMediaImageUrl } from '@/utilities/getMediaUrl'
 import { cn } from '@/utilities/ui'
 
 interface SongInfoProps {
@@ -31,12 +32,15 @@ export const SongInfo = ({ className, compact = false }: SongInfoProps) => {
 
   if (!currentSong) return null
 
-  const rawCoverUrl = currentSong.coverImage
-    ? currentSong.coverImage
-    : typeof currentSong.coverArt === 'object'
-      ? (currentSong.coverArt as { url?: string })?.url
-      : undefined
-  const coverArtUrl = normalizeMediaUrlForImage(rawCoverUrl) || undefined
+  const coverArtUrl =
+    pickMediaImageUrl(
+      typeof currentSong.coverArt === 'object'
+        ? (currentSong.coverArt as Media)
+        : currentSong.coverImage
+          ? ({ url: currentSong.coverImage } as Media)
+          : undefined,
+      'thumbnail',
+    ) || undefined
 
   const hasSlug = Boolean(currentSong.slug)
 

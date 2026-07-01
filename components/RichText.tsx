@@ -9,6 +9,7 @@ import {
   JSXConvertersFunction,
   LinkJSXConverter,
   RichText as ConvertRichText,
+  UploadJSXConverter,
 } from '@payloadcms/richtext-lexical/react'
 
 import { CodeBlock, CodeBlockProps } from '@/blocks/Code/Component'
@@ -47,6 +48,23 @@ const jsxConverters: JSXConvertersFunction<NodeTypes> = ({
 }) => ({
   ...defaultConverters,
   ...LinkJSXConverter({ internalDocToHref }),
+  // Payload's default upload converter treats `null` as an object (`typeof null === 'object'`)
+  // and throws when a post references a deleted media doc.
+  upload: (args) => {
+    const { node } = args
+    if (node.value == null || typeof node.value !== 'object') {
+      return null
+    }
+    const doc = node.value as { url?: string | null; mimeType?: string | null }
+    if (!doc.url || !doc.mimeType) {
+      return null
+    }
+    const converter = UploadJSXConverter.upload
+    if (typeof converter === 'function') {
+      return converter(args)
+    }
+    return null
+  },
   blocks: {
     banner: ({ node }) => (
       <BannerBlock className="col-start-2 mb-4" {...node.fields} />

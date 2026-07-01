@@ -1,11 +1,12 @@
 import sharp from 'sharp'
 import type { Payload } from 'payload'
 import { getServerSideURL } from '@/utilities/getURL'
+import { fetchUploadBytes } from '@/lib/storage/fetchUploadBytes'
 import {
   coverArtMediaUrl,
   mapSongToTagSpec,
   taggableMasterMedia,
-  type MasterMediaInfo,
+  type TaggableUploadInfo,
   type SongForTagging,
 } from './mapSongToTagSpec'
 import { hashTagSpec } from './hashTagSpec'
@@ -122,24 +123,14 @@ export async function syncSongAudioTags(
 async function tagAndReupload(
   payload: Payload,
   songId: number,
-  master: MasterMediaInfo,
+  master: TaggableUploadInfo,
   spec: ReturnType<typeof mapSongToTagSpec>,
 ): Promise<number> {
-  if (!master.url) return 0
-  const fullUrl = master.url.startsWith('/')
-    ? `${getServerSideURL()}${master.url}`
-    : master.url
-  const res = await fetch(fullUrl)
-  if (!res.ok) {
-    throw new Error(
-      `Master audio fetch failed (${master.filename ?? master.id}): ${res.status} ${res.statusText}`,
-    )
-  }
-  const original = new Uint8Array(await res.arrayBuffer())
+  const original = await fetchUploadBytes(master)
   const mutated = await writeTagsToBuffer(original, spec)
 
   await payload.update({
-    collection: 'media',
+    collection: master.collection,
     id: master.id,
     data: {},
     file: {

@@ -1,3 +1,5 @@
+import type { Media } from '@/payload-types'
+import type { MediaDisplaySize } from '@/components/Media/types'
 import { getClientSideURL } from '@/utilities/getURL'
 
 function stripQueryString(url: string): string {
@@ -29,6 +31,25 @@ export function normalizeMediaUrlForImage(
   }
 
   return stripQueryString(url)
+}
+
+type MediaWithSizes = Pick<Media, 'url' | 'sizes'>
+
+/**
+ * Prefer a sharp-generated derivative over the full master (saves Blob/R2 transfer).
+ */
+export function pickMediaImageUrl(
+  media: MediaWithSizes | null | undefined,
+  displaySize: MediaDisplaySize,
+): string {
+  if (!media) return ''
+
+  const entry = media.sizes?.[displaySize]
+  if (entry && typeof entry === 'object' && entry.url) {
+    return normalizeMediaUrlForImage(entry.url)
+  }
+
+  return normalizeMediaUrlForImage(media.url)
 }
 
 /**

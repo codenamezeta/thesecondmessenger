@@ -12,8 +12,8 @@ This application is designed to be more than a landing page—it is a functional
 - **Headless CMS**: Payload CMS v3 smoothly integrated into the Next.js app structure, providing a beautiful database administration panel directly on the same domain.
 - **Database**: PostgreSQL (via `@vercel/postgres`).
 - **File Storage & Delivery**:
-  - **Vercel Blob** for direct client-side uploads of standard media, circumventing serverless function payload limits.
-  - **Cloudflare R2** (S3-compatible) for hosting high-value locked files (multitrack stems, high-res audio archives) secured behind signed URLs.
+  - **Cloudflare R2** (S3-compatible) for all Payload uploads: public `media` (cover art, MP3 masters) and private `gated-content` (vault demos, stems, lossless masters).
+  - Vercel Blob is a legacy fallback only when R2 env vars are missing (local dev).
 - **Styling & UX**: Tailwind CSS v4 and a customized implementation of `shadcn/ui` heavily constrained by a brutalist, no-rounded-corners, grid-aligned design system. 
 - **Motion & Interaction**: Framer Motion and GSAP handle scroll-linked reveals and micro-interactions, simulating the feel of an advanced command interface. Backgrounds integrate `three.js` to create subtle environmental depth.
 
