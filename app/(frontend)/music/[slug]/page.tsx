@@ -650,8 +650,8 @@ export default async function SongPage({ params, searchParams }: Args) {
               </section>
             )}
 
-            {song.youtubeId && (
               <section className="mt-6 lg:col-span-8">
+            {song.youtubeId && (
                 <div className="mb-3 flex w-full flex-col items-center justify-center gap-2 md:flex-row">
                   <YouTubeLikeButton
                     videoId={song.youtubeId}
@@ -666,6 +666,7 @@ export default async function SongPage({ params, searchParams }: Args) {
                     Subscribe to YouTube Channel
                   </YouTubeSubscribeButton>
                 </div>
+              )}
                 {masterAudioUrl && (
                   <div className="mb-3 w-full">
                     <SongDownloadButton
@@ -678,10 +679,11 @@ export default async function SongPage({ params, searchParams }: Args) {
                     />
                   </div>
                 )}
-                {/* <Separator className="mb-8" /> */}
-                <CommentsYT videoId={song.youtubeId} />
+                 {song.youtubeId && (
+                  <CommentsYT videoId={song.youtubeId} />
+                )}
               </section>
-            )}
+
             {song.about && (
               <section className="space-y-3 rounded-sm border border-border/60 bg-background/80 p-6 shadow-xs backdrop-blur-sm md:p-8">
                 {/* <div className="space-y-1"> */}
