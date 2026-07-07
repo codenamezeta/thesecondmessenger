@@ -11,6 +11,8 @@ import {
 } from './mapSongToTagSpec'
 import { hashTagSpec } from './hashTagSpec'
 import { writeTagsToBuffer } from './writeTagsToBuffer'
+import { readDurationFromSongMasters } from '@/lib/songs/autoFillSongDuration'
+import { formatDurationMmSs } from '@/lib/songs/formatDurationMmSs'
 
 export type SyncResult =
   | { status: 'synced'; hash: string; bytesWritten: number }
@@ -41,6 +43,8 @@ export async function syncSongAudioTags(
     depth: 2,
     overrideAccess: true,
   })) as unknown as SongForTagging
+
+  await backfillSongDuration(payload, songId, song)
 
   // MP3 + FLAC masters (WAV is excluded — minimal embedded-tag support).
   const masters = taggableMasterMedia(song).filter((m) => m.url)
@@ -144,6 +148,40 @@ async function tagAndReupload(
   })
 
   return mutated.byteLength
+}
+
+async function backfillSongDuration(
+  payload: Payload,
+  songId: number,
+  song: SongForTagging,
+): Promise<void> {
+  try {
+    const seconds = await readDurationFromSongMasters(
+      payload,
+      song as unknown as Record<string, unknown>,
+    )
+    if (seconds === null || song.duration === seconds) return
+
+    await payload.update({
+      collection: 'songs',
+      id: songId,
+      data: {
+        duration: seconds,
+        durationText: formatDurationMmSs(seconds),
+      },
+      overrideAccess: true,
+      context: { skipAudioTagSync: true },
+    })
+    song.duration = seconds
+    payload.logger.info(
+      `🎵 [SyncTags] Backfilled duration ${formatDurationMmSs(seconds)} for song id=${songId}.`,
+    )
+  } catch (err) {
+    payload.logger.warn({
+      err,
+      msg: `🎵 [SyncTags] Duration backfill failed for song id=${songId}.`,
+    })
+  }
 }
 
 async function markStatus(

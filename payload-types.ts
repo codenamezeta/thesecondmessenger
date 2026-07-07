@@ -546,6 +546,9 @@ export interface Song {
    * International Standard Musical Work Code (composition). No native ID3 frame — written as TXXX:ISWC for MP3 and as ISWC Vorbis comment for FLAC.
    */
   iswc?: string | null;
+  /**
+   * Auto-filled from the master recording (MP3, then FLAC, then WAV) when you save.
+   */
   durationText?: string | null;
   duration?: number | null;
   /**
