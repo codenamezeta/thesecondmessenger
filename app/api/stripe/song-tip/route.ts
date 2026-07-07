@@ -21,6 +21,13 @@ function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
 
+function buildSongTipReturnUrl(origin: string, songSlug: string | null): string {
+  const basePath = songSlug
+    ? `/music/${encodeURIComponent(songSlug)}`
+    : '/music'
+  return `${origin}${basePath}?tip_session_id={CHECKOUT_SESSION_ID}`
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json().catch(() => null)) as {
@@ -51,33 +58,48 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'A valid email is required' }, { status: 400 })
     }
 
+    const songSlug = body?.songSlug?.trim() || null
+    const songTitle = body?.songTitle?.trim() || ''
+    const origin = req.nextUrl.origin
+
     const stripe = getStripeClient()
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountCents,
-      currency: 'usd',
-      receipt_email: customerEmail,
+    const session = await stripe.checkout.sessions.create({
+      ui_mode: 'elements',
+      mode: 'payment',
+      customer_email: user?.stripeCustomerId ? undefined : customerEmail,
+      ...(user?.stripeCustomerId ? { customer: user.stripeCustomerId } : {}),
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            unit_amount: amountCents,
+            product_data: {
+              name: songTitle ? `Tip: ${songTitle}` : 'Song tip',
+            },
+          },
+          quantity: 1,
+        },
+      ],
+      return_url: buildSongTipReturnUrl(origin, songSlug),
       metadata: {
         type: 'song_tip',
-        songSlug: body?.songSlug?.trim() || '',
-        songTitle: body?.songTitle?.trim() || '',
+        songSlug: songSlug || '',
+        songTitle,
         payloadUserId: user ? String(user.id) : '',
         email: customerEmail,
       },
-      ...(user?.stripeCustomerId
-        ? { customer: user.stripeCustomerId }
-        : {}),
     })
 
-    if (!paymentIntent.client_secret) {
+    if (!session.client_secret) {
       return NextResponse.json(
         { error: 'Could not start payment' },
         { status: 500 },
       )
     }
 
-    return NextResponse.json({ clientSecret: paymentIntent.client_secret })
+    return NextResponse.json({ clientSecret: session.client_secret })
   } catch (error) {
-    console.error('Song tip PaymentIntent error:', error)
+    console.error('Song tip Checkout Session error:', error)
     return NextResponse.json({ error: 'Payment unavailable' }, { status: 500 })
   }
 }
