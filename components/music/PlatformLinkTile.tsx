@@ -49,14 +49,14 @@ export function PlatformLinkTile({
     >
       <span
         className={cn(
-          'flex shrink-0 items-center justify-center rounded-none border border-border/40 bg-background/60 transition-colors duration-300',
-          'group-hover:border-(--platform-brand) group-hover:bg-background/80',
-          compact ? 'size-6' : 'size-12',
+          'flex shrink-0 items-center justify-center rounded-none bg-background/60 transition-colors duration-300',
+          'group-hover:bg-background/80',
+          compact ? 'size-8' : 'size-12',
         )}
       >
         <PlatformIcon
           platformId={config?.id ?? 'unknown'}
-          className="text-muted-foreground transition-colors duration-300 group-hover:text-(--platform-brand)"
+          className="text-muted-foreground transition-colors duration-300 group-hover:text-(--platform-brand) border-none"
         />
       </span>
 
@@ -66,7 +66,7 @@ export function PlatformLinkTile({
             {displayName}
           </span>
           <ExternalLink
-            size={14}
+            size={16}
             className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
             aria-hidden
           />

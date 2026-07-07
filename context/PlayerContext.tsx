@@ -11,6 +11,7 @@ import {
   useEffect,
 } from 'react'
 import { Song, Release } from '@/payload-types'
+import { isSongPlayable } from '@/lib/music/songRelease'
 
 export type ViewMode = 'audio' | 'medium' | 'fullscreen'
 export type VideoMode = 'theater' | 'mini'
@@ -298,6 +299,12 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const playMedia = useCallback(
     async (media: PlayableMedia | string) => {
       const song = await normalizeSongData(media, allSongs)
+
+      const releaseDate = (song as { releaseDate?: string | null }).releaseDate
+      const premiereAt = (song as { premiereAt?: string | null }).premiereAt
+      if (releaseDate && !isSongPlayable(releaseDate, premiereAt)) {
+        return
+      }
 
       const isSame =
         currentSong?.youtubeId &&

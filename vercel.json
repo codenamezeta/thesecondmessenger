@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/sync-audio-tags",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/release-radar",
+      "schedule": "0 9 * * *"
     }
   ]
 }

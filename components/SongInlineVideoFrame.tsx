@@ -8,23 +8,16 @@ import { usePlayer } from '@/context/PlayerContext'
 import { cn } from '@/utilities/ui'
 import placeholderArt from '@/public/imgs/placeholder-art.png'
 import { pickMediaImageUrl } from '@/utilities/getMediaUrl'
+import { isSongPlayable } from '@/lib/music/songRelease'
 
 /**
  * The Song page's in-flow "viewscreen" frame.
  *
- * - Renders a **single** low-resolution blurred standby layer (cover or
- *   placeholder) plus the play/pause control. Sharp album art is not
- *   duplicated here — it already appears in `SongHero`, which avoided three
- *   separate full-width `next/image` optimizer requests for the same asset.
- * - Registers its own DOM element with `PlayerContext` as an inline target.
- * - When `currentSong.youtubeId === song.youtubeId` and `videoEnabled === false`,
- *   the Global Player's `VideoStage` overlays the real YouTube iframe on top of
- *   this element via `position: fixed`. The iframe is never reparented — only
- *   its coordinates change — so audio playback is uninterrupted.
+ * **Released songs:** blurred standby + play control; registers with Global Player
+ * for inline iframe overlay when video mode is off.
  *
- * The overlay inherits this frame's rounded corners and lives inside the
- * existing viewscreen's `p-3` inset, so the corner-bracket decoration around
- * the frame stays visible.
+ * **Unreleased premieres:** static YouTube embed (countdown thumbnail) — no Global
+ * Player hookup, so users are not misled into a fake "playing" state.
  */
 interface SongInlineVideoFrameProps {
   song: Song
@@ -46,27 +39,62 @@ export const SongInlineVideoFrame = ({
   } = usePlayer()
 
   const youtubeId = song.youtubeId ?? null
-  const isCurrent = Boolean(youtubeId && currentSong?.youtubeId === youtubeId)
+  const playable = isSongPlayable(song.releaseDate, song.premiereAt)
+  const isCurrent = Boolean(
+    playable && youtubeId && currentSong?.youtubeId === youtubeId,
+  )
   const isActive = isCurrent && isPlaying
 
   useEffect(() => {
+    if (!playable) return
+
     const element = frameRef.current
     if (!element || !youtubeId) return
     setInlineTarget({ element, songYoutubeId: youtubeId })
     return () => clearInlineTarget(element)
-  }, [youtubeId, setInlineTarget, clearInlineTarget])
+  }, [playable, youtubeId, setInlineTarget, clearInlineTarget])
 
   const coverArtUrl =
     pickMediaImageUrl(song.coverArt as Media | null | undefined, 'thumbnail') ||
     null
 
   const handleClick = () => {
+    if (!playable) return
     if (isCurrent) togglePlay()
     else playMedia(song)
   }
 
+  if (youtubeId && !playable) {
+    return (
+      <div
+        id="viewscreen"
+        ref={frameRef}
+        role="region"
+        aria-label={`Premiere countdown for ${song.title}`}
+        className={cn(
+          'relative h-full w-full overflow-hidden rounded-sm bg-black',
+          className,
+        )}
+      >
+        <iframe
+          src={`https://www.youtube.com/embed/${youtubeId}?rel=0`}
+          title={`${song.title} — YouTube Premiere`}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerPolicy="strict-origin-when-cross-origin"
+          className="absolute inset-0 h-full w-full border-0"
+        />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-background/90 to-transparent px-4 py-3">
+          <p className="font-mono text-[10px] tracking-widest text-primary uppercase">
+            {'// Premiere Scheduled — Playback unlocks on release'}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
+      id="viewscreen"
       ref={frameRef}
       role="region"
       aria-label={`Video frame for ${song.title}`}
@@ -75,8 +103,6 @@ export const SongInlineVideoFrame = ({
         className,
       )}
     >
-      {/* One low-res ambient layer only. Sharp cover art already lives in SongHero
-          above; duplicating it here caused a third full-width optimized fetch. */}
       <Image
         src={coverArtUrl || placeholderArt}
         alt=""

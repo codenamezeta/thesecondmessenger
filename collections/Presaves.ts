@@ -69,6 +69,32 @@ export const Presaves: CollectionConfig = {
       admin: { hidden: true },
     },
     {
+      name: 'artistFollowedAt',
+      type: 'date',
+      admin: {
+        description: 'When this user followed TSM on Spotify during presave.',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'linkedUser',
+      type: 'relationship',
+      relationTo: 'users',
+      admin: {
+        description:
+          'Optional TSM account link for YouTube cron fulfillment (Google refresh token).',
+      },
+    },
+    {
+      name: 'intentStatus',
+      type: 'json',
+      admin: {
+        hidden: true,
+        description:
+          'Per-song platform fulfillment map. Keys are song IDs.',
+      },
+    },
+    {
       name: 'campaigns',
       type: 'relationship',
       relationTo: 'songs',

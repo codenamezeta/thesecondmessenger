@@ -55,7 +55,8 @@ export const Users: CollectionConfig = {
     update: ({ req: { user }, id }) => {
       if (!user) return false
       if (user.role === 'admin') return true
-      return user.id === id
+      if (id === undefined || id === null) return false
+      return String(user.id) === String(id)
     },
     admin: ({ req: { user } }) => user?.role === 'admin',
   },

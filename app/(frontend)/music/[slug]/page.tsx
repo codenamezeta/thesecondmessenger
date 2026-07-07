@@ -11,6 +11,7 @@ import { SongHero } from '@/components/SongHero'
 import { SongInlineVideoFrame } from '@/components/SongInlineVideoFrame'
 import { Share } from '@/components/Share'
 import { LibrarySync } from '@/components/LibrarySync'
+import { ReleasePresavePanel } from '@/components/ReleasePresavePanel'
 import CommentsYT from '@/components/CommentsYT'
 import { YouTubeLikeButton } from '@/components/YouTube/LikeButton'
 import { YouTubeSubscribeButton } from '@/components/YouTube/SubscribeButton'
@@ -56,6 +57,12 @@ import {
 } from '@/lib/music/filterState'
 import { ARTIST_HOMEPAGE, PRIMARY_ARTIST } from '@/lib/branding'
 import { getMeUser } from '@/utilities/getMeUser'
+import { isSongReleased } from '@/lib/music/songRelease'
+import {
+  getSongIntent,
+  isPlatformFulfilled,
+  parseIntentStatusMap,
+} from '@/lib/presave/intents'
 import { SongGatedBonusSection } from '@/components/SongGatedBonusSection'
 import { SongDownloadButton } from '@/components/SongDownload/SongDownloadButton'
 import { userMeetsGatedFileAccess } from '@/access/crewRanks'
@@ -540,7 +547,8 @@ export default async function SongPage({ params, searchParams }: Args) {
   const song = (songResult.docs[0] as SongDoc | undefined) ?? initialSong
 
   // --- CHECK SAVED STATUS ---
-  let isSaved = false
+  let isSpotifySaved = false
+  let isYoutubeSaved = false
   const cookieStore = await cookies()
   const userId = cookieStore.get('tsm_user_id')?.value
 
@@ -551,19 +559,36 @@ export default async function SongPage({ params, searchParams }: Args) {
         id: userId,
       })
 
-      // Check if THIS song ID exists in their campaigns array
-      if (userPresave && userPresave.campaigns) {
-        const savedIds = userPresave.campaigns.map((campaign) =>
-          resolveId(campaign as IdLike),
-        )
-        if (savedIds.includes(song.id)) {
-          isSaved = true
+      if (userPresave) {
+        const intentMap = parseIntentStatusMap(userPresave.intentStatus)
+        const songIntent = getSongIntent(intentMap, song.id)
+
+        if (userPresave.campaigns) {
+          const savedIds = userPresave.campaigns.map((campaign) =>
+            resolveId(campaign as IdLike),
+          )
+          if (savedIds.includes(song.id)) {
+            isSpotifySaved = true
+          }
+        }
+
+        if (
+          isPlatformFulfilled(intentMap, song.id, 'spotify') ||
+          songIntent.spotify === 'pending'
+        ) {
+          isSpotifySaved = true
+        }
+
+        if (isPlatformFulfilled(intentMap, song.id, 'youtube')) {
+          isYoutubeSaved = true
         }
       }
     } catch {
       // Cookie might be invalid or user deleted, fail gracefully
     }
   }
+
+  const isReleased = isSongReleased(song.releaseDate, song.premiereAt)
 
   // Related Songs are now derived by weighted tag-overlap across all
   // 11 ontology layers — see `<RelatedSongs />` below. The component
@@ -626,6 +651,18 @@ export default async function SongPage({ params, searchParams }: Args) {
       />
       <PayloadRedirects disableNotFound url={`/music/${slug}`} />
       <SongHero song={song} archiveReturnHref={archiveReturnHref} />
+
+      {song.releaseDate && !isReleased && (
+        <ReleasePresavePanel
+          releaseDate={song.releaseDate}
+          premiereAt={song.premiereAt}
+          songId={String(song.id)}
+          youtubeId={song.youtubeId || undefined}
+          spotifyId={song.spotifyId || undefined}
+          initialSpotifySaved={isSpotifySaved}
+          initialYoutubeSaved={isYoutubeSaved}
+        />
+      )}
 
       <div className="container bg-transparent py-10 md:py-16">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10">
@@ -729,20 +766,14 @@ export default async function SongPage({ params, searchParams }: Args) {
               url={`${process.env.NEXT_PUBLIC_SERVER_URL}/music/${song.slug}`}
             />
 
-            {song.releaseDate && (
+            {song.releaseDate && isReleased && (
               <LibrarySync
                 songId={String(song.id)}
                 youtubeId={song.youtubeId || undefined}
                 spotifyId={song.spotifyId || undefined}
-                isReleased={
-                  song.relatedReleases?.docs?.some(
-                    (doc) =>
-                      typeof doc === 'object' &&
-                      doc.releaseDate &&
-                      new Date(doc.releaseDate) <= new Date(),
-                  ) ?? false
-                }
-                initialIsSaved={isSaved}
+                isReleased={isReleased}
+                initialSpotifySaved={isSpotifySaved}
+                initialYoutubeSaved={isYoutubeSaved}
               />
             )}
 

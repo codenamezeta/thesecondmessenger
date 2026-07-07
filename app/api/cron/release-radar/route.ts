@@ -1,88 +1,46 @@
 import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
-import { refreshSpotifyToken, saveTrackToLibrary } from '@/utilities/spotify'
+import { fulfillPendingPresaves } from '@/lib/presave/fulfillment'
 
-// Force dynamic so Vercel doesn't cache the result
 export const dynamic = 'force-dynamic'
+export const maxDuration = 300
 
+function isAuthorized(request: Request): boolean {
+  const expected = process.env.CRON_SECRET
+  if (!expected) return false
+
+  const url = new URL(request.url)
+  const key = url.searchParams.get('key')
+  const auth = request.headers.get('authorization') ?? ''
+
+  return key === expected || auth === `Bearer ${expected}`
+}
+
+/**
+ * Fulfill pending Spotify saves and YouTube likes for recently released songs.
+ *
+ * Schedule via cron-job.org (recommended) every 15–30 minutes around release
+ * windows. Vercel Hobby only allows one daily run — see docs/PRESAVE_CRON.md.
+ */
 export async function GET(request: Request) {
-  // 1. Security Check
-  const { searchParams } = new URL(request.url)
-  const key = searchParams.get('key')
+  if (!process.env.CRON_SECRET) {
+    return NextResponse.json(
+      { error: 'CRON_SECRET not configured' },
+      { status: 500 },
+    )
+  }
 
-  if (key !== process.env.CRON_SECRET) {
+  if (!isAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const payload = await getPayload({ config: configPromise })
-
-  // 2. Find Songs that "Just Released" (e.g., today)
-  // We look for songs released between yesterday and now to catch anything we missed.
-  const now = new Date()
-  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000) // 24 hours ago
-
-  // NOTE: If you are testing, you might want to comment out this 'where' clause
-  // to force it to run on ALL songs for a test run.
-  const releasedSongs = await payload.find({
-    collection: 'songs',
-    where: {
-      and: [
-        { releaseDate: { less_than_equal: now.toISOString() } },
-        { releaseDate: { greater_than: yesterday.toISOString() } },
-      ],
-    },
-    limit: 50,
-  })
-
-  const stats = {
-    songsFound: releasedSongs.docs.length,
-    usersProcessed: 0,
-    successfulSaves: 0,
-    errors: 0,
-  }
-
-  // 3. Process each song
-  for (const song of releasedSongs.docs) {
-    if (!song.spotifyId) continue
-
-    // Find users who pre-saved this specific song
-    const presaves = await payload.find({
-      collection: 'presaves',
-      where: {
-        campaigns: { equals: song.id },
-      },
-      limit: 1000,
-    })
-
-    // 4. Save for each user
-    for (const user of presaves.docs) {
-      if (!user.refreshToken) continue
-      stats.usersProcessed++
-
-      try {
-        // A. Refresh their token
-        const accessToken = await refreshSpotifyToken(user.refreshToken)
-
-        if (accessToken) {
-          // B. Save the song to their library
-          const success = await saveTrackToLibrary(accessToken, [
-            song.spotifyId,
-          ])
-          if (success) stats.successfulSaves++
-        } else {
-          stats.errors++ // Token refresh failed (maybe user revoked access)
-        }
-      } catch (e) {
-        console.error(`Error processing user ${user.email}:`, e)
-        stats.errors++
-      }
-    }
-  }
+  const stats = await fulfillPendingPresaves(payload)
 
   return NextResponse.json({
     success: true,
     ...stats,
-    message: `Processed ${stats.usersProcessed} users for ${stats.songsFound} newly released songs.`,
+    message: `Scanned ${stats.presavesScanned} presave profiles. Spotify: ${stats.spotifyFulfilled}/${stats.spotifyAttempts}. YouTube: ${stats.youtubeFulfilled}/${stats.youtubeAttempts}.`,
   })
 }

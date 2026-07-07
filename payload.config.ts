@@ -36,8 +36,16 @@ const dirname = path.dirname(filename)
 
 const r2StorageEnabled = isR2StorageEnabled()
 
+const devLocalOrigins =
+  process.env.NODE_ENV === 'development'
+    ? (['http://localhost:3000', 'http://127.0.0.1:3000'] as const)
+    : ([] as const)
+
 export default buildConfig({
   serverURL: getServerSideURL(),
+  // Payload also pushes `serverURL` into this list; include both dev host aliases so
+  // cookie auth works whether you browse via localhost or 127.0.0.1.
+  csrf: [...devLocalOrigins],
   email: resendAdapter({
     defaultFromAddress: EMAIL_FROM_ADDRESS,
     defaultFromName: EMAIL_FROM_NAME,

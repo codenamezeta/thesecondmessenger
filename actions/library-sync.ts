@@ -3,6 +3,20 @@
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import { getServerSideURL } from '@/utilities/getURL'
+import { isSongReleased } from '@/lib/music/songRelease'
+import {
+  parseIntentStatusMap,
+  upsertSongIntent,
+  getSongIntent,
+} from '@/lib/presave/intents'
+import {
+  ensureSpotifyArtistFollowed,
+} from '@/lib/presave/fulfillment'
+import {
+  followSpotifyArtist,
+  refreshSpotifyToken,
+  saveTrackToLibrary,
+} from '@/utilities/spotify'
 
 // --- SPOTIFY CONFIG ---
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
@@ -76,6 +90,79 @@ export async function getSpotifyAuthUrl(songId: string): Promise<string> {
   })
 
   return `https://accounts.spotify.com/authorize?${params.toString()}`
+}
+
+/**
+ * Save a released track immediately when the user already has a presave cookie.
+ */
+export async function saveSpotifyTrackNow(songId: string): Promise<{
+  success: boolean
+  error?: string
+}> {
+  const { cookies } = await import('next/headers')
+  const cookieStore = await cookies()
+  const presaveId = cookieStore.get('tsm_user_id')?.value
+  if (!presaveId) {
+    return { success: false, error: 'No Spotify connection on this device.' }
+  }
+
+  try {
+    assertSpotifyConfig()
+    const payload = await getPayload({ config: configPromise })
+    const presave = await payload.findByID({
+      collection: 'presaves',
+      id: presaveId,
+      depth: 0,
+    })
+
+    if (!presave.refreshToken) {
+      return { success: false, error: 'Spotify session expired. Re-connect.' }
+    }
+
+    const songIdNum = Number(songId)
+    const song = await payload.findByID({
+      collection: 'songs',
+      id: songIdNum,
+      depth: 0,
+    })
+
+    if (!song.spotifyId) {
+      return { success: false, error: 'This song is not on Spotify yet.' }
+    }
+
+    const accessToken = await refreshSpotifyToken(presave.refreshToken)
+    if (!accessToken) {
+      return { success: false, error: 'Could not refresh Spotify token.' }
+    }
+
+    await followSpotifyArtist(accessToken)
+    const saved = await saveTrackToLibrary(accessToken, [song.spotifyId])
+    if (!saved) {
+      return { success: false, error: 'Spotify library save failed.' }
+    }
+
+    const intentMap = upsertSongIntent(
+      parseIntentStatusMap(presave.intentStatus),
+      songIdNum,
+      {
+        spotify: 'fulfilled',
+        spotifyFulfilledAt: new Date().toISOString(),
+      },
+    )
+
+    await payload.update({
+      collection: 'presaves',
+      id: presaveId,
+      data: { intentStatus: intentMap },
+    })
+
+    return { success: true }
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : 'Spotify save failed.',
+    }
+  }
 }
 
 /**
@@ -157,6 +244,15 @@ export async function saveSpotifyToken(
     const refreshTokenUpdate =
       typeof tokens.refresh_token === 'string' ? tokens.refresh_token : undefined
 
+    let existingIntentMap = parseIntentStatusMap(
+      existingUser.totalDocs > 0 ? existingUser.docs[0].intentStatus : {},
+    )
+    const priorIntent = getSongIntent(existingIntentMap, songIdTyped)
+    existingIntentMap = upsertSongIntent(existingIntentMap, songIdTyped, {
+      spotify:
+        priorIntent.spotify === 'fulfilled' ? 'fulfilled' : 'pending',
+    })
+
     if (existingUser.totalDocs > 0) {
       const doc = existingUser.docs[0]
       presaveDocId = doc.id
@@ -168,7 +264,10 @@ export async function saveSpotifyToken(
       const updateData: {
         refreshToken?: string
         campaigns?: number[]
-      } = {}
+        intentStatus?: typeof existingIntentMap
+      } = {
+        intentStatus: existingIntentMap,
+      }
 
       if (refreshTokenUpdate) {
         updateData.refreshToken = refreshTokenUpdate
@@ -212,10 +311,14 @@ export async function saveSpotifyToken(
           spotifyId: userData.id,
           refreshToken: refreshTokenUpdate,
           campaigns: [songIdTyped],
+          intentStatus: existingIntentMap,
         },
       })
       presaveDocId = newDoc.id
     }
+
+    await followSpotifyArtist(tokens.access_token)
+    await ensureSpotifyArtistFollowed(payload, presaveDocId, tokens.access_token)
 
     const songDoc = await payload.findByID({
       collection: 'songs',
@@ -232,10 +335,34 @@ export async function saveSpotifyToken(
         body: JSON.stringify({ ids: [songDoc.spotifyId] }),
       })
 
-      if (!saveResponse.ok) {
+      if (saveResponse.ok) {
+        const fulfilledMap = upsertSongIntent(
+          parseIntentStatusMap(
+            (
+              await payload.findByID({
+                collection: 'presaves',
+                id: presaveDocId,
+                depth: 0,
+              })
+            ).intentStatus,
+          ),
+          songIdTyped,
+          {
+            spotify: 'fulfilled',
+            spotifyFulfilledAt: new Date().toISOString(),
+          },
+        )
+        await payload.update({
+          collection: 'presaves',
+          id: presaveDocId,
+          data: { intentStatus: fulfilledMap },
+        })
+      } else {
         const err = await saveResponse.text()
         console.error('Spotify library save failed:', err)
       }
+    } else if (isSongReleased(songDoc?.releaseDate, songDoc?.premiereAt)) {
+      // Released but no Spotify ID yet — cron will pick up when ID is added.
     }
 
     return {

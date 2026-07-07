@@ -23,7 +23,7 @@ export const PLATFORM_METADATA: Record<string, PlatformConfig> = {
     payoutRank: 1, // 10/10 Score
     ubiquityRank: 12, // ~0
     features: ['Best Overall', 'Hi-Fi Downloads', 'Pay What You Want'],
-    description: '100% of proceeds go directly to the artist. The absolute best way to show support.',
+    description: 'Pay whatever you want. 100% of proceeds go directly to the artist. No intermediaries. The absolute best way to show support.',
   },
   BandCamp: {
     id: 'bandcamp',
@@ -52,7 +52,7 @@ export const PLATFORM_METADATA: Record<string, PlatformConfig> = {
     id: 'tidal',
     name: 'Tidal',
     baseUrl: 'https://tidal.com/artist/21016548',
-    brandColor: '#000000',
+    brandColor: '--foreground',
     payoutTier: 'High',
     payoutRank: 4, // 8.5/10 Score
     ubiquityRank: 8, // ~2M

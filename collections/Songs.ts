@@ -317,6 +317,19 @@ export const Songs: CollectionConfig = {
       },
     },
     {
+      name: 'premiereAt',
+      type: 'date',
+      label: 'Premiere Date & Time',
+      admin: {
+        position: 'sidebar',
+        date: {
+          pickerAppearance: 'dayAndTime',
+        },
+        description:
+          'Exact premiere moment — match YouTube Studio scheduled start. Powers the site countdown and release gating. When empty, falls back to release date at UTC midnight.',
+      },
+    },
+    {
       name: 'catalogSequence',
       type: 'number',
       index: true,

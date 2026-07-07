@@ -9,7 +9,9 @@ import {
   SiTidal,
   SiYoutube,
   SiYoutubemusic,
+  SiDeezer,
 } from 'react-icons/si'
+import { FaAmazon } from "react-icons/fa";
 import { Disc3, Globe } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -24,6 +26,8 @@ const PLATFORM_ICONS: Record<string, IconType> = {
   soundcloud: SiSoundcloud,
   pandora: SiPandora,
   iheart: SiIheartradio,
+  amazon: FaAmazon,
+  deezer: SiDeezer,
 }
 
 type PlatformIconProps = {
