@@ -7,6 +7,7 @@ import { usePlayer, PlayableMedia } from '@/context/PlayerContext'
 import { Playlist } from '@/payload-types'
 import type { Media } from '@/payload-types'
 import { pickMediaImageUrl } from '@/utilities/getMediaUrl'
+import { isSongPlayable } from '@/lib/music/songRelease'
 import { cn } from '@/utilities/ui'
 import {
   Sheet,
@@ -26,11 +27,11 @@ type PlaylistView = {
   kind: 'smart' | 'cms'
 }
 
-/** A song is "released" when it has a release date that is not in the future. */
 const isReleased = (song: PlayableMedia): boolean => {
   const releaseDate = (song as { releaseDate?: string | null }).releaseDate
-  if (!releaseDate) return false
-  return new Date(releaseDate).getTime() <= Date.now()
+  const premiereAt = (song as { premiereAt?: string | null }).premiereAt
+  if (!releaseDate && !premiereAt) return false
+  return isSongPlayable(releaseDate, premiereAt)
 }
 
 const coverUrlOf = (media: PlayableMedia | undefined | null): string | null => {

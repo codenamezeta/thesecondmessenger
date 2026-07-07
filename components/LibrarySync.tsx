@@ -13,38 +13,44 @@ import { Check, Disc3, Loader2, Save, Youtube } from 'lucide-react'
 import { cn } from '@/utilities/ui'
 import { useYouTubeAuth } from '@/context/YouTubeAuthContext'
 import { likeVideo, subscribeToChannel } from '@/lib/youtube/client'
-import { getSpotifyAuthUrl } from '@/actions/library-sync'
+import { getSpotifyAuthUrl, saveSpotifyTrackNow } from '@/actions/library-sync'
+import { recordYouTubePresave } from '@/actions/youtube-presave'
 import { useRouter, useSearchParams } from 'next/navigation'
-
-const YOUTUBE_CHANNEL_ID = process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL_ID
-
-// import { Separator } from './ui/separator'
 import { Button } from './ui/button'
 import { ButtonGroup } from './ui/button-group'
+
+const YOUTUBE_CHANNEL_ID = process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL_ID
 
 interface LibrarySyncProps {
   songId: string
   youtubeId?: string
   spotifyId?: string
   isReleased: boolean
-  initialIsSaved?: boolean // <--- Receive the DB check
+  initialSpotifySaved?: boolean
+  initialYoutubeSaved?: boolean
+  variant?: 'sidebar' | 'featured'
 }
 
 export const LibrarySync = ({
   songId,
   youtubeId,
-  // spotifyId,
+  spotifyId,
   isReleased,
-  initialIsSaved = false,
+  initialSpotifySaved = false,
+  initialYoutubeSaved = false,
+  variant = 'sidebar',
 }: LibrarySyncProps) => {
+  const isFeatured = variant === 'featured'
   const router = useRouter()
   const searchParams = useSearchParams()
   const { ensureToken } = useYouTubeAuth()
 
+  const [spotifyLinked, setSpotifyLinked] = useState(initialSpotifySaved)
+  const [youtubeLinked, setYoutubeLinked] = useState(initialYoutubeSaved)
+
   const [status, setStatus] = useState<
-    'idle' | 'loading' | 'success' | 'connected' | 'error'
+    'idle' | 'loading' | 'success' | 'error'
   >(() => {
-    if (initialIsSaved) return 'connected'
     if (
       searchParams.get('success') === 'true' &&
       searchParams.get('action') === 'spotify'
@@ -59,9 +65,7 @@ export const LibrarySync = ({
   })
   const [activePlatform, setActivePlatform] = useState<
     'spotify' | 'youtube' | null
-  >(() =>
-    searchParams.get('action') === 'spotify' ? 'spotify' : null,
-  )
+  >(() => (searchParams.get('action') === 'spotify' ? 'spotify' : null))
   const [errorMessage, setErrorMessage] = useState<string | null>(() => {
     if (searchParams.get('error') !== 'spotify') return null
     const reason = searchParams.get('reason')
@@ -71,13 +75,31 @@ export const LibrarySync = ({
     return 'Could not connect to Spotify. Please try again.'
   })
 
-  // --- SPOTIFY HANDLER ---
   const handleSpotify = async () => {
     setStatus('loading')
     setActivePlatform('spotify')
     setErrorMessage(null)
 
     try {
+      if (isReleased && spotifyId && spotifyLinked) {
+        const result = await saveSpotifyTrackNow(songId)
+        if (result.success) {
+          setStatus('success')
+          setTimeout(() => setStatus('idle'), 3000)
+          return
+        }
+      }
+
+      if (isReleased && spotifyId && !spotifyLinked) {
+        const result = await saveSpotifyTrackNow(songId)
+        if (result.success) {
+          setSpotifyLinked(true)
+          setStatus('success')
+          setTimeout(() => setStatus('idle'), 3000)
+          return
+        }
+      }
+
       const url = await getSpotifyAuthUrl(songId)
       router.push(url)
     } catch (err) {
@@ -90,9 +112,8 @@ export const LibrarySync = ({
     }
   }
 
-  // --- YOUTUBE HANDLER ---
   const handleYouTube = async () => {
-    if (!youtubeId && isReleased) return
+    if (!youtubeId) return
 
     setStatus('loading')
     setActivePlatform('youtube')
@@ -104,15 +125,26 @@ export const LibrarySync = ({
         return
       }
 
-      if (isReleased && youtubeId) {
-        await likeVideo(youtubeId, token)
-      } else {
-        if (!YOUTUBE_CHANNEL_ID) {
-          throw new Error('Channel ID not configured')
-        }
-        await subscribeToChannel(YOUTUBE_CHANNEL_ID, token)
+      if (!YOUTUBE_CHANNEL_ID) {
+        throw new Error('Channel ID not configured')
       }
 
+      await subscribeToChannel(YOUTUBE_CHANNEL_ID, token)
+
+      let likeSucceeded = false
+      try {
+        await likeVideo(youtubeId, token)
+        likeSucceeded = true
+      } catch {
+        likeSucceeded = false
+      }
+
+      await recordYouTubePresave(songId, {
+        likeAttempted: true,
+        likeSucceeded,
+      })
+
+      setYoutubeLinked(true)
       setStatus('success')
       setTimeout(() => setStatus('idle'), 3000)
     } catch (err) {
@@ -123,10 +155,29 @@ export const LibrarySync = ({
     }
   }
 
-  // --- RENDER: ERROR FLASH ---
+  const spotifySuccessMessage = isReleased
+    ? 'Following artist — added to your library.'
+    : 'Following artist — track saves on release day.'
+
+  const youtubeSuccessMessage = (() => {
+    if (isReleased) return 'Subscribed — video liked.'
+    if (youtubeId) return 'Subscribed — video will be liked at premiere.'
+    return 'Subscribed to channel.'
+  })()
+
+  const flashClass = cn(
+    'flex w-full animate-in items-center justify-center gap-3 rounded-lg border p-4 duration-300 fade-in zoom-in',
+    isFeatured && 'py-5',
+  )
+
   if (status === 'error') {
     return (
-      <div className="flex w-full flex-col gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+      <div
+        className={cn(
+          'flex w-full flex-col gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-4',
+          isFeatured && 'border-destructive/60 p-5',
+        )}
+      >
         <div>
           <h4 className="font-heading text-sm font-bold tracking-widest text-destructive uppercase">
             Link Failed
@@ -147,10 +198,14 @@ export const LibrarySync = ({
     )
   }
 
-  // --- RENDER: SUCCESS FLASH ---
   if (status === 'success') {
     return (
-      <div className="flex w-full animate-in items-center justify-center gap-3 rounded-lg border border-green-500/50 bg-green-500/10 p-4 duration-300 fade-in zoom-in">
+      <div
+        className={cn(
+          flashClass,
+          'border-green-500/50 bg-green-500/10',
+        )}
+      >
         <div className="rounded-full bg-green-500 p-2 text-black">
           <Check size={20} strokeWidth={3} />
         </div>
@@ -158,37 +213,38 @@ export const LibrarySync = ({
           <h4 className="font-heading text-sm font-bold tracking-widest text-green-500 uppercase">
             {activePlatform === 'youtube' ? 'Signal Verified' : 'Success!'}
           </h4>
-          <p className="max-w-40 font-mono text-[10px] text-wrap text-green-400/80">
-            {
-              activePlatform === 'youtube'
-                ? isReleased
-                  ? 'Video Liked'
-                  : 'Subscribed to Channel'
-                : isReleased
-                  ? 'Added to Spotify Library'
-                  : 'Check your Spotify Library on Release Day!' // <--- FIXED
-            }
+          <p
+            className={cn(
+              'max-w-48 font-mono text-[10px] text-wrap text-green-400/80',
+              isFeatured && 'max-w-none text-xs',
+            )}
+          >
+            {activePlatform === 'youtube'
+              ? youtubeSuccessMessage
+              : spotifySuccessMessage}
           </p>
         </div>
       </div>
     )
   }
 
-  // --- RENDER: ALREADY CONNECTED ---
-  if (status === 'connected') {
+  if (spotifyLinked && !youtubeId) {
     return (
-      <div className="relative overflow-hidden rounded-lg border border-primary/30 bg-muted/5 p-6">
+      <div
+        className={cn(
+          'relative overflow-hidden rounded-lg border border-primary/30 bg-muted/5 p-6',
+          isFeatured && 'border-primary/40 bg-primary/5 p-5',
+        )}
+      >
         <h4 className="mb-2 flex items-center gap-2 font-heading text-xs tracking-widest text-white uppercase">
           <Check size={16} className="text-primary" />
           Status: {isReleased ? 'Link Active' : 'Pre-Save Active'}
         </h4>
-
         <p className="mb-4 text-xs text-muted">
           {isReleased
-            ? 'Your secure link is established. Click below to add this specific frequency to your collection.'
-            : 'Your connection is secure. This transmission will be captured automatically upon arrival.'}
+            ? 'Your Spotify link is ready. Tap below to save this track.'
+            : 'You are following the artist. This track saves automatically on release day.'}
         </p>
-
         <button
           onClick={handleSpotify}
           className="flex w-full items-center justify-center gap-2 rounded border border-white/10 px-4 py-2 text-[10px] font-bold tracking-widest text-white uppercase transition-colors hover:bg-white/5"
@@ -200,7 +256,85 @@ export const LibrarySync = ({
     )
   }
 
-  // --- RENDER: DEFAULT ---
+  const buttonRow = (
+    <>
+      <Button
+        onClick={handleSpotify}
+        disabled={status === 'loading'}
+        className={cn(
+          'flex w-full items-center justify-center gap-2 font-heading tracking-wider',
+          'border border-primary/20 bg-background text-foreground hover:bg-[#1ed760] hover:text-black',
+          spotifyLinked && 'border-[#1ed760]/40',
+          isFeatured ? 'py-6 text-base' : 'py-6',
+        )}
+      >
+        {status === 'loading' && activePlatform === 'spotify' ? (
+          <Loader2 size={isFeatured ? 20 : 16} className="animate-spin" />
+        ) : spotifyLinked ? (
+          <Check size={isFeatured ? 22 : 20} />
+        ) : (
+          <Disc3 size={isFeatured ? 22 : 20} />
+        )}
+        {spotifyLinked
+          ? isReleased
+            ? 'Save on Spotify'
+            : 'Pre-Saved on Spotify'
+          : isReleased
+            ? 'Save on Spotify'
+            : 'Pre-Save on Spotify'}
+      </Button>
+      {youtubeId && (
+        <Button
+          onClick={handleYouTube}
+          disabled={status === 'loading'}
+          className={cn(
+            'flex w-full items-center justify-center gap-2 font-heading tracking-wider',
+            'border border-primary/20 bg-background text-foreground hover:bg-[#FF0000] hover:text-white',
+            youtubeLinked && 'border-[#FF0000]/40',
+            isFeatured ? 'py-6 text-base' : 'py-6',
+          )}
+        >
+          {status === 'loading' && activePlatform === 'youtube' ? (
+            <Loader2 size={isFeatured ? 20 : 16} className="animate-spin" />
+          ) : youtubeLinked ? (
+            <Check size={isFeatured ? 22 : 20} />
+          ) : (
+            <Youtube size={isFeatured ? 22 : 20} />
+          )}
+          {youtubeLinked
+            ? 'YouTube Linked'
+            : isReleased
+              ? 'Like on YouTube'
+              : 'Pre-Save on YouTube'}
+        </Button>
+      )}
+    </>
+  )
+
+  if (isFeatured) {
+    return (
+      <div className="w-full space-y-3">
+        <div className="space-y-1 text-center md:text-left">
+          <p className="font-mono text-[10px] tracking-widest text-primary uppercase">
+            {'// Pre-Save Protocol'}
+          </p>
+          <p className="font-body text-sm text-muted-foreground">
+            Follow the artist and auto-save on release day.
+          </p>
+        </div>
+        {(spotifyLinked || youtubeLinked) && (
+          <div className="rounded border border-primary/25 bg-primary/10 px-3 py-2 font-mono text-[10px] tracking-wider text-muted-foreground">
+            {spotifyLinked && (
+              <p>Spotify: {isReleased ? 'linked' : 'pre-saved'}</p>
+            )}
+            {youtubeLinked && <p>YouTube: subscribed</p>}
+          </div>
+        )}
+        <div className="flex flex-col gap-3">{buttonRow}</div>
+      </div>
+    )
+  }
+
   return (
     <Card className="group bg-background">
       <CardHeader>
@@ -209,43 +343,22 @@ export const LibrarySync = ({
           {isReleased ? 'Library Sync' : 'Pre-Save Protocol'}
         </CardTitle>
         <CardDescription className="font-mono text-sm tracking-wider text-muted-foreground">
-          Save this release and connect your platforms.
+          {isReleased
+            ? 'Save this release to your libraries.'
+            : 'Follow the artist and auto-save on release day.'}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
+        {(spotifyLinked || youtubeLinked) && (
+          <div className="rounded border border-primary/20 bg-primary/5 px-3 py-2 font-mono text-[10px] tracking-wider text-muted-foreground">
+            {spotifyLinked && (
+              <p>Spotify: {isReleased ? 'linked' : 'pre-saved'}</p>
+            )}
+            {youtubeLinked && <p>YouTube: subscribed</p>}
+          </div>
+        )}
         <ButtonGroup orientation="vertical" className="w-full">
-          <Button
-            onClick={handleSpotify}
-            disabled={status === 'loading'}
-            className={cn(
-              'flex w-full items-center justify-center gap-2 py-6 font-heading tracking-wider',
-              'border border-primary/20 bg-background text-foreground hover:bg-[#1ed760] hover:text-black',
-            )}
-          >
-            {status === 'loading' && activePlatform === 'spotify' ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <Disc3 size={20} />
-            )}
-            {isReleased ? 'Save on Spotify' : 'Pre-Save on Spotify'}
-          </Button>
-          {youtubeId && (
-            <Button
-              onClick={handleYouTube}
-              disabled={status === 'loading'}
-              className={cn(
-                'flex w-full items-center justify-center gap-2 py-6 font-heading tracking-wider',
-                'border border-primary/20 bg-background text-foreground hover:bg-[#FF0000] hover:text-white',
-              )}
-            >
-              {status === 'loading' && activePlatform === 'youtube' ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Youtube size={20} />
-              )}
-              {isReleased ? 'Like on YouTube' : 'Subscribe on YouTube'}
-            </Button>
-          )}
+          {buttonRow}
         </ButtonGroup>
       </CardContent>
       <CardFooter className="flex items-center justify-center text-center text-[9px] tracking-widest text-muted-foreground uppercase">

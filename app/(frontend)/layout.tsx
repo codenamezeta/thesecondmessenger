@@ -61,10 +61,13 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
       data-theme={siteDefault}
       suppressHydrationWarning
     >
-      <body className="flex min-h-screen flex-col font-body antialiased">
+      <head>
         <script
+          id="theme-init"
           dangerouslySetInnerHTML={{ __html: themeInitScript(siteDefault) }}
         />
+      </head>
+      <body className="flex min-h-screen flex-col font-body antialiased">
         <Analytics />
         <SpeedInsights />
         <YouTubeAuthProvider>

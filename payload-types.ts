@@ -426,6 +426,10 @@ export interface Song {
    */
   releaseDate?: string | null;
   /**
+   * Exact premiere moment — match YouTube Studio scheduled start. Powers the site countdown and release gating. When empty, falls back to release date at UTC midnight.
+   */
+  premiereAt?: string | null;
+  /**
    * Auto-assigned. This song’s position within its composition type, ordered by release date (oldest = 1). Powers the card catalog code, e.g. TSM-2025-ORG-011.
    */
   catalogSequence?: number | null;
@@ -542,6 +546,9 @@ export interface Song {
    * International Standard Musical Work Code (composition). No native ID3 frame — written as TXXX:ISWC for MP3 and as ISWC Vorbis comment for FLAC.
    */
   iswc?: string | null;
+  /**
+   * Auto-filled from the master recording (MP3, then FLAC, then WAV) when you save.
+   */
   durationText?: string | null;
   duration?: number | null;
   /**
@@ -921,6 +928,26 @@ export interface Presave {
   email: string;
   spotifyId?: string | null;
   refreshToken?: string | null;
+  /**
+   * When this user followed TSM on Spotify during presave.
+   */
+  artistFollowedAt?: string | null;
+  /**
+   * Optional TSM account link for YouTube cron fulfillment (Google refresh token).
+   */
+  linkedUser?: (number | null) | User;
+  /**
+   * Per-song platform fulfillment map. Keys are song IDs.
+   */
+  intentStatus?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   campaigns?: (number | Song)[] | null;
   updatedAt: string;
   createdAt: string;
@@ -1562,6 +1589,9 @@ export interface PresavesSelect<T extends boolean = true> {
   email?: T;
   spotifyId?: T;
   refreshToken?: T;
+  artistFollowedAt?: T;
+  linkedUser?: T;
+  intentStatus?: T;
   campaigns?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1592,6 +1622,7 @@ export interface SongsSelect<T extends boolean = true> {
   coverArt?: T;
   slug?: T;
   releaseDate?: T;
+  premiereAt?: T;
   catalogSequence?: T;
   relatedReleases?: T;
   inPlaylists?: T;

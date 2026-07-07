@@ -20,6 +20,7 @@ import { MediaBlock } from '@/blocks/MediaBlock/config'
 import { Embed } from '@/blocks/Embed/config'
 import type { Release } from '@/payload-types'
 import { queueAudioTagSync } from '@/lib/audio-tags/queueAudioTagSync'
+import { autoFillSongDuration } from '@/lib/songs/autoFillSongDuration'
 import {
   CATALOG_UPDATE_CONTEXT,
   recomputeCatalogSequences,
@@ -161,7 +162,7 @@ export const Songs: CollectionConfig = {
       },
     ],
     beforeChange: [
-      async ({ data, originalDoc, operation }) => {
+      async ({ data, originalDoc, operation, req }) => {
         if (!data || typeof data !== 'object') return data
         const d = data as Record<string, unknown>
         const prev =
@@ -183,6 +184,14 @@ export const Songs: CollectionConfig = {
               if (deduped !== cur) d[key] = deduped
             }
           }
+        }
+        if (operation === 'create' || operation === 'update') {
+          await autoFillSongDuration({
+            data: d,
+            originalDoc: originalDoc as typeof originalDoc,
+            payload: req.payload,
+            req,
+          })
         }
         return data
       },
@@ -314,6 +323,19 @@ export const Songs: CollectionConfig = {
         position: 'sidebar',
         readOnly: true, // <--- Locked down
         description: 'Auto-synced from the related Release.',
+      },
+    },
+    {
+      name: 'premiereAt',
+      type: 'date',
+      label: 'Premiere Date & Time',
+      admin: {
+        position: 'sidebar',
+        date: {
+          pickerAppearance: 'dayAndTime',
+        },
+        description:
+          'Exact premiere moment — match YouTube Studio scheduled start. Powers the site countdown and release gating. When empty, falls back to release date at UTC midnight.',
       },
     },
     {
@@ -704,22 +726,11 @@ export const Songs: CollectionConfig = {
                       type: 'text',
                       label: 'Duration (MM:SS)',
                       admin: {
-                        placeholder: '5:18',
+                        readOnly: true,
+                        description:
+                          'Auto-filled from the master recording (MP3, then FLAC, then WAV) when you save.',
                       },
                       hooks: {
-                        beforeValidate: [
-                          ({ value, siblingData }) => {
-                            if (typeof value === 'string') {
-                              const [mins, secs] = value.split(':').map(Number)
-                              if (!isNaN(mins) && !isNaN(secs)) {
-                                siblingData.duration = mins * 60 + secs
-                              }
-                            } else if (!value) {
-                              siblingData.duration = null
-                            }
-                            return value
-                          },
-                        ],
                         afterRead: [
                           ({ siblingData }) => {
                             const seconds = siblingData?.duration

@@ -1,6 +1,10 @@
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET
 
+/** The Second Messenger artist id on Spotify (override via env). */
+export const SPOTIFY_ARTIST_ID =
+  process.env.SPOTIFY_ARTIST_ID ?? '44ueDtWuMKuBOqFE7CS7ax'
+
 /**
  * Exchanges a Refresh Token for a new Access Token
  */
@@ -52,6 +56,26 @@ export async function saveTrackToLibrary(
   if (!res.ok) {
     const err = await res.text()
     console.error('Failed to save track to library:', err)
+  }
+
+  return res.ok
+}
+
+/**
+ * Follow the TSM artist profile on Spotify.
+ */
+export async function followSpotifyArtist(accessToken: string): Promise<boolean> {
+  const res = await fetch(
+    `https://api.spotify.com/v1/me/following?type=artist&ids=${encodeURIComponent(SPOTIFY_ARTIST_ID)}`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  )
+
+  if (!res.ok) {
+    const err = await res.text()
+    console.error('Failed to follow Spotify artist:', err)
   }
 
   return res.ok

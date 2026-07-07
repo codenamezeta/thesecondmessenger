@@ -5,13 +5,20 @@ import Link from 'next/link'
 import { Song } from '@/payload-types'
 import { usePlayer } from '@/context/PlayerContext'
 import { Button } from '@/components/ui/button'
-import { Play, Pause, Clock, Music2, Activity, ListMusic } from 'lucide-react' // Added Icons
+import {
+  Play,
+  Pause,
+  Clock,
+  Music2,
+  Activity,
+  ListMusic,
+} from 'lucide-react'
 import { cn } from '@/utilities/ui'
 import formatTime from '@/utilities/formatTime'
 import type { Media } from '@/payload-types'
 import placeholderArt from '@/public/imgs/placeholder-art.png'
-import { PRIMARY_ARTIST } from '@/lib/branding'
 import { pickMediaImageUrl } from '@/utilities/getMediaUrl'
+import { isSongPlayable } from '@/lib/music/songRelease'
 
 type SongHeroProps = {
   song: Song
@@ -25,7 +32,9 @@ export const SongHero = ({
 }: SongHeroProps) => {
   const { playMedia, currentSong, isPlaying, togglePlay } = usePlayer()
 
-  const isCurrent = currentSong?.id === song.id
+  const playable = isSongPlayable(song.releaseDate, song.premiereAt)
+
+  const isCurrent = playable && currentSong?.id === song.id
   const isActive = isCurrent && isPlaying
 
   const coverArt = song.coverArt as Media | null | undefined
@@ -34,7 +43,6 @@ export const SongHero = ({
 
   return (
     <section className="backdrop-blur-0 relative w-full overflow-hidden border-b border-white/10 bg-muted/30">
-      {/* Background ambience — tiny srcSet + heavy blur; not a second full-viewport decode */}
       <div className="pointer-events-none absolute inset-0 opacity-20">
         {coverArtBlurUrl && (
           <Image
@@ -52,17 +60,13 @@ export const SongHero = ({
 
       <div className="relative z-10 container py-12 md:py-20">
         <nav aria-label="Breadcrumb" className="mb-4">
-          {/*
-            Global base styles set `ol { text-base md:text-lg }`, so size
-            must be declared on the list itself — not just the nav wrapper.
-          */}
           <ol className="my-0 flex flex-wrap items-center gap-x-1.5 gap-y-1 font-mono text-[10px] leading-none tracking-widest uppercase md:text-[11px]">
             <li className="my-0">
               <Link
                 href="/"
                 className="font-normal text-muted-foreground no-underline transition-colors hover:text-primary"
               >
-                {PRIMARY_ARTIST}
+                Home
               </Link>
             </li>
             <li aria-hidden className="my-0 text-muted-foreground/40">
@@ -73,7 +77,7 @@ export const SongHero = ({
                 href={archiveReturnHref}
                 className="font-normal text-muted-foreground no-underline transition-colors hover:text-primary"
               >
-                Music Archive
+                Music
               </Link>
             </li>
             <li aria-hidden className="my-0 text-muted-foreground/40">
@@ -89,7 +93,6 @@ export const SongHero = ({
         </nav>
 
         <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-[300px_1fr]">
-          {/* 1. ARTWORK */}
           <div className="group relative mx-auto aspect-square w-full max-w-[300px] overflow-hidden rounded-lg border border-accent/25 shadow-[0_0_40px_rgba(var(--color-primary-rgb),0.2)] md:mx-0">
             {coverArtUrl ? (
               <Image
@@ -116,8 +119,7 @@ export const SongHero = ({
               </div>
             )}
 
-            {/* Overlay Play Button */}
-            {song.masterAudio && (
+            {playable && song.youtubeId && (
               <button
                 onClick={() => (isCurrent ? togglePlay() : playMedia(song))}
                 className="absolute inset-0 flex items-center justify-center bg-background/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
@@ -133,7 +135,6 @@ export const SongHero = ({
             )}
           </div>
 
-          {/* 2. METADATA */}
           <div className="flex h-full flex-col items-center justify-between space-y-3 text-center md:items-start md:justify-center md:text-left">
             <h1 className="font-heading text-4xl leading-[0.75] font-bold tracking-wide text-foreground uppercase drop-shadow-lg md:text-6xl">
               {song.title}
@@ -147,9 +148,7 @@ export const SongHero = ({
               </p>
             )}
 
-            {/* Stat Grid */}
             <div className="flex flex-wrap justify-center gap-2 font-mono text-xs tracking-wider text-muted-foreground uppercase md:justify-start">
-              {/* Genre */}
               <div className="flex items-center gap-2 rounded border border-border bg-muted px-3 py-1.5">
                 <Music2 size={12} className="text-accent" />
                 <span className="text-foreground">
@@ -159,7 +158,6 @@ export const SongHero = ({
                 </span>
               </div>
 
-              {/* Duration */}
               {song.duration && (
                 <div className="flex items-center gap-2 rounded border border-border bg-muted px-3 py-1.5">
                   <Clock size={12} className="text-accent" />
@@ -169,7 +167,6 @@ export const SongHero = ({
                 </div>
               )}
 
-              {/* BPM */}
               {song.bpm && (
                 <div className="flex items-center gap-2 rounded border border-border bg-muted px-3 py-1.5">
                   <Activity size={12} className="text-accent" />
@@ -177,7 +174,6 @@ export const SongHero = ({
                 </div>
               )}
 
-              {/* Key */}
               {song.key && (
                 <div className="flex items-center gap-2 rounded border border-border bg-muted px-3 py-1.5">
                   <ListMusic size={12} className="text-accent" />
@@ -186,9 +182,7 @@ export const SongHero = ({
               )}
             </div>
 
-            {/* Action Bar */}
-
-            {song.masterAudio && (
+            {song.youtubeId && playable && (
               <Button
                 onClick={() => playMedia(song)}
                 variant={isActive ? 'default' : 'outline'}
