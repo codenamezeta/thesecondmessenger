@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Elements } from '@stripe/react-stripe-js'
+import { CheckoutElementsProvider } from '@stripe/react-stripe-js/checkout'
 import { Download, Loader2, Check, Heart } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -148,6 +148,57 @@ export function SongDownloadButton({
     setStatus('done')
   }, [audioUrl, filename, isLoggedIn, resolvedEmail, slug, title])
 
+  useEffect(() => {
+    if (!audioUrl) return
+
+    const params = new URLSearchParams(window.location.search)
+    const sessionId = params.get('tip_session_id')
+    if (!sessionId) return
+
+    let cancelled = false
+
+    ;(async () => {
+      try {
+        const res = await fetch(
+          `/api/stripe/song-tip/status?session_id=${encodeURIComponent(sessionId)}`,
+        )
+        const data = (await res.json().catch(() => null)) as {
+          paid?: boolean
+          error?: string
+        } | null
+
+        if (!res.ok || !data?.paid) {
+          if (!cancelled) {
+            setOpen(true)
+            setError(data?.error ?? 'Tip payment could not be verified.')
+          }
+          return
+        }
+
+        if (!cancelled) {
+          setOpen(true)
+          await completeDownload()
+          const url = new URL(window.location.href)
+          url.searchParams.delete('tip_session_id')
+          window.history.replaceState(
+            {},
+            '',
+            `${url.pathname}${url.search}${url.hash}`,
+          )
+        }
+      } catch {
+        if (!cancelled) {
+          setOpen(true)
+          setError('Tip payment could not be verified.')
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [audioUrl, completeDownload])
+
   const handleFreeDownload = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -239,18 +290,20 @@ export function SongDownloadButton({
 
   const stripePromise = useMemo(() => getStripeBrowserClient(), [])
 
-  const elementsOptions = useMemo(() => {
+  const checkoutElementsOptions = useMemo(() => {
     if (!clientSecret) return null
     return {
       clientSecret,
-      appearance: {
-        theme: 'night' as const,
-        variables: {
-          colorPrimary: 'hsl(var(--primary))',
-          colorBackground: 'hsl(var(--card))',
-          colorText: 'hsl(var(--foreground))',
-          colorDanger: 'hsl(var(--destructive))',
-          borderRadius: '0px',
+      elementsOptions: {
+        appearance: {
+          theme: 'night' as const,
+          variables: {
+            colorPrimary: 'hsl(var(--primary))',
+            colorBackground: 'hsl(var(--card))',
+            colorText: 'hsl(var(--foreground))',
+            colorDanger: 'hsl(var(--destructive))',
+            borderRadius: '0px',
+          },
         },
       },
     }
@@ -456,17 +509,17 @@ export function SongDownloadButton({
                       </p>
                     ) : paymentLoading ||
                       !clientSecret ||
-                      !elementsOptions ||
+                      !checkoutElementsOptions ||
                       !canStartPaidPayment ? (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Loader2 size={16} className="animate-spin" />
                         Preparing secure checkout…
                       </div>
                     ) : (
-                      <Elements
+                      <CheckoutElementsProvider
                         key={clientSecret}
                         stripe={stripePromise}
-                        options={elementsOptions}
+                        options={checkoutElementsOptions}
                       >
                         <SongDownloadTipPayment
                           amountCents={amountCents}
@@ -474,7 +527,7 @@ export function SongDownloadButton({
                           disabled={!resolvedEmail}
                           onSuccess={completeDownload}
                         />
-                      </Elements>
+                      </CheckoutElementsProvider>
                     )}
                   </div>
                 ) : (

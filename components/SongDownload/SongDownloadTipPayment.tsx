@@ -3,9 +3,8 @@
 import { useState } from 'react'
 import {
   PaymentElement,
-  useElements,
-  useStripe,
-} from '@stripe/react-stripe-js'
+  useCheckoutElements,
+} from '@stripe/react-stripe-js/checkout'
 import { Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -25,39 +24,43 @@ function formatUsd(cents: number): string {
   }).format(cents / 100)
 }
 
+function isCheckoutSessionPaid(
+  status: { type: string; paymentStatus?: string },
+): boolean {
+  return (
+    status.type === 'complete' &&
+    (status.paymentStatus === 'paid' ||
+      status.paymentStatus === 'no_payment_required')
+  )
+}
+
 export function SongDownloadTipPayment({
   amountCents,
   title,
   disabled = false,
   onSuccess,
 }: Props) {
-  const stripe = useStripe()
-  const elements = useElements()
+  const checkoutState = useCheckoutElements()
   const [status, setStatus] = useState<'idle' | 'processing'>('idle')
   const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!stripe || !elements) return
+    if (checkoutState.type !== 'success') return
 
     setError(null)
     setStatus('processing')
 
     try {
-      const { error: submitError, paymentIntent } = await stripe.confirmPayment({
-        elements,
+      const confirmResult = await checkoutState.checkout.confirm({
         redirect: 'if_required',
       })
 
-      if (submitError) {
-        throw new Error(submitError.message ?? 'Payment failed.')
+      if (confirmResult.type === 'error') {
+        throw new Error(confirmResult.error.message ?? 'Payment failed.')
       }
 
-      if (
-        paymentIntent &&
-        paymentIntent.status !== 'succeeded' &&
-        paymentIntent.status !== 'processing'
-      ) {
+      if (!isCheckoutSessionPaid(confirmResult.session.status)) {
         throw new Error('Payment was not completed.')
       }
 
@@ -66,6 +69,23 @@ export function SongDownloadTipPayment({
       setError(err instanceof Error ? err.message : 'Payment failed.')
       setStatus('idle')
     }
+  }
+
+  if (checkoutState.type === 'loading') {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 size={16} className="animate-spin" />
+        Loading payment form…
+      </div>
+    )
+  }
+
+  if (checkoutState.type === 'error') {
+    return (
+      <p className="text-sm font-semibold text-destructive">
+        {checkoutState.error.message}
+      </p>
+    )
   }
 
   return (
@@ -81,7 +101,7 @@ export function SongDownloadTipPayment({
       <Button
         type="submit"
         className="w-full rounded-none"
-        disabled={disabled || !stripe || !elements || status === 'processing'}
+        disabled={disabled || status === 'processing'}
       >
         {status === 'processing' ? (
           <>
