@@ -427,9 +427,19 @@ export const Songs: CollectionConfig = {
         position: 'sidebar',
         initCollapsed: true,
         description:
-          'Background sync of CMS fields → MP3/FLAC ID3 tags. Runs after every save via Vercel Cron.',
+          'Background sync of CMS fields → MP3/FLAC ID3 tags. Queued on save; drained daily by Vercel Cron, or run immediately with the button below.',
       },
       fields: [
+        {
+          name: 'runTagSync',
+          type: 'ui',
+          admin: {
+            components: {
+              Field:
+                '@/components/payload-admin/RunTagSyncButton#RunTagSyncButton',
+            },
+          },
+        },
         {
           name: 'tagSyncStatus',
           type: 'select',
