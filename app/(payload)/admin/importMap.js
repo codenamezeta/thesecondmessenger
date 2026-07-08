@@ -32,6 +32,7 @@ import { SlugField as SlugField_2b8867833a34864a02ddf429b0728a40 } from '@payloa
 import { FolderTableCell as FolderTableCell_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 import { FolderField as FolderField_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 import { LinkExistingJoinBeforeInput as LinkExistingJoinBeforeInput_3e084ca98d2d1bf44a21fdf36f8b44ef } from '@/components/payload-admin/LinkExistingJoinBeforeInput'
+import { RunTagSyncButton as RunTagSyncButton_d86b0a01340141441bd971a58a9f489a } from '@/components/payload-admin/RunTagSyncButton'
 import { TagCopyButtons as TagCopyButtons_766c385b9ad1c674c27d6d8eec116111 } from '@/components/payload-admin/TagCopyButtons'
 import { TextStateFeatureClient as TextStateFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { TableFeatureClient as TableFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
@@ -77,6 +78,7 @@ export const importMap = {
   "@payloadcms/next/rsc#FolderTableCell": FolderTableCell_f9c02e79a4aed9a3924487c0cd4cafb1,
   "@payloadcms/next/rsc#FolderField": FolderField_f9c02e79a4aed9a3924487c0cd4cafb1,
   "@/components/payload-admin/LinkExistingJoinBeforeInput#LinkExistingJoinBeforeInput": LinkExistingJoinBeforeInput_3e084ca98d2d1bf44a21fdf36f8b44ef,
+  "@/components/payload-admin/RunTagSyncButton#RunTagSyncButton": RunTagSyncButton_d86b0a01340141441bd971a58a9f489a,
   "@/components/payload-admin/TagCopyButtons#TagCopyButtons": TagCopyButtons_766c385b9ad1c674c27d6d8eec116111,
   "@payloadcms/richtext-lexical/client#TextStateFeatureClient": TextStateFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#TableFeatureClient": TableFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
