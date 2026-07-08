@@ -5,6 +5,7 @@ import type { GatedContent } from '@/payload-types'
 import AudioFilePlayer from '@/components/AudioFilePlayer'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { getGatedContentDownloadUrl } from '@/utilities/getGatedContentDownloadUrl'
 import { getGatedContentFileUrl } from '@/utilities/getGatedContentFileUrl'
 import { gatedContentKindFromMimeType } from '@/utilities/gatedContentKindFromMimeType'
 import { DownloadIcon } from 'lucide-react'
@@ -28,6 +29,7 @@ function DownloadAssetButton({ href, title }: { href: string; title: string }) {
 
 function GatedAssetRenderer({ gated }: { gated: GatedContent }) {
   const src = getGatedContentFileUrl(gated)
+  const downloadUrl = getGatedContentDownloadUrl(gated)
   if (!src) {
     return (
       <p className="font-body text-sm text-muted-foreground">
@@ -44,7 +46,7 @@ function GatedAssetRenderer({ gated }: { gated: GatedContent }) {
         <p className="font-body text-sm text-muted-foreground">
           This file type is not previewed in the Vault UI.
         </p>
-        <DownloadAssetButton href={src} title={gated.title} />
+        <DownloadAssetButton href={downloadUrl || src} title={gated.title} />
       </div>
     )
   }
@@ -54,11 +56,11 @@ function GatedAssetRenderer({ gated }: { gated: GatedContent }) {
       return (
         <>
           <AudioFilePlayer title={gated.title} src={src} />
-          <DownloadAssetButton href={src} title={gated.title} />
+          <DownloadAssetButton href={downloadUrl || src} title={gated.title} />
         </>
       )
     case 'download':
-      return <DownloadAssetButton href={src} title={gated.title} />
+      return <DownloadAssetButton href={downloadUrl || src} title={gated.title} />
     case 'video':
       return (
         <>
@@ -68,7 +70,7 @@ function GatedAssetRenderer({ gated }: { gated: GatedContent }) {
             src={src}
             preload="metadata"
           />
-          <DownloadAssetButton href={src} title={gated.title} />
+          <DownloadAssetButton href={downloadUrl || src} title={gated.title} />
         </>
       )
     case 'image':
@@ -80,13 +82,13 @@ function GatedAssetRenderer({ gated }: { gated: GatedContent }) {
             alt={gated.title}
             className="mt-4 max-h-[min(70vh,720px)] w-auto border border-border/50 object-contain"
           />
-          <DownloadAssetButton href={src} title={gated.title} />
+          <DownloadAssetButton href={downloadUrl || src} title={gated.title} />
         </>
       )
     case 'pdf':
-      return <DownloadAssetButton href={src} title={gated.title} />
+      return <DownloadAssetButton href={downloadUrl || src} title={gated.title} />
     case 'text':
-      return <DownloadAssetButton href={src} title={gated.title} />
+      return <DownloadAssetButton href={downloadUrl || src} title={gated.title} />
     default: {
       const _exhaustive: never = kind
       return _exhaustive
