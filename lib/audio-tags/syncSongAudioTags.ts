@@ -2,6 +2,7 @@ import sharp from 'sharp'
 import type { Payload } from 'payload'
 import { getServerSideURL } from '@/utilities/getURL'
 import { fetchUploadBytes } from '@/lib/storage/fetchUploadBytes'
+import { r2ObjectKeyForUpload } from '@/lib/storage/r2ObjectKey'
 import {
   coverArtMediaUrl,
   mapSongToTagSpec,
@@ -14,6 +15,11 @@ import { writeTagsToBuffer } from './writeTagsToBuffer'
 import { readDurationFromSongMasters } from '@/lib/songs/autoFillSongDuration'
 import { formatDurationMmSs } from '@/lib/songs/formatDurationMmSs'
 
+export type SyncSongAudioTagsOptions = {
+  /** Bypass the tagsSyncedHash short-circuit (manual admin re-run). */
+  force?: boolean
+}
+
 export type SyncResult =
   | { status: 'synced'; hash: string; bytesWritten: number }
   | { status: 'skipped'; reason: string }
@@ -24,19 +30,17 @@ export type SyncResult =
  *   1. Re-fetch the song with full depth.
  *   2. Build the canonical TagSpec from the CMS fields.
  *   3. Compare against the previously synced hash; skip if unchanged.
- *   4. Download the master audio bytes.
+ *   4. Download each master from R2 (or HTTP fallback for media).
  *   5. Resize the cover art to a 1400² JPEG via sharp.
  *   6. Write the new tags into the buffer with taglib-wasm.
- *   7. Re-upload via `payload.update()` on the Media doc — the storage
- *      adapter handles overwrite-in-place and returns the same URL.
- *   8. Stamp `tagsSyncedAt`, `tagsSyncedHash`, `tagSyncStatus` on the
- *      Song. Errors are recorded on `tagSyncError`.
+ *   7. Re-upload via `payload.update()` — storage adapter overwrites in place.
+ *   8. Stamp `tagsSyncedAt`, `tagsSyncedHash`, `tagSyncStatus` on the Song.
  */
 export async function syncSongAudioTags(
   payload: Payload,
   songId: number,
+  options: SyncSongAudioTagsOptions = {},
 ): Promise<SyncResult> {
-  // Hydrate the song with depth so all relationships resolve.
   const song = (await payload.findByID({
     collection: 'songs',
     id: songId,
@@ -46,14 +50,14 @@ export async function syncSongAudioTags(
 
   await backfillSongDuration(payload, songId, song)
 
-  // MP3 + FLAC masters (WAV is excluded — minimal embedded-tag support).
-  const masters = taggableMasterMedia(song).filter((m) => m.url)
+  const masters = taggableMasterMedia(song).filter(
+    (m) => Boolean(m.filename) || Boolean(m.url),
+  )
   if (masters.length === 0) {
     await markStatus(payload, songId, 'idle', null, null)
     return { status: 'skipped', reason: 'No taggable master audio attached.' }
   }
 
-  // 1. Resolve cover art (optional).
   const coverUrl = coverArtMediaUrl(song, getServerSideURL())
   let coverArtPayload: { data: Uint8Array; mimeType: string } | undefined
   if (coverUrl) {
@@ -82,9 +86,6 @@ export async function syncSongAudioTags(
     }
   }
 
-  // 2. Build spec + hash. Short-circuit if nothing meaningful changed.
-  // The hash folds in the set of master file ids so attaching a new FLAC
-  // master busts the cache even when the metadata itself is unchanged.
   const spec = mapSongToTagSpec({ song, coverArt: coverArtPayload })
   const masterKey = masters
     .map((m) => m.id)
@@ -92,7 +93,7 @@ export async function syncSongAudioTags(
     .join(',')
   const hash = hashTagSpec(spec, `masters:${masterKey}`)
   const lastHash = (song as { tagsSyncedHash?: string | null }).tagsSyncedHash
-  if (lastHash && lastHash === hash) {
+  if (!options.force && lastHash && lastHash === hash) {
     await markStatus(payload, songId, 'synced', hash, null)
     return { status: 'skipped', reason: 'Tag spec unchanged since last sync.' }
   }
@@ -101,8 +102,39 @@ export async function syncSongAudioTags(
 
   try {
     let totalBytesWritten = 0
+    const failures: string[] = []
+
     for (const master of masters) {
-      totalBytesWritten += await tagAndReupload(payload, songId, master, spec)
+      try {
+        totalBytesWritten += await tagAndReupload(payload, songId, master, spec)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        const keyHint = master.filename
+          ? (() => {
+              try {
+                return r2ObjectKeyForUpload(master)
+              } catch {
+                return master.filename
+              }
+            })()
+          : String(master.id)
+        failures.push(
+          `${master.collection} id=${master.id} (${keyHint}): ${message}`,
+        )
+        payload.logger.error({
+          err,
+          msg: `🎵 [SyncTags] Failed master ${master.collection} id=${master.id} for song id=${songId}.`,
+        })
+      }
+    }
+
+    if (failures.length > 0) {
+      const summary =
+        failures.length === masters.length
+          ? failures.join(' | ')
+          : `Partial sync (${masters.length - failures.length}/${masters.length} masters written). Failures: ${failures.join(' | ')}`
+      await markStatus(payload, songId, 'error', null, summary)
+      return { status: 'error', error: summary }
     }
 
     await markStatus(payload, songId, 'synced', hash, null, totalBytesWritten)
@@ -121,8 +153,8 @@ export async function syncSongAudioTags(
 
 /**
  * Download one master file, rewrite its tags from `spec`, and re-upload it
- * in place via the Media collection (the storage adapter overwrites and the
- * public URL stays stable). Returns the byte length written.
+ * in place via its upload collection (storage adapter overwrites; URL stays
+ * stable). Returns the byte length written.
  */
 async function tagAndReupload(
   payload: Payload,
@@ -213,7 +245,6 @@ async function markStatus(
       id: songId,
       data,
       overrideAccess: true,
-      // Bypass our own afterChange so we don't loop.
       context: { skipAudioTagSync: true },
     })
   } catch (err) {
