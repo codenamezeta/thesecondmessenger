@@ -396,6 +396,7 @@ function mediaInfo(value: number | Media | null | undefined): MasterMediaInfo | 
     url: value.url ?? null,
     mimeType: value.mimeType ?? null,
     filename: value.filename ?? null,
+    prefix: value.prefix ?? null,
   }
 }
 

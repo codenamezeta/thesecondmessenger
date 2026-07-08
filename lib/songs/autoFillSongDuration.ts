@@ -20,14 +20,23 @@ function relationId(value: unknown): number | null {
   return null
 }
 
-function pickMasterForDuration(merged: Record<string, unknown>): MasterPick | null {
+function pickMastersForDuration(
+  merged: Record<string, unknown>,
+): MasterPick[] {
+  const out: MasterPick[] = []
   const mp3 = relationId(merged.masterAudio)
-  if (mp3) return { collection: 'media', id: mp3 }
+  if (mp3) out.push({ collection: 'media', id: mp3 })
   const flac = relationId(merged.masterAudioFlac)
-  if (flac) return { collection: 'gated-content', id: flac }
+  if (flac) out.push({ collection: 'gated-content', id: flac })
   const wav = relationId(merged.masterAudioWav)
-  if (wav) return { collection: 'gated-content', id: wav }
-  return null
+  if (wav) out.push({ collection: 'gated-content', id: wav })
+  return out
+}
+
+function pickMasterForDuration(
+  merged: Record<string, unknown>,
+): MasterPick | null {
+  return pickMastersForDuration(merged)[0] ?? null
 }
 
 function masterSourceKey(pick: MasterPick | null): string | null {
@@ -55,10 +64,7 @@ async function resolveUploadInfo(
     url: typeof d.url === 'string' ? d.url : null,
     mimeType: typeof d.mimeType === 'string' ? d.mimeType : null,
     filename: typeof d.filename === 'string' ? d.filename : null,
-    prefix:
-      pick.collection === 'gated-content' && typeof d.prefix === 'string'
-        ? d.prefix
-        : null,
+    prefix: typeof d.prefix === 'string' ? d.prefix : null,
   }
 }
 
@@ -102,23 +108,36 @@ export async function autoFillSongDuration({
   if (!sourceChanged && !durationMissing) return data
   if (!currentPick) return data
 
-  try {
-    const upload = await resolveUploadInfo(payload, currentPick, req)
-    if (!upload) return data
+  const picks = pickMastersForDuration(merged)
+  let lastErr: unknown
+  for (const pick of picks) {
+    try {
+      const upload = await resolveUploadInfo(payload, pick, req)
+      if (!upload) continue
 
-    const bytes = await fetchUploadBytes(upload)
-    const seconds = await getAudioDurationSeconds(bytes)
-    if (seconds === null) return data
+      const bytes = await fetchUploadBytes(upload)
+      const seconds = await getAudioDurationSeconds(bytes)
+      if (seconds === null) continue
 
-    data.duration = seconds
-    data.durationText = formatDurationMmSs(seconds)
-    payload.logger.info(
-      `🎵 [Songs] Auto-filled duration ${formatDurationMmSs(seconds)} from ${currentPick.collection} id=${currentPick.id}`,
-    )
-  } catch (err) {
+      data.duration = seconds
+      data.durationText = formatDurationMmSs(seconds)
+      payload.logger.info(
+        `🎵 [Songs] Auto-filled duration ${formatDurationMmSs(seconds)} from ${pick.collection} id=${pick.id}`,
+      )
+      return data
+    } catch (err) {
+      lastErr = err
+      payload.logger.warn({
+        err,
+        msg: `🎵 [Songs] Duration read failed for ${pick.collection} id=${pick.id}; trying next master.`,
+      })
+    }
+  }
+
+  if (lastErr) {
     payload.logger.warn({
-      err,
-      msg: '🎵 [Songs] Failed to auto-fill duration from master audio.',
+      err: lastErr,
+      msg: '🎵 [Songs] Failed to auto-fill duration from any master audio.',
     })
   }
 
@@ -131,10 +150,16 @@ export async function readDurationFromSongMasters(
   song: Record<string, unknown>,
   req?: PayloadRequest,
 ): Promise<number | null> {
-  const pick = pickMasterForDuration(song)
-  if (!pick) return null
-  const upload = await resolveUploadInfo(payload, pick, req)
-  if (!upload) return null
-  const bytes = await fetchUploadBytes(upload)
-  return getAudioDurationSeconds(bytes)
+  for (const pick of pickMastersForDuration(song)) {
+    try {
+      const upload = await resolveUploadInfo(payload, pick, req)
+      if (!upload) continue
+      const bytes = await fetchUploadBytes(upload)
+      const seconds = await getAudioDurationSeconds(bytes)
+      if (seconds !== null) return seconds
+    } catch {
+      // Try the next available master (e.g. missing FLAC in R2).
+    }
+  }
+  return null
 }
