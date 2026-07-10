@@ -39,9 +39,7 @@ export const BottomBar = () => {
 
   // Keep --bottom-bar-height in sync so VideoStage can position itself correctly
   const sectionRef = useRef<HTMLElement>(null)
-  const seekReleaseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  )
+  const seekReleaseTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     const el = sectionRef.current
