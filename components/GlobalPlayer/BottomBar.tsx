@@ -39,6 +39,8 @@ export const BottomBar = () => {
 
   // Keep --bottom-bar-height in sync so VideoStage can position itself correctly
   const sectionRef = useRef<HTMLElement>(null)
+  const seekReleaseTimeoutRef = useRef<number | null>(null)
+
   useEffect(() => {
     const el = sectionRef.current
     if (!el) return
@@ -50,7 +52,12 @@ export const BottomBar = () => {
       )
     })
     observer.observe(el)
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      if (seekReleaseTimeoutRef.current !== null) {
+        clearTimeout(seekReleaseTimeoutRef.current)
+      }
+    }
   }, [])
 
   const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,13 +66,43 @@ export const BottomBar = () => {
     setCurrentTime(newPercent * duration)
   }
 
+  const commitSeek = (input: HTMLInputElement) => {
+    const newPercent = parseFloat(input.value)
+    const time = newPercent * duration
+    setCurrentTime(time)
+    setPlayed(newPercent)
+    seekTo(time)
+    if (seekReleaseTimeoutRef.current !== null) {
+      clearTimeout(seekReleaseTimeoutRef.current)
+    }
+    // Keep polling paused briefly so YouTube can apply the seek before we
+    // read getCurrentTime() again (otherwise the bar snaps back on release).
+    seekReleaseTimeoutRef.current = window.setTimeout(() => {
+      seekReleaseTimeoutRef.current = null
+      setIsSeeking(false)
+    }, 350)
+  }
+
   // Pointer events unify mouse, touch, and pen. Using them here fixes the
   // long-standing bug where touch users could drag the scrubber visually but
   // `seekTo()` never fired (onMouseUp doesn't run on touch devices).
+  const handleSeekPointerDown = (e: React.PointerEvent<HTMLInputElement>) => {
+    setIsSeeking(true)
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
   const handleSeekPointerUp = (e: React.PointerEvent<HTMLInputElement>) => {
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    }
+    commitSeek(e.currentTarget)
+  }
+
+  const handleSeekPointerCancel = (e: React.PointerEvent<HTMLInputElement>) => {
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    }
     setIsSeeking(false)
-    const newPercent = parseFloat((e.target as HTMLInputElement).value)
-    seekTo(newPercent * duration)
   }
 
   return (
@@ -106,9 +143,9 @@ export const BottomBar = () => {
           step="any"
           value={played ?? 0}
           onChange={handleSeekChange}
-          onPointerDown={() => setIsSeeking(true)}
+          onPointerDown={handleSeekPointerDown}
           onPointerUp={handleSeekPointerUp}
-          onPointerCancel={() => setIsSeeking(false)}
+          onPointerCancel={handleSeekPointerCancel}
           className="absolute inset-0 h-full w-full cursor-pointer touch-none opacity-0"
           aria-label="Seek"
         />
