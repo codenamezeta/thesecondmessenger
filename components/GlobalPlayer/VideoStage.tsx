@@ -72,6 +72,7 @@ export const VideoStage = ({
     setDuration,
     setPlayed,
     setIsPlaying,
+    isSeeking,
     playNext,
     registerYouTubePlayer,
   } = usePlayer()
@@ -83,7 +84,8 @@ export const VideoStage = ({
   )
   const internalPlayerRef = useRef<YouTubePlayerRef | null>(null)
   const progressInterval = useRef<NodeJS.Timeout | null>(null)
-  const isSeeking = useRef(false)
+  const isSeekingRef = useRef(isSeeking)
+  isSeekingRef.current = isSeeking
 
   // --- Inline rect tracking ---
   //
@@ -217,17 +219,16 @@ export const VideoStage = ({
       return
     }
     progressInterval.current = setInterval(() => {
-      if (!isSeeking.current) {
-        safePlayerCall((player) => {
-          const time: number = player.getCurrentTime()
-          const total: number = player.getDuration()
-          if (time !== undefined && total) {
-            setCurrentTime(time)
-            setDuration(total)
-            setPlayed(time / total)
-          }
-        })
-      }
+      if (isSeekingRef.current) return
+      safePlayerCall((player) => {
+        const time: number = player.getCurrentTime()
+        const total: number = player.getDuration()
+        if (time !== undefined && total) {
+          setCurrentTime(time)
+          setDuration(total)
+          setPlayed(time / total)
+        }
+      })
     }, 250)
     return () => {
       if (progressInterval.current) clearInterval(progressInterval.current)
