@@ -218,9 +218,9 @@ export const VideoStage = ({
     }
     progressInterval.current = setInterval(() => {
       if (!isSeeking.current) {
-      safePlayerCall((player) => {
-        const time = player.getCurrentTime?.()
-        const total = player.getDuration?.()
+        safePlayerCall((player) => {
+          const time = player.getCurrentTime?.()
+          const total = player.getDuration?.()
           if (time !== undefined && total) {
             setCurrentTime(time)
             setDuration(total)

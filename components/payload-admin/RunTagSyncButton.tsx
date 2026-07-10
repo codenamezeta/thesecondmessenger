@@ -1,7 +1,12 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Button, toast, useDocumentInfo } from '@payloadcms/ui'
+import {
+  Button,
+  toast,
+  useDocumentInfo,
+  useFormModified,
+} from '@payloadcms/ui'
 import { RefreshCwIcon } from 'lucide-react'
 
 /**
@@ -9,12 +14,21 @@ import { RefreshCwIcon } from 'lucide-react'
  * without waiting for the daily Vercel Cron.
  */
 export function RunTagSyncButton() {
-  const { id } = useDocumentInfo()
+  const { id, unpublishedVersionCount, uploadStatus } = useDocumentInfo()
+  const modified = useFormModified()
   const [running, setRunning] = useState(false)
+
+  const hasUnpublishedChanges =
+    modified || unpublishedVersionCount > 0 || uploadStatus === 'uploading'
 
   const handleRun = async () => {
     if (!id) {
       toast.error('Save the song before running tag sync.')
+      return
+    }
+
+    if (hasUnpublishedChanges) {
+      toast.error('Save and publish the song before running tag sync.')
       return
     }
 
@@ -71,7 +85,7 @@ export function RunTagSyncButton() {
         type="button"
         buttonStyle="secondary"
         onClick={handleRun}
-        disabled={running || !id}
+        disabled={running || !id || hasUnpublishedChanges}
       >
         <span
           style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
@@ -89,7 +103,7 @@ export function RunTagSyncButton() {
         }}
       >
         Writes CMS metadata into attached MP3/FLAC masters immediately. Save
-        the song first if you just changed fields.
+        and publish first if you changed fields or master uploads.
       </p>
     </div>
   )
