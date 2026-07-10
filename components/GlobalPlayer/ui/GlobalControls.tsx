@@ -9,6 +9,8 @@ import {
   Minimize2,
   Maximize2,
   Library,
+  Captions,
+  CaptionsOff,
   // Info,
   ChevronDown,
   ChevronUp,
@@ -31,6 +33,8 @@ export const GlobalControls = ({
     setVolume,
     isMuted,
     toggleMute,
+    captionsEnabled,
+    toggleCaptions,
     videoEnabled,
     setVideoEnabled,
     videoMode,
@@ -136,6 +140,33 @@ export const GlobalControls = ({
           Video
         </span>
       </div>
+
+      {/* Closed captions — only meaningful when video is visible */}
+      <button
+        onClick={toggleCaptions}
+        className={cn(
+          'hidden items-center justify-center transition-colors md:flex',
+          videoEnabled
+            ? captionsEnabled
+              ? 'text-primary'
+              : 'text-foreground/70 hover:text-foreground'
+            : 'text-foreground/20',
+        )}
+        title={
+          !videoEnabled
+            ? 'Enable video to use captions'
+            : captionsEnabled
+              ? 'Turn off captions'
+              : 'Turn on captions'
+        }
+        aria-label={
+          captionsEnabled ? 'Turn off captions' : 'Turn on captions'
+        }
+        aria-pressed={captionsEnabled}
+        disabled={!videoEnabled}
+      >
+        {captionsEnabled ? <Captions size={18} /> : <CaptionsOff size={18} />}
+      </button>
 
       {/* Video Mode toggle — Theater / Mini (only relevant when video is enabled) */}
       <button

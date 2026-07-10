@@ -3,8 +3,9 @@
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import YouTube, { YouTubeProps, YouTubeEvent } from 'react-youtube'
 import { Minimize2, Maximize2 } from 'lucide-react'
-import { usePlayer } from '@/context/PlayerContext'
+import { usePlayer, type YouTubePlayerRef } from '@/context/PlayerContext'
 import { cn } from '@/utilities/ui'
+import { applyYouTubeCaptions } from '@/lib/youtube/captions'
 
 /** https://developers.google.com/youtube/iframe_api_reference#onStateChange */
 const YT_PLAYER_STATE = {
@@ -16,17 +17,7 @@ const YT_PLAYER_STATE = {
 } as const
 
 /** Subset of the YouTube IFrame Player API surface that this component uses. */
-interface YouTubePlayerRef {
-  getIframe: () => HTMLIFrameElement | null
-  playVideo: () => void
-  pauseVideo: () => void
-  seekTo: (seconds: number, allowSeekAhead: boolean) => void
-  setVolume: (volume: number) => void
-  mute: () => void
-  unMute: () => void
-  getCurrentTime: () => number
-  getDuration: () => number
-}
+type VideoStagePlayerRef = YouTubePlayerRef
 
 /**
  * VideoStage owns the YouTube player lifecycle.
@@ -74,6 +65,7 @@ export const VideoStage = ({
     setIsPlaying,
     playNext,
     registerYouTubePlayer,
+    captionsEnabled,
   } = usePlayer()
 
   const [isReady, setIsReady] = useState(false)
@@ -81,7 +73,7 @@ export const VideoStage = ({
   const [origin] = useState(() =>
     typeof window !== 'undefined' ? window.location.origin : '',
   )
-  const internalPlayerRef = useRef<YouTubePlayerRef | null>(null)
+  const internalPlayerRef = useRef<VideoStagePlayerRef | null>(null)
   const progressInterval = useRef<NodeJS.Timeout | null>(null)
   const isSeeking = useRef(false)
 
@@ -175,7 +167,7 @@ export const VideoStage = ({
 
   // --- Safe player call helper ---
   const safePlayerCall = useCallback(
-    (callback: (player: YouTubePlayerRef) => void) => {
+    (callback: (player: VideoStagePlayerRef) => void) => {
       const player = internalPlayerRef.current
       if (player && typeof player.getIframe === 'function') {
         const iframe = player.getIframe()
@@ -194,8 +186,8 @@ export const VideoStage = ({
   useEffect(() => {
     if (!currentSong || !isReady) return
     safePlayerCall((player) => {
-      if (isPlaying) player.playVideo()
-      else player.pauseVideo()
+      if (isPlaying) player.playVideo?.()
+      else player.pauseVideo?.()
     })
   }, [isPlaying, isReady, currentSong, safePlayerCall])
 
@@ -204,11 +196,19 @@ export const VideoStage = ({
     if (!currentSong || !isReady) return
     safePlayerCall((player) => {
       const vol = Math.round(volume * 100)
-      player.setVolume(vol)
-      if (isMuted || vol === 0) player.mute()
-      else player.unMute()
+      player.setVolume?.(vol)
+      if (isMuted || vol === 0) player.mute?.()
+      else player.unMute?.()
     })
   }, [volume, isMuted, isReady, currentSong, safePlayerCall])
+
+  // --- Bridge: captions → YouTube player ---
+  useEffect(() => {
+    if (!currentSong || !isReady) return
+    safePlayerCall((player) => {
+      applyYouTubeCaptions(player, captionsEnabled)
+    })
+  }, [captionsEnabled, isReady, currentSong, safePlayerCall])
 
   // --- Progress polling ---
   useEffect(() => {
@@ -218,9 +218,9 @@ export const VideoStage = ({
     }
     progressInterval.current = setInterval(() => {
       if (!isSeeking.current) {
-        safePlayerCall((player) => {
-          const time: number = player.getCurrentTime()
-          const total: number = player.getDuration()
+      safePlayerCall((player) => {
+        const time = player.getCurrentTime?.()
+        const total = player.getDuration?.()
           if (time !== undefined && total) {
             setCurrentTime(time)
             setDuration(total)
@@ -251,9 +251,10 @@ export const VideoStage = ({
       const dur: number = event.target.getDuration()
       setDuration(dur)
       event.target.setVolume(volume * 100)
+      applyYouTubeCaptions(event.target, captionsEnabled)
       if (isPlaying) event.target.playVideo()
     },
-    [volume, isPlaying, registerYouTubePlayer, setDuration],
+    [volume, isPlaying, captionsEnabled, registerYouTubePlayer, setDuration],
   )
 
   const onPlayerStateChange: YouTubeProps['onStateChange'] = useCallback(
@@ -297,6 +298,7 @@ export const VideoStage = ({
     () => ({
       playerVars: {
         autoplay: 1,
+        cc_load_policy: 0,
         controls: 0,
         disablekb: 1,
         modestbranding: 1,
