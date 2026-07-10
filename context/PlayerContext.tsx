@@ -12,6 +12,7 @@ import {
 } from 'react'
 import { Song, Release } from '@/payload-types'
 import { isSongPlayable } from '@/lib/music/songRelease'
+import { applyYouTubeCaptions } from '@/lib/youtube/captions'
 
 export type ViewMode = 'audio' | 'medium' | 'fullscreen'
 export type VideoMode = 'theater' | 'mini'
@@ -29,6 +30,9 @@ export interface YouTubePlayerRef {
   unMute?: () => void
   getCurrentTime?: () => number
   getDuration?: () => number
+  loadModule?: (moduleName: string) => void
+  unloadModule?: (moduleName: string) => void
+  setOption?: (module: string, option: string, value: unknown) => void
 }
 
 /**
@@ -75,6 +79,8 @@ interface PlayerState {
   controlsVisible: boolean
   volume: number
   isMuted: boolean
+  /** Closed captions — only visible when video is enabled */
+  captionsEnabled: boolean
   /** Drawer open states */
   isLibraryDrawerOpen: boolean
   isInfoDrawerOpen: boolean
@@ -111,6 +117,8 @@ interface PlayerActions {
   setVolume: (vol: number) => void
   toggleMute: () => void
   setIsMuted: (muted: boolean) => void
+  toggleCaptions: () => void
+  setCaptionsEnabled: (enabled: boolean) => void
   setIsPlaying: (playing: boolean) => void
   setIsVideoEnabled: (enabled: boolean) => void
   /** Drawer actions */
@@ -188,6 +196,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [controlsVisible, setControlsVisible] = useState(false)
   const [volume, setVolume] = useState(0.67)
   const [isMuted, setIsMuted] = useState(false)
+  const [captionsEnabled, setCaptionsEnabledState] = useState(false)
 
   // Independent video state
   const [videoEnabled, setVideoEnabled] = useState(false)
@@ -256,6 +265,19 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const toggleMute = useCallback(() => setIsMuted((prev) => !prev), [])
+
+  const setCaptionsEnabled = useCallback((enabled: boolean) => {
+    setCaptionsEnabledState(enabled)
+    applyYouTubeCaptions(ytPlayerRef.current, enabled)
+  }, [])
+
+  const toggleCaptions = useCallback(() => {
+    setCaptionsEnabledState((prev) => {
+      const next = !prev
+      applyYouTubeCaptions(ytPlayerRef.current, next)
+      return next
+    })
+  }, [])
 
   const toggleVideo = useCallback(() => setVideoEnabled((prev) => !prev), [])
 
@@ -452,6 +474,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       controlsVisible,
       volume,
       isMuted,
+      captionsEnabled,
       isLibraryDrawerOpen,
       isInfoDrawerOpen,
       activeLibraryTab,
@@ -478,6 +501,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       setVolume,
       toggleMute,
       setIsMuted,
+      toggleCaptions,
+      setCaptionsEnabled,
       setIsPlaying,
       setIsVideoEnabled,
       setIsLibraryDrawerOpen,
@@ -509,6 +534,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       controlsVisible,
       volume,
       isMuted,
+      captionsEnabled,
       isLibraryDrawerOpen,
       isInfoDrawerOpen,
       activeLibraryTab,
@@ -533,6 +559,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       setControlsVisible,
       toggleControls,
       toggleMute,
+      toggleCaptions,
+      setCaptionsEnabled,
       setIsVideoEnabled,
       seekTo,
       registerYouTubePlayer,
