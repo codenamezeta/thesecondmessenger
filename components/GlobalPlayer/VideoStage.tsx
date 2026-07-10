@@ -186,8 +186,8 @@ export const VideoStage = ({
   useEffect(() => {
     if (!currentSong || !isReady) return
     safePlayerCall((player) => {
-      if (isPlaying) player.playVideo()
-      else player.pauseVideo()
+      if (isPlaying) player.playVideo?.()
+      else player.pauseVideo?.()
     })
   }, [isPlaying, isReady, currentSong, safePlayerCall])
 
@@ -196,9 +196,9 @@ export const VideoStage = ({
     if (!currentSong || !isReady) return
     safePlayerCall((player) => {
       const vol = Math.round(volume * 100)
-      player.setVolume(vol)
-      if (isMuted || vol === 0) player.mute()
-      else player.unMute()
+      player.setVolume?.(vol)
+      if (isMuted || vol === 0) player.mute?.()
+      else player.unMute?.()
     })
   }, [volume, isMuted, isReady, currentSong, safePlayerCall])
 
@@ -219,8 +219,8 @@ export const VideoStage = ({
     progressInterval.current = setInterval(() => {
       if (!isSeeking.current) {
         safePlayerCall((player) => {
-          const time: number = player.getCurrentTime()
-          const total: number = player.getDuration()
+          const time = player.getCurrentTime?.()
+          const total = player.getDuration?.()
           if (time !== undefined && total) {
             setCurrentTime(time)
             setDuration(total)
