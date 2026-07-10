@@ -50,7 +50,7 @@ export default async function VideosPage() {
         highlightStat={{ value: mergedVideos.length, label: 'Files Found' }}
       />
 
-      <main className="container">
+      <main className="container pb-24">
         <VisualLog videos={mergedVideos} />
       </main>
     </article>

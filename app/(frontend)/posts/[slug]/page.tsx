@@ -12,7 +12,7 @@ import { PayloadRedirects } from '@/components/PayloadRedirects'
 import RichText from '@/components/RichText'
 import { PostCard } from '@/components/PostCard'
 import { generateMeta } from '@/utilities/generateMeta'
-import { Separator } from '@/components/ui/separator'
+// import { Separator } from '@/components/ui/separator'
 // import PageClient from './page.client'
 
 type Args = {
@@ -115,7 +115,7 @@ export default async function PostPage({ params: paramsPromise }: Args) {
             {/* Related posts */}
             {relatedPosts.docs.length > 0 && (
               <section className="mt-12">
-                <Separator className="mb-8 opacity-30" />
+                {/* <Separator className="mb-8 opacity-30" /> */}
                 <div className="mb-6 flex items-center gap-3">
                   <div className="h-px flex-1 bg-border/40" />
                   <span className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase">

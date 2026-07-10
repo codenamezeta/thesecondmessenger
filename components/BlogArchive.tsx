@@ -410,7 +410,7 @@ export const BlogArchive = ({ initialPosts, categories }: BlogArchiveProps) => {
       )}
 
       {filteredPosts.length > 0 && (
-        <div className="flex items-center gap-3 border-t border-border/30 pt-4">
+        <div className="flex items-center gap-3">
           <div className="h-px flex-1 bg-border/30" />
           <span className="font-mono text-[9px] tracking-widest text-muted-foreground uppercase">
             END OF LOG — {filteredPosts.length} ENTRIES
