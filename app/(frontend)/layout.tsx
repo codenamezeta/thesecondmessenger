@@ -5,7 +5,7 @@ import { DynamicGlobalPlayer } from '@/components/GlobalPlayer/DynamicGlobalPlay
 import { CollapseTheaterOnRouteChange } from '@/components/GlobalPlayer/CollapseTheaterOnRouteChange'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { Nav } from '@/components/Nav'
-import { Analytics } from '@vercel/analytics/next'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import { Footer } from '@/components/Footer'
@@ -51,6 +51,8 @@ export const metadata: Metadata = {
   manifest: '/imgs/favicons/site.webmanifest',
 }
 
+const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim()
+
 export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props
   const siteDefault = await getDefaultTheme()
@@ -68,7 +70,6 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
         />
       </head>
       <body className="flex min-h-screen flex-col font-body antialiased">
-        <Analytics />
         <SpeedInsights />
         <YouTubeAuthProvider>
           <ThemeProvider siteDefault={siteDefault}>
@@ -81,6 +82,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
             </PlayerProvider>
           </ThemeProvider>
         </YouTubeAuthProvider>
+        {gaMeasurementId ? <GoogleAnalytics gaId={gaMeasurementId} /> : null}
       </body>
     </html>
   )

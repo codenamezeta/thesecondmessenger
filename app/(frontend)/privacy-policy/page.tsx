@@ -119,17 +119,18 @@ export default function PrivacyPolicyPage() {
             <li>
               <strong>Analytics and performance data</strong> collected via{' '}
               <a
-                href="https://vercel.com/docs/analytics"
+                href="https://support.google.com/analytics/answer/12017362"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary underline-offset-4 hover:underline"
               >
-                Vercel Analytics
+                Google Analytics 4
               </a>{' '}
-              and Vercel Speed Insights &mdash; aggregated page views, Web
-              Vitals, referrers, approximate geography, and anonymized visitor
-              hashes. These services do not use third-party cookies and do not
-              build cross-site advertising profiles.
+              (page views, referrers, approximate geography, device/browser
+              info, and engagement metrics) and Vercel Speed Insights (Web
+              Vitals). GA4 may set cookies such as <code>_ga</code> and{' '}
+              <code>_ga_*</code> to distinguish visitors; Speed Insights is
+              cookieless.
             </li>
             <li>
               <strong>Server logs</strong> &mdash; IP address, user-agent,
@@ -423,9 +424,23 @@ export default function PrivacyPolicyPage() {
             site also clears it.
           </li>
           <li>
-            <strong>Vercel Analytics / Speed Insights</strong> &mdash;
-            cookieless telemetry hashed to a rotating identifier. No cross-site
-            advertising profiles are created.
+            <strong>Google Analytics cookies</strong> (
+            <code>_ga</code>, <code>_ga_*</code>) &mdash; used by GA4 to
+            distinguish unique visitors and sessions. Managed by Google; you can
+            clear them via browser settings or limit them with Google&apos;s{' '}
+            <a
+              href="https://tools.google.com/dlpage/gaoptout"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline-offset-4 hover:underline"
+            >
+              Analytics Opt-out Browser Add-on
+            </a>
+            .
+          </li>
+          <li>
+            <strong>Vercel Speed Insights</strong> &mdash; cookieless Web Vitals
+            telemetry hashed to a rotating identifier.
           </li>
         </ul>
       </LegalSection>
@@ -442,7 +457,8 @@ export default function PrivacyPolicyPage() {
         <ul className="list-disc space-y-2 pl-5">
           <li>
             <strong>Vercel, Inc.</strong> &mdash; application hosting, Vercel
-            Postgres database, Vercel Blob media storage, analytics. See the{' '}
+            Postgres database, Vercel Blob media storage, and Speed Insights.
+            See the{' '}
             <a
               href="https://vercel.com/legal/privacy-policy"
               target="_blank"
@@ -483,9 +499,18 @@ export default function PrivacyPolicyPage() {
             .
           </li>
           <li>
-            <strong>Google LLC / YouTube LLC</strong> &mdash; OAuth identity,
-            YouTube Data API v3 for both authorized write actions and
-            public-channel reads.
+            <strong>Google LLC / YouTube LLC</strong> &mdash; Google Analytics 4
+            for site traffic measurement; OAuth identity and YouTube Data API
+            v3 for authorized write actions and public-channel reads. See the{' '}
+            <a
+              href="https://policies.google.com/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline-offset-4 hover:underline"
+            >
+              Google Privacy Policy
+            </a>
+            .
           </li>
           <li>
             <strong>Spotify AB</strong> &mdash; presave flow and optional

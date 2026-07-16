@@ -100,7 +100,8 @@ function SongTile({
 }) {
   const { playMedia } = usePlayer()
   const coverArt = song.coverArt as Media | null
-  const coverUrl = pickMediaImageUrl(coverArt, featured ? 'feature' : 'card') || null
+  const coverUrl =
+    pickMediaImageUrl(coverArt, featured ? 'feature' : 'card') || null
   const coverAlt = coverArt?.alt ?? song.title ?? 'Cover art'
   const releaseYear = song.releaseDate
     ? new Date(song.releaseDate).getFullYear()
@@ -327,32 +328,30 @@ function ArchiveSection({ songs }: { songs: SongPreview[] }) {
 
 const INTERCEPTS = [
   {
-    userId: 'SYS.USER_8492',
-    platform: 'YT_COMMENT',
-    timestamp: '2024.11.03_14:22',
-    message:
-      '"That chorus has been stuck in my head for three days straight. I don\'t even know how that\'s legal."',
-  },
-  {
-    userId: 'SYS.USER_1177',
-    platform: 'YT_REPLY',
-    timestamp: '2025.02.17_09:41',
-    message:
-      '"Bro replied to my comment within an hour. An actual independent artist who talks to his listeners. This is what music is supposed to feel like."',
-  },
-  {
     userId: 'SYS.USER_3309',
-    platform: 'YT_COMMENT',
+    platform: 'YouTube Comment',
     timestamp: '2025.01.08_22:55',
     message:
-      '"The guitar tone in the bridge is doing something genuinely illegal. I\'ve listened to that 30-second section probably 200 times."',
+      '"The guitar tone in the bridge is doing something genuinely special. I\'ve listened to that 30-second section probably 200 times."',
   },
   {
-    userId: 'SYS.USER_5821',
-    platform: 'YT_COMMENT',
-    timestamp: '2024.09.29_18:07',
+    userId: '@davidquintana2635',
+    platform: 'YouTube Comment',
+    timestamp: '2024.11.03_14:22',
+    message: '"This song is f**kin awesome. Great job guys!"',
+  },
+  {
+    userId: '@vador329',
+    platform: 'YouTube Comment',
+    timestamp: '2025.08.03',
+    message: '"Wow more of this please, this is a straight up banger."',
+  },
+  {
+    userId: 'Ste (Tato-SU)',
+    platform: 'Studio Pro Community Forum',
+    timestamp: '2026.06.12',
     message:
-      '"This is what foreground music means. You cannot have this on in the background. It demands your full attention and rewards every second of it."',
+      '"What a rich and beautifully crafted song! The arrangement is full but linear, everything well thought through. Guitars, bass, drums, vocals: all in their right place. The mix feels deep and immersive it really draws you in. Beautiful harmonies throughout. Great song, well done!"',
   },
 ]
 
@@ -426,7 +425,7 @@ function SignalInterceptSection() {
             className="mt-4 max-w-xl border-l border-primary/30 pl-4 font-mono text-xs leading-relaxed tracking-wide text-muted-foreground"
           >
             Others have already crossed the threshold. These are their
-            transmissions back.
+            transmissions.
           </motion.p>
         </motion.div>
 
