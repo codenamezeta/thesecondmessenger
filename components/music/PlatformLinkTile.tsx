@@ -1,9 +1,12 @@
+'use client'
+
 import type { CSSProperties, ReactNode } from 'react'
 import { ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { PlatformConfig } from '@/lib/platforms'
 import { PlatformIcon } from '@/components/music/PlatformIcon'
 import { Badge } from '@/components/ui/badge'
+import { trackOutboundStream } from '@/lib/analytics/ga'
 
 type PlatformLinkTileProps = {
   href: string
@@ -12,6 +15,7 @@ type PlatformLinkTileProps = {
   description?: string | null
   features?: string[]
   compact?: boolean
+  songSlug?: string
 }
 
 export function PlatformLinkTile({
@@ -21,10 +25,12 @@ export function PlatformLinkTile({
   description,
   features,
   compact = false,
+  songSlug,
 }: PlatformLinkTileProps) {
   const brandColor = config?.brandColor ?? 'hsl(var(--primary))'
   const isDirectSupport = config?.payoutRank === 1
   const featureList = features ?? config?.features ?? []
+  const platform = config?.id ?? displayName
 
   const brandStyle = {
     '--platform-brand': brandColor,
@@ -37,6 +43,13 @@ export function PlatformLinkTile({
       rel="noopener noreferrer"
       style={brandStyle}
       title={description ?? undefined}
+      onClick={() => {
+        trackOutboundStream({
+          platform,
+          link_url: href,
+          song_slug: songSlug,
+        })
+      }}
       className={cn(
         'group relative flex min-h-12 items-center gap-3 rounded-none border bg-card/10 px-3 py-2.5 backdrop-blur-sm transition-[border-color,box-shadow,background-color] duration-300',
         'border-border/50 hover:border-(--platform-brand) hover:bg-card/20',

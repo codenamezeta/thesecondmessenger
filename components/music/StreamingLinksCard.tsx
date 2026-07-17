@@ -15,10 +15,12 @@ import { PlatformLinkTile } from '@/components/music/PlatformLinkTile'
 
 type StreamingLinksCardProps = {
   streamingLinks: StreamingLinkInput[]
+  songSlug?: string
 }
 
 export function StreamingLinksCard({
   streamingLinks,
+  songSlug,
 }: StreamingLinksCardProps) {
   if (!streamingLinks.length) return null
 
@@ -47,6 +49,7 @@ export function StreamingLinksCard({
               displayName={link.displayName}
               description={link.description}
               compact={true}
+              songSlug={songSlug}
             />
           ))}
         </div>

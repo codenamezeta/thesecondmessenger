@@ -11,6 +11,12 @@ import {
   useEffect,
 } from 'react'
 import { Song, Release } from '@/payload-types'
+import {
+  LISTEN_PROGRESS_MILESTONES,
+  trackListenProgress,
+  trackSongPlay,
+  type ListenPercent,
+} from '@/lib/analytics/ga'
 import { isSongPlayable } from '@/lib/music/songRelease'
 import { applyYouTubeCaptions } from '@/lib/youtube/captions'
 
@@ -59,6 +65,27 @@ export type PlayableMedia =
       slug?: string
       [key: string]: unknown
     }
+
+function songAnalyticsParams(song: PlayableMedia) {
+  return {
+    song_id:
+      song.id != null
+        ? String(song.id)
+        : song.youtubeId
+          ? String(song.youtubeId)
+          : undefined,
+    song_slug: typeof song.slug === 'string' ? song.slug : undefined,
+    song_title: typeof song.title === 'string' ? song.title : undefined,
+  }
+}
+
+function songSessionKey(song: PlayableMedia | null): string | null {
+  if (!song) return null
+  if (song.youtubeId) return String(song.youtubeId)
+  if (typeof song.slug === 'string') return song.slug
+  if (song.id != null) return String(song.id)
+  return null
+}
 
 interface PlayerState {
   currentSong: PlayableMedia | null
@@ -224,6 +251,10 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   // YouTube player ref — VideoStage registers its player instance here
   const ytPlayerRef = useRef<YouTubePlayerRef | null>(null)
 
+  // GA4 listen milestones — once per song session (reset when track changes)
+  const listenMilestonesRef = useRef<Set<ListenPercent>>(new Set())
+  const listenSessionKeyRef = useRef<string | null>(null)
+
   // Derived backward-compat values
   const isVideoEnabled = videoEnabled
   const miniMode = videoMode === 'mini'
@@ -248,6 +279,32 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     }
     fetchAllSongs()
   }, [])
+
+  // Reset listen milestones when the current track changes
+  useEffect(() => {
+    const key = songSessionKey(currentSong)
+    if (key !== listenSessionKeyRef.current) {
+      listenSessionKeyRef.current = key
+      listenMilestonesRef.current = new Set()
+    }
+  }, [currentSong])
+
+  // Fire listen_progress at 25 / 50 / 75 / 100 once per song session
+  useEffect(() => {
+    if (!currentSong) return
+    const percentOfTrack = played * 100
+    const song_slug =
+      typeof currentSong.slug === 'string' ? currentSong.slug : undefined
+    for (const milestone of LISTEN_PROGRESS_MILESTONES) {
+      if (
+        percentOfTrack >= milestone &&
+        !listenMilestonesRef.current.has(milestone)
+      ) {
+        listenMilestonesRef.current.add(milestone)
+        trackListenProgress({ song_slug, percent: milestone })
+      }
+    }
+  }, [played, currentSong])
 
   // --- Actions ---
 
@@ -351,6 +408,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       setCurrentSong(song)
       setControlsVisible(true)
       setIsPlaying(true)
+      trackSongPlay(songAnalyticsParams(song))
     },
     [currentSong, togglePlay, allSongs],
   )
@@ -383,6 +441,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       setCurrentSong(songToPlay)
       setControlsVisible(true)
       setIsPlaying(true)
+      trackSongPlay(songAnalyticsParams(songToPlay))
     },
     [currentSong, queue, togglePlay],
   )
@@ -393,9 +452,11 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       return
     }
     const nextIndex = currentSongIndex + 1
+    const nextSong = queue[nextIndex] ?? null
     setCurrentSongIndex(nextIndex)
-    setCurrentSong(queue[nextIndex] ?? null)
+    setCurrentSong(nextSong)
     setIsPlaying(true)
+    if (nextSong) trackSongPlay(songAnalyticsParams(nextSong))
   }, [currentSongIndex, queue])
 
   const playPrevious = useCallback(() => {
@@ -409,9 +470,11 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       return
     }
     const prevIndex = currentSongIndex - 1
+    const prevSong = queue[prevIndex] ?? null
     setCurrentSongIndex(prevIndex)
-    setCurrentSong(queue[prevIndex] ?? null)
+    setCurrentSong(prevSong)
     setIsPlaying(true)
+    if (prevSong) trackSongPlay(songAnalyticsParams(prevSong))
   }, [currentSongIndex, queue, currentTime, seekTo])
 
   const shuffleQueue = useCallback(() => {

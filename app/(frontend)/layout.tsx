@@ -51,6 +51,7 @@ export const metadata: Metadata = {
   manifest: '/imgs/favicons/site.webmanifest',
 }
 
+/** GA4 measurement ID (`G-XXXXXXXX`). Set in Vercel env; omit locally to disable. */
 const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim()
 
 export default async function RootLayout(props: { children: React.ReactNode }) {

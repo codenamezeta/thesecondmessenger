@@ -48,6 +48,7 @@ import {
   CardContent,
 } from '@/components/ui/card'
 import { NewsletterSignup } from '@/components/NewsletterSignup'
+import { JoinCrewLink } from '@/components/analytics/JoinCrewLink'
 import { MagneticCta } from './HomeSectionMagneticCta'
 import { fadeUp, fadeLeft, fadeRight, stagger } from './homeSectionVariants'
 import type { HomeProps, SongPreview } from './homeSectionTypes'
@@ -546,12 +547,22 @@ function BackstageSection() {
                   <p className="flex-1 border-l border-primary/20 pl-4 font-body text-sm leading-relaxed text-muted-foreground">
                     {step.body}
                   </p>
-                  <Link
-                    href={step.cta.href}
-                    className="mt-8 self-start border border-border/30 px-4 py-2 font-mono text-[10px] tracking-[0.25em] text-foreground/60 uppercase transition-colors hover:border-primary/40 hover:text-primary"
-                  >
-                    {step.cta.label}
-                  </Link>
+                  {step.cta.href === '/memberships' ? (
+                    <JoinCrewLink
+                      href={step.cta.href}
+                      location="home_backstage"
+                      className="mt-8 self-start border border-border/30 px-4 py-2 font-mono text-[10px] tracking-[0.25em] text-foreground/60 uppercase transition-colors hover:border-primary/40 hover:text-primary"
+                    >
+                      {step.cta.label}
+                    </JoinCrewLink>
+                  ) : (
+                    <Link
+                      href={step.cta.href}
+                      className="mt-8 self-start border border-border/30 px-4 py-2 font-mono text-[10px] tracking-[0.25em] text-foreground/60 uppercase transition-colors hover:border-primary/40 hover:text-primary"
+                    >
+                      {step.cta.label}
+                    </Link>
+                  )}
                 </div>
               </SpotlightCard>
             </motion.div>
