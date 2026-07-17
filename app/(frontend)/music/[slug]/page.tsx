@@ -778,7 +778,10 @@ export default async function SongPage({ params, searchParams }: Args) {
             )}
 
             {song.streamingLinks && song.streamingLinks.length > 0 && (
-              <StreamingLinksCard streamingLinks={song.streamingLinks} />
+              <StreamingLinksCard
+                streamingLinks={song.streamingLinks}
+                songSlug={song.slug ?? undefined}
+              />
             )}
             <SongMetadataCard song={song} />
             <ReleaseDetailsCard song={song} />

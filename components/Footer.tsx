@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { ThemeSelect } from '@/components/ThemeSelect'
+import { JoinCrewLink } from '@/components/analytics/JoinCrewLink'
 
 const exploreLinks = [
   // { label: 'Home', href: '/' },
@@ -11,8 +12,16 @@ const exploreLinks = [
 ] as const
 
 const accessLinks = [
-  { label: 'Join the Crew', href: '/crew' },
-  { label: 'Memberships', href: '/memberships' },
+  {
+    label: 'Join the Crew',
+    href: '/crew',
+    trackLocation: 'footer_nav_crew' as const,
+  },
+  {
+    label: 'Memberships',
+    href: '/memberships',
+    trackLocation: 'footer_nav_memberships' as const,
+  },
   { label: 'Members', href: '/login' },
 ] as const
 
@@ -48,18 +57,28 @@ function FooterColumn({
 function FooterLinkList({
   links,
 }: {
-  links: readonly { label: string; href: string }[]
+  links: readonly { label: string; href: string; trackLocation?: string }[]
 }) {
   return (
     <ul className="flex flex-col gap-3">
       {links.map((item) => (
         <li key={item.href}>
-          <Link
-            href={item.href}
-            className="font-mono text-xs tracking-wider text-muted-foreground uppercase transition-colors hover:text-primary"
-          >
-            {item.label}
-          </Link>
+          {item.trackLocation ? (
+            <JoinCrewLink
+              href={item.href}
+              location={item.trackLocation}
+              className="font-mono text-xs tracking-wider text-muted-foreground uppercase transition-colors hover:text-primary"
+            >
+              {item.label}
+            </JoinCrewLink>
+          ) : (
+            <Link
+              href={item.href}
+              className="font-mono text-xs tracking-wider text-muted-foreground uppercase transition-colors hover:text-primary"
+            >
+              {item.label}
+            </Link>
+          )}
         </li>
       ))}
     </ul>
@@ -94,12 +113,13 @@ export function Footer() {
               Foreground music, direct from the artist. Join the Crew to shape
               releases, hear demos early, and unlock the archive.
             </p>
-            <Link
+            <JoinCrewLink
               href="/crew"
+              location="footer_primary"
               className="mt-6 inline-flex min-h-12 items-center justify-center border border-border/50 bg-background/40 px-6 py-3 font-mono text-xs tracking-[0.2em] uppercase backdrop-blur-sm transition-colors hover:border-primary/50 hover:text-primary"
             >
               Join the Crew
-            </Link>
+            </JoinCrewLink>
           </div>
 
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-3 lg:col-span-7">
