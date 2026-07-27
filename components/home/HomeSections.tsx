@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { MotionConfig } from 'motion/react'
 import { HeroSection } from './sections/HeroSection'
 import type { HomeProps } from './homeSectionTypes'
 
@@ -27,14 +28,20 @@ export function HomeSections({
   categoryQueues,
 }: HomeProps) {
   return (
-    <article className="relative bg-transparent">
-      <HeroSection songs={songs} categoryQueues={categoryQueues} />
-      <HomeSectionsBelowHeroDynamic
-        songs={songs}
-        videos={videos}
-        premiere={premiere}
-        categoryQueues={categoryQueues}
-      />
-    </article>
+    <MotionConfig reducedMotion="user">
+      <article className="relative bg-transparent">
+        {/* Global grain ties the textured ends to the quieter middle sections */}
+        <div className="home-grain" aria-hidden />
+        <div className="relative z-[2]">
+          <HeroSection songs={songs} categoryQueues={categoryQueues} />
+          <HomeSectionsBelowHeroDynamic
+            songs={songs}
+            videos={videos}
+            premiere={premiere}
+            categoryQueues={categoryQueues}
+          />
+        </div>
+      </article>
+    </MotionConfig>
   )
 }

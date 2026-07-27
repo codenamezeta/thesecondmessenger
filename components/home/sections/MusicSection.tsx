@@ -14,7 +14,8 @@ import { MUSIC } from '@/lib/home/copy'
 import { SectionHeading } from '../SectionHeading'
 import type { Media } from '@/payload-types'
 import type { YoutubeChannelVideo } from '@/actions/youtube'
-import { fadeUp, sectionInView, stagger } from '../homeSectionVariants'
+import { fadeUp, SECTION_PAD, sectionGlow, sectionInView, stagger, staggerFast } from '../homeSectionVariants'
+import { HomeCta } from '../HomeCta'
 import type { SongPreview, PremiereTeaser } from '../homeSectionTypes'
 
 // TODO: mixed-content data model — `✎ POST` cards land here once the posts
@@ -117,10 +118,12 @@ function TrackCard({
   return (
     <SpotlightCard
       className={cn(
-        'group relative flex h-full flex-col rounded-none border-border/30 bg-card/5 p-0 backdrop-blur-sm transition-all duration-300 hover:border-primary/50',
-        featured && 'min-h-[420px] border-primary/40',
+        'group relative flex h-full flex-col rounded-none border-border/30 bg-card/5 p-0',
+        featured &&
+          'min-h-[420px] border-primary/50 shadow-[0_0_60px_-20px_color-mix(in_oklch,var(--primary)_35%,transparent)]',
       )}
-      spotlightColor={`color-mix(in oklch, var(--primary) ${featured ? 14 : 10}%, transparent)`}
+      spotlightColor={`color-mix(in oklch, var(--primary) ${featured ? 18 : 10}%, transparent)`}
+      elevated={featured}
     >
       {/* Stretch link: whole card opens the song page */}
       <Link
@@ -194,7 +197,7 @@ function TrackCard({
             onClick={handlePlay}
             aria-label={`Play ${song.title}`}
             className={cn(
-              'pointer-events-auto inline-flex shrink-0 items-center justify-center border border-primary/50 bg-primary/10 text-primary transition-all duration-300 hover:border-primary hover:bg-primary hover:text-background',
+              'pointer-events-auto inline-flex shrink-0 items-center justify-center border border-primary/50 bg-primary/10 text-primary transition-all duration-300 hover:border-primary hover:bg-primary hover:text-background focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none',
               featured ? 'h-14 w-14' : 'h-12 w-12',
             )}
             style={{
@@ -228,13 +231,13 @@ function VideoCard({ video }: { video: YoutubeChannelVideo }) {
 
   return (
     <SpotlightCard
-      className="flex h-full flex-col rounded-none border-border/30 bg-card/5 p-0 backdrop-blur-sm transition-all duration-300 hover:border-primary/50"
+      className="flex h-full flex-col rounded-none border-border/30 bg-card/5 p-0 hover:border-primary/45"
       spotlightColor="color-mix(in oklch, var(--primary) 10%, transparent)"
     >
       {/* Image stays aspect-locked; no flex-1 so body padding matches track cards */}
       <button
         type="button"
-        className="group relative aspect-video w-full shrink-0 cursor-pointer overflow-hidden text-left focus:outline-none"
+        className="group relative aspect-video w-full shrink-0 cursor-pointer overflow-hidden text-left focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
         onClick={handlePlay}
         aria-label={`Play video: ${video.title}`}
       >
@@ -376,16 +379,21 @@ export function MusicSection({
     )
 
   return (
-    <section ref={ref} className="relative overflow-hidden px-4 py-28">
+    <section ref={ref} className={cn('relative overflow-hidden px-4', SECTION_PAD.peak)}>
+      <div className="absolute inset-0" style={sectionGlow('medium')} />
+      {/* Soft console grid — Music is the catalog peak */}
       <div
-        className="absolute inset-0"
+        className="pointer-events-none absolute inset-0 opacity-[0.07]"
         style={{
-          background:
-            'radial-gradient(ellipse 60% 40% at 80% 50%, color-mix(in oklch, var(--primary) 8%, transparent), transparent)',
+          backgroundImage:
+            'linear-gradient(color-mix(in oklch, var(--primary) 40%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklch, var(--primary) 40%, transparent) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+          maskImage:
+            'radial-gradient(ellipse 70% 60% at 70% 40%, black, transparent)',
         }}
       />
 
-      <div className="container relative">
+      <div className="home-shell container relative">
         <motion.div
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
@@ -396,6 +404,7 @@ export function MusicSection({
             eyebrow={MUSIC.eyebrow}
             heading={MUSIC.heading}
             subheading={MUSIC.subheading}
+            size="lg"
           />
         </motion.div>
 
@@ -403,8 +412,8 @@ export function MusicSection({
           <motion.div
             initial="hidden"
             animate={inView ? 'visible' : 'hidden'}
-            variants={stagger}
-            className="grid grid-cols-1 gap-px bg-border/20 md:grid-cols-12"
+            variants={staggerFast}
+            className="grid grid-cols-1 gap-px bg-border/25 md:grid-cols-12"
           >
             {/* Featured slot — fixed, biggest box */}
             <motion.div
@@ -445,24 +454,17 @@ export function MusicSection({
           </div>
         )}
 
-        {/* Hear Everything — accent, visually pops */}
+        {/* Hear Everything — primary action (accent reserved for emotional register) */}
         <motion.div
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
           variants={fadeUp}
-          className="mt-10 flex justify-center"
+          className="mt-12 flex justify-center"
         >
-          <Link
-            href="/music"
-            className="group inline-flex items-center gap-3 border border-accent bg-accent px-8 py-4 font-mono text-xs font-bold tracking-[0.25em] text-accent-foreground uppercase transition-all duration-300 hover:bg-accent/80"
-            style={{
-              boxShadow:
-                '0 0 40px color-mix(in oklch, var(--accent) 35%, transparent)',
-            }}
-          >
+          <HomeCta href="/music" variant="primary" size="default">
             {MUSIC.exploreCta}
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-          </Link>
+          </HomeCta>
         </motion.div>
       </div>
     </section>

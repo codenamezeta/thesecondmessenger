@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import { Check, Loader2 } from 'lucide-react'
 import { EMAIL_BAR } from '@/lib/home/copy'
+import { HomeCta } from '../HomeCta'
 
 /**
- * Slim, low-commitment catch for the "not yet" crowd — deliberately quiet
- * relative to the Final CTA below it.
+ * Slim, low-commitment catch — deliberately quiet relative to Final CTA.
  */
 export function EmailBar() {
   const [email, setEmail] = useState('')
@@ -25,7 +25,6 @@ export function EmailBar() {
         body: JSON.stringify({
           email,
           // TODO: persist name — MailingList has no name field yet
-          // (schema addition, separate workstream). Sent but ignored for now.
           name: name.trim() || undefined,
           source: 'newsletter_signup',
           tags: 'homepage_email_bar',
@@ -40,8 +39,8 @@ export function EmailBar() {
 
   return (
     <section className="relative border-y border-border/25 bg-card/5 px-4 py-10 backdrop-blur-sm">
-      <div className="container flex flex-col items-center justify-between gap-6 lg:flex-row">
-        <h2 className="text-center font-body text-base font-semibold text-foreground/90 lg:text-left">
+      <div className="home-shell container flex flex-col items-center justify-between gap-6 lg:flex-row">
+        <h2 className="max-w-md text-center font-body text-base font-semibold text-foreground/90 lg:text-left md:text-lg">
           {EMAIL_BAR.heading}
         </h2>
 
@@ -55,7 +54,7 @@ export function EmailBar() {
         ) : (
           <form
             onSubmit={handleSubmit}
-            className="flex w-full max-w-4xl flex-col gap-2 sm:flex-row"
+            className="flex w-full max-w-3xl flex-col gap-2 sm:flex-row"
           >
             <input
               type="email"
@@ -64,7 +63,7 @@ export function EmailBar() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="min-h-12 flex-1 border border-border/40 bg-input px-3 py-2 font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-primary"
+              className="min-h-12 flex-1 border border-border/40 bg-input px-3 py-2 font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30"
             />
             <input
               type="text"
@@ -72,26 +71,28 @@ export function EmailBar() {
               placeholder="Name (optional)"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="min-h-12 flex-1 border border-border/40 bg-input px-3 py-2 font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-primary"
+              className="min-h-12 flex-1 border border-border/40 bg-input px-3 py-2 font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30"
             />
-            <button
+            <HomeCta
               type="submit"
+              variant="quiet"
+              size="compact"
               disabled={status === 'loading'}
-              className="inline-flex min-h-12 items-center justify-center gap-2 border border-border/50 bg-card/20 px-5 py-2 font-mono text-[11px] tracking-[0.2em] text-foreground uppercase transition-colors hover:border-primary/50 hover:text-primary disabled:opacity-60"
+              className="min-w-[10rem]"
             >
               {status === 'loading' ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
                 EMAIL_BAR.button
               )}
-            </button>
+            </HomeCta>
           </form>
         )}
       </div>
       {status === 'error' && (
         <p
           role="alert"
-          className="container mt-2 text-right font-mono text-[10px] tracking-widest text-destructive uppercase"
+          className="container mt-2 text-right font-mono text-[11px] tracking-widest text-destructive uppercase"
         >
           Transmission failed — try again.
         </p>

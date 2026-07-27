@@ -10,7 +10,7 @@ import { cn } from '@/utilities/ui'
 import { trackJoinCrewClick } from '@/lib/analytics/ga'
 import { HERO } from '@/lib/home/copy'
 import type { PlayCategory } from '@/lib/home/playCategories'
-import { MagneticCta } from '../HomeSectionMagneticCta'
+import { HomeCta } from '../HomeCta'
 import { PlaySomethingButton } from '../PlaySomethingButton'
 import { AmbientComments } from '../AmbientComments'
 import { fadeUp, stagger } from '../homeSectionVariants'
@@ -91,7 +91,7 @@ export function HeroSection({
       <div className="absolute right-6 bottom-[10%] h-8 w-8 border-r border-b border-primary/30" />
 
       {/* Content */}
-      <div className="relative container flex flex-col items-center gap-4 pt-14 pb-20 lg:h-full lg:flex-row lg:items-stretch lg:gap-0 lg:pt-0 lg:pb-0">
+      <div className="relative container flex flex-col items-center gap-4 pt-12 pb-20 lg:h-full lg:flex-row lg:items-stretch lg:gap-0 lg:pt-0 lg:pb-0">
         {/* Left column — the pitch */}
         <motion.div
           className="relative z-10 flex flex-col justify-center space-y-5 lg:min-h-0 lg:flex-1 lg:space-y-6"
@@ -154,14 +154,15 @@ export function HeroSection({
             className="flex flex-col items-start gap-2 sm:flex-row sm:items-center"
           >
             <PlaySomethingButton songs={songs} queues={categoryQueues} />
-            <MagneticCta
+            <HomeCta
               href="/memberships"
-              variant="ghost"
+              variant="secondary"
+              magnetic
               onClick={() => trackJoinCrewClick({ location: 'home_hero' })}
             >
               {HERO.secondaryCta}
-              <ArrowRight className="size-5" />
-            </MagneticCta>
+              <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+            </HomeCta>
           </motion.div>
 
           {/* Value checks — top 3 on mobile, all 5 on md+ */}
@@ -199,13 +200,21 @@ export function HeroSection({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.9, delay: 0.3 }}
-          className="pointer-events-none relative flex w-full flex-col items-end lg:h-full lg:w-1/2 lg:shrink-0"
+          className="pointer-events-none relative flex flex-auto flex-col items-end lg:h-full lg:shrink-0"
         >
           {/* Halo rings behind head — anchored to the right */}
-          <div className="absolute top-[35%] right-0 size-[min(800px,90vw)] animate-pulse rounded-full border border-foreground/20 lg:-right-6" />
-          <div className="absolute top-[38%] right-0 size-[min(750px,85vw)] rounded-full border border-dashed border-foreground/20 lg:-right-6" />
+          <div className="absolute top-[31%] right-0 size-[min(800px,90vw)] animate-pulse rounded-full border border-foreground/20 lg:-right-10" />
+          <div className="absolute top-[33%] right-0 size-[min(750px,85vw)] rounded-full border border-dashed border-foreground/20 lg:-right-6" />
+          {/* Halo glow — single dramatic light source */}
+          <div
+            className="absolute top-[35%] left-25 size-[min(820px,92vw)] rounded-full lg:-right-6"
+            style={{
+              background:
+                'radial-gradient(circle at 30% 20%, color-mix(in oklch, var(--primary) 14%, transparent), transparent 60%)',
+            }}
+          />
 
-          <div className="relative h-full min-h-96 w-full lg:min-h-0">
+          <div className="relative size-full min-h-96 lg:min-h-0">
             {/* Ambient peeking comments — behind the PNG, in the halo space */}
             <AmbientComments />
 

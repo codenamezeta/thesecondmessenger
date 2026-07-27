@@ -4,13 +4,15 @@ import { useRef } from 'react'
 import Image from 'next/image'
 import { motion, useInView } from 'motion/react'
 import { ArrowRight, Play, Radio, ShieldAlert } from 'lucide-react'
+import { cn } from '@/utilities/ui'
 import { PAS } from '@/lib/home/copy'
-import { MagneticCta } from '../HomeSectionMagneticCta'
+import { HomeCta } from '../HomeCta'
 import { SectionHeading } from '../SectionHeading'
 import {
   fadeLeft,
   fadeRight,
-  fadeUp,
+  fadeScale,
+  SECTION_PAD,
   sectionInView,
   stagger,
 } from '../homeSectionVariants'
@@ -29,16 +31,14 @@ function withEmphasis(text: string, phrase: string) {
 }
 
 function TrailerSlot() {
-  // TODO: asset — channel-trailer video (edgier spoken adaptation of the PAS copy). Swap this placeholder for the YouTube embed when footage lands.
+  // TODO: asset — channel-trailer video. Swap this placeholder for the embed when footage lands.
   return (
-    <div className="relative aspect-video w-full overflow-hidden border border-border/40 bg-card/5">
-      {/* Corner brackets */}
+    <div className="relative aspect-video w-full overflow-hidden border border-border/40 bg-card/5 shadow-[0_1px_0_0_color-mix(in_oklch,var(--foreground)_8%,transparent)_inset]">
       <div className="absolute top-3 left-3 h-5 w-5 border-t border-l border-primary/40" />
       <div className="absolute top-3 right-3 h-5 w-5 border-t border-r border-primary/40" />
       <div className="absolute bottom-3 left-3 h-5 w-5 border-b border-l border-primary/40" />
       <div className="absolute right-3 bottom-3 h-5 w-5 border-r border-b border-primary/40" />
 
-      {/* Static/noise texture */}
       <div
         className="absolute inset-0 opacity-[0.06]"
         style={{
@@ -55,11 +55,11 @@ function TrailerSlot() {
       />
 
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center border border-primary/50 bg-background/60 backdrop-blur-sm">
+        <div className="flex size-16 items-center justify-center border border-primary/50 bg-background/60 backdrop-blur-sm">
           <Play className="ml-0.5 h-6 w-6 text-primary/70" />
         </div>
-        <span className="font-mono text-[9px] tracking-[0.3em] text-muted-foreground/60 uppercase">
-          [ Transmission corrupted — try again later]
+        <span className="font-mono text-[10px] tracking-[0.28em] text-muted-foreground/70 uppercase">
+          Transmission pending
         </span>
       </div>
     </div>
@@ -71,16 +71,20 @@ export function PasSection() {
   const inView = useInView(ref, sectionInView)
 
   return (
-    <section ref={ref} className="relative overflow-hidden px-4 py-28">
+    <section
+      ref={ref}
+      className={cn('relative overflow-hidden px-4', SECTION_PAD.default)}
+    >
+      {/* Problem-side tension — cool destructive wash from the left */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse 50% 45% at 15% 30%, color-mix(in oklch, var(--destructive) 6%, transparent), transparent)',
+            'radial-gradient(ellipse 50% 50% at 12% 35%, color-mix(in oklch, var(--destructive) 7%, transparent), transparent 65%)',
         }}
       />
 
-      <div className="relative container">
+      <div className="home-shell container relative">
         <motion.div
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
@@ -91,10 +95,10 @@ export function PasSection() {
             eyebrow={PAS.eyebrow}
             heading={PAS.heading}
             subheading={withEmphasis(PAS.subheading, 'stuck')}
+            size="md"
           />
         </motion.div>
 
-        {/* Two columns: trailer video left, Problem + Agitation right */}
         <motion.div
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
@@ -106,47 +110,43 @@ export function PasSection() {
           </motion.div>
 
           <motion.div variants={fadeRight} className="space-y-6">
-            {/* Problem — bold, slightly larger */}
             <p className="font-body text-base leading-relaxed font-semibold text-foreground md:text-lg">
               {PAS.problem}
             </p>
-            {/* Agitation — regular weight */}
-            <p className="border-l border-border/40 pl-4 font-body text-sm leading-relaxed text-muted-foreground md:text-base">
+            <p className="border-l-2 border-border/40 pl-4 font-body text-sm leading-relaxed text-muted-foreground md:text-base">
               {PAS.agitation}
             </p>
           </motion.div>
         </motion.div>
 
-        {/* Solution reveal — full-width, the one intentionally sparkly block */}
+        {/* Solution reveal */}
         <motion.div
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
-          variants={fadeUp}
-          className="relative mt-20"
+          variants={fadeScale}
+          className="relative mt-16 md:mt-20"
         >
-          {/* Gradient border frame */}
           <div
             className="p-px"
             style={{
               background:
-                'linear-gradient(120deg, color-mix(in oklch, var(--primary) 70%, transparent), color-mix(in oklch, var(--accent) 45%, transparent) 50%, color-mix(in oklch, var(--primary) 70%, transparent))',
+                'linear-gradient(120deg, color-mix(in oklch, var(--primary) 65%, transparent), color-mix(in oklch, var(--accent) 35%, transparent) 55%, color-mix(in oklch, var(--primary) 55%, transparent))',
             }}
           >
             <div className="relative overflow-hidden bg-background">
-              {/* Ambient bloom */}
               <div
                 className="pointer-events-none absolute inset-0"
                 style={{
                   background:
-                    'radial-gradient(ellipse 70% 90% at 20% 10%, color-mix(in oklch, var(--primary) 14%, transparent), transparent 60%), radial-gradient(ellipse 50% 80% at 95% 90%, color-mix(in oklch, var(--accent) 10%, transparent), transparent 60%)',
+                    'radial-gradient(ellipse 70% 90% at 18% 10%, color-mix(in oklch, var(--primary) 14%, transparent), transparent 60%), radial-gradient(ellipse 45% 70% at 95% 85%, color-mix(in oklch, var(--accent) 9%, transparent), transparent 60%)',
                 }}
               />
 
-              <div className="relative grid grid-cols-1 gap-8 p-8 md:grid-cols-[1fr_minmax(240px,320px)] md:p-12">
-                <div className="space-y-6">
-                  <div className="flex items-center gap-2">
-                    <Radio className="size-3 text-primary" />
-                    <span className="font-mono text-[10px] tracking-[0.3em] text-primary uppercase">
+              <div className="relative grid grid-cols-1 gap-8 p-8 md:grid-cols-[1fr_minmax(240px,300px)] md:gap-10 md:p-12">
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2.5">
+                    <Radio className="size-3.5 text-primary" />
+                    <span className="font-mono text-[11px] tracking-[0.28em] text-primary uppercase">
                       {PAS.solution.eyebrow}
                     </span>
                   </div>
@@ -156,27 +156,28 @@ export function PasSection() {
                   <p className="max-w-3xl font-body text-sm leading-relaxed text-foreground/85 md:text-base">
                     {withEmphasis(PAS.solution.body, 'listened to')}
                   </p>
-                  <div className="-m-6">
-                    <MagneticCta href={PAS.solution.cta.href} variant="ghost">
-                      {PAS.solution.cta.label}
-                      <ArrowRight className="size-5" />
-                    </MagneticCta>
-                  </div>
+                  <HomeCta
+                    href={PAS.solution.cta.href}
+                    variant="secondary"
+                    magnetic
+                  >
+                    {PAS.solution.cta.label}
+                    <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                  </HomeCta>
                 </div>
 
-                {/* Artist — the real person behind the signal */}
-                <div className="relative hidden min-h-[320px] md:block">
+                <div className="relative hidden min-h-[300px] md:block">
                   <div className="absolute inset-0 overflow-hidden border border-border/30">
                     <Image
                       src="/imgs/michael-today.jpg" // TODO: asset — dedicated solution-reveal artist photo
                       alt="Michael Zeta — the artist behind The Second Messenger"
                       fill
-                      sizes="320px"
+                      sizes="300px"
                       className="object-cover object-top contrast-110 grayscale-25 transition-all duration-700 hover:grayscale-0"
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-background/80 via-transparent to-transparent" />
                   </div>
-                  <div className="absolute -bottom-3 -left-3 border border-primary/40 bg-background/90 px-3 py-1.5 font-mono text-[9px] tracking-[0.25em] text-primary uppercase backdrop-blur-sm">
+                  <div className="absolute -bottom-3 -left-3 border border-accent/40 bg-background/90 px-3 py-1.5 font-mono text-[10px] tracking-[0.22em] text-accent uppercase backdrop-blur-sm">
                     Michael Zeta
                   </div>
                 </div>

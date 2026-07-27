@@ -76,7 +76,7 @@ export function PlaySomethingButton({
         type="button"
         onClick={handlePlay}
         aria-label={`Play something ${category}`}
-        className="group relative inline-flex min-h-[56px] items-center justify-between gap-4 border border-primary bg-primary/10 px-6 py-4 font-mono text-xs tracking-[0.25em] text-primary uppercase transition-all duration-300 hover:bg-primary hover:text-background"
+        className="group relative inline-flex min-h-14 items-center justify-between gap-4 border border-primary bg-primary/10 px-6 py-4 font-heading text-xs font-semibold tracking-[0.2em] text-primary uppercase transition-all duration-300 hover:bg-primary hover:text-background focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
         style={{
           boxShadow:
             '0 0 40px color-mix(in oklch, var(--primary) 25%, transparent)',
