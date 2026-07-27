@@ -437,6 +437,28 @@
 }
 
 /* ============================================================
+   Film grain — a single global texture layer.
+
+   The homepage used to be textured at the hero and the final CTA and
+   completely flat for the ~60% in between. This runs under every section so
+   each section's own ruling/grid reads as an accent rather than as the only
+   thing keeping the page from being a bare gradient.
+
+   SVG feTurbulence rather than the PNGs in /imgs/backgrounds (those are
+   400KB–1.7MB; this is well under 1KB and resolution independent).
+   ============================================================ */
+.tsm-grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.055;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+/* ============================================================
    Song trading cards — depth, foil, equalizer, now-playing.
 
    All driven by CSS custom properties set on `.tsm-card-tilt` by the
@@ -544,6 +566,12 @@
   .tsm-card-foil {
     opacity: 0.18 !important;
   }
+  /* The two infinite glitch loops are decorative; hold them on the readable
+     frame. Framer entrances are handled by MotionConfig reducedMotion="user". */
+  .glitch-text,
+  .glitch-text-2 {
+    animation: none !important;
+  }
 }
 
 @layer components {
@@ -565,7 +593,36 @@
     /* Optional: Add a tiny bit of padding so text never touches the *absolute* edge 
      if the clamp hits 100% on a weird device. 
   */
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Homepage composition width — keeps three-column grids from sprawling
+     on ultrawide while the global .container stays wide for other routes. */
+  .home-shell {
+    width: 100%;
+    max-width: 1600px;
+    margin-inline: auto;
+  }
+
+  /* Global film grain — ties textured hero/CTA ends to the flat middle.
+     Applied once on the homepage article; pointer-events none. */
+  .home-grain {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 180px 180px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .glitch-text,
+    .glitch-text-2 {
+      animation: none !important;
+    }
   }
 }
