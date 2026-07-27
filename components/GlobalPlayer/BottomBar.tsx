@@ -128,10 +128,10 @@ export const BottomBar = () => {
       >
         {/* Visible muted track, anchored to the BOTTOM of the hit area (=
             the top edge of the bottom bar). Matches the original position. */}
-        <div className="pointer-events-none absolute right-0 bottom-0 left-0 h-[2px] bg-muted transition-all duration-150 group-hover:h-1" />
+        <div className="pointer-events-none absolute right-0 bottom-0 left-0 h-0.5 bg-muted transition-all duration-150 group-hover:h-1" />
         {/* Filled primary track */}
         <div
-          className="pointer-events-none absolute bottom-0 left-0 h-[2px] bg-primary shadow-[0_0_10px_hsl(var(--primary))] transition-all duration-150 ease-linear group-hover:h-1"
+          className="pointer-events-none absolute bottom-0 left-0 h-0.5 bg-primary shadow-[0_0_10px_hsl(var(--primary))] transition-all duration-150 ease-linear group-hover:h-1"
           style={{ width: `${(played ?? 0) * 100}%` }}
         />
         <input
