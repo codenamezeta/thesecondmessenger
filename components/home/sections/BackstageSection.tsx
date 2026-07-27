@@ -9,7 +9,7 @@ import SpotlightCard from '@/components/SpotlightCard'
 import { JoinCrewLink } from '@/components/analytics/JoinCrewLink'
 import { BACKSTAGE } from '@/lib/home/copy'
 import { SectionHeading } from '../SectionHeading'
-import { fadeUp, stagger } from '../homeSectionVariants'
+import { fadeUp, sectionInView, stagger } from '../homeSectionVariants'
 
 /**
  * The escalation ladder: free listen → free account → paid membership.
@@ -20,7 +20,7 @@ const STEP_ICONS = [Play, UserPlus, Crown] as const
 
 export function BackstageSection() {
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-10%' })
+  const inView = useInView(ref, sectionInView)
 
   return (
     <section ref={ref} className="relative overflow-hidden px-4 py-28">

@@ -9,7 +9,7 @@ import { FINAL_CTA } from '@/lib/home/copy'
 import type { PlayCategory } from '@/lib/home/playCategories'
 import { MagneticCta } from '../HomeSectionMagneticCta'
 import { PlaySomethingButton } from '../PlaySomethingButton'
-import { fadeUp, stagger } from '../homeSectionVariants'
+import { fadeUp, sectionInView, stagger } from '../homeSectionVariants'
 import type { SongPreview } from '../homeSectionTypes'
 
 /**
@@ -24,7 +24,7 @@ export function FinalCtaSection({
   categoryQueues: Record<PlayCategory, Array<string | number>>
 }) {
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-10%' })
+  const inView = useInView(ref, sectionInView)
 
   return (
     <section ref={ref} className="relative overflow-hidden px-4 py-32 md:py-40">

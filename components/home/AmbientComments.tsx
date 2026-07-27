@@ -11,9 +11,9 @@ import { HERO_COMMENTS } from '@/lib/home/heroComments'
  */
 
 const POSITIONS = [
-  'top-[16%] -left-4 max-w-[240px]',
+  'top-[40%] left-24 max-w-[240px]',
   'top-[42%] -right-2 max-w-[190px]',
-  'top-[66%] left-[2%] max-w-[210px]',
+  'top-[67%] left-[2%] max-w-[210px]',
 ]
 
 export function AmbientComments({ className }: { className?: string }) {
@@ -36,7 +36,7 @@ export function AmbientComments({ className }: { className?: string }) {
             ease: 'easeInOut',
           }}
         >
-          <div className="border border-border/30 bg-background/40 p-3 opacity-40 blur-[1.2px] backdrop-blur-sm">
+          <div className="border border-accent/50 bg-accent/20 p-3 opacity-40 blur-[0.67px] backdrop-blur-sm">
             <div className="mb-1 font-mono text-[9px] tracking-[0.2em] text-primary/80 uppercase">
               {comment.author}
             </div>

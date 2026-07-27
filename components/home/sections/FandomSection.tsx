@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
+import Image from 'next/image'
 import { motion, useInView } from 'motion/react'
 import { ExternalLink, Signal } from 'lucide-react'
 import { cn } from '@/utilities/ui'
@@ -12,7 +13,7 @@ import {
   type FandomComment,
 } from '@/lib/home/fandom'
 import { SectionHeading } from '../SectionHeading'
-import { fadeUp, stagger } from '../homeSectionVariants'
+import { fadeUp, sectionInView, stagger } from '../homeSectionVariants'
 
 /**
  * Social proof, right before the ask. Hybrid layout per spec: 3 detailed
@@ -20,7 +21,7 @@ import { fadeUp, stagger } from '../homeSectionVariants'
  * ones. Every comment carries a small avatar + verifiable source link.
  */
 
-/** Initial-letter avatar tile — no hotlinked user images. */
+/** Letter placeholder when no local fan avatar is available. */
 function InitialAvatar({
   author,
   size = 'default',
@@ -39,6 +40,32 @@ function InitialAvatar({
     >
       {initial}
     </span>
+  )
+}
+
+function CommentAvatar({
+  comment,
+  size = 'default',
+}: {
+  comment: FandomComment
+  size?: 'default' | 'large'
+}) {
+  if (!comment.avatar) {
+    return <InitialAvatar author={comment.author} size={size} />
+  }
+
+  return (
+    <Image
+      src={comment.avatar}
+      alt=""
+      aria-hidden
+      className={cn(
+        'shrink-0 border border-primary/30 object-cover',
+        size === 'large' ? 'h-9 w-9' : 'h-6 w-6',
+      )}
+      width={size === 'large' ? 36 : 24}
+      height={size === 'large' ? 36 : 24}
+    />
   )
 }
 
@@ -94,7 +121,7 @@ function AnchorCard({
         &ldquo;{comment.quote}&rdquo;
       </blockquote>
       <footer className="mt-5 flex items-center gap-3 border-t border-border/20 pt-4">
-        <InitialAvatar author={comment.author} size="large" />
+        <CommentAvatar comment={comment} size="large" />
         <div className="min-w-0">
           <div className="truncate font-mono text-[11px] tracking-[0.15em] text-primary uppercase">
             {comment.author}
@@ -118,12 +145,12 @@ function GridCard({ comment }: { comment: FandomComment }) {
         &ldquo;{comment.quote}&rdquo;
       </blockquote>
       <footer className="mt-4 flex items-center gap-2.5">
-        <InitialAvatar author={comment.author} />
+        <CommentAvatar comment={comment} />
         <div className="min-w-0 flex-1">
           <div className="truncate font-mono text-[10px] tracking-[0.15em] text-primary/90 uppercase">
             {comment.author}
           </div>
-          <div className="truncate font-mono text-[8px] tracking-[0.1em] text-muted-foreground/50 uppercase">
+          <div className="truncate font-mono text-[8px] tracking-widest text-muted-foreground/50 uppercase">
             {comment.videoTitle}
           </div>
         </div>
@@ -135,7 +162,7 @@ function GridCard({ comment }: { comment: FandomComment }) {
 
 export function FandomSection() {
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-10%' })
+  const inView = useInView(ref, sectionInView)
 
   const [crownJewel, ...otherAnchors] = ANCHOR_REVIEWS
 
@@ -157,7 +184,7 @@ export function FandomSection() {
         }}
       />
 
-      <div className="container relative">
+      <div className="relative container">
         <motion.div
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
@@ -167,6 +194,7 @@ export function FandomSection() {
             icon={Signal}
             eyebrow={FANDOM.eyebrow}
             heading={FANDOM.heading}
+            subheading={FANDOM.subtitle}
           />
         </motion.div>
 

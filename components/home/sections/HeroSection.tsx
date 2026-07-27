@@ -24,7 +24,7 @@ export function HeroSection({
   categoryQueues: Record<PlayCategory, Array<string | number>>
 }) {
   return (
-    <section className="relative overflow-hidden lg:min-h-[calc(100vh-var(--main-nav-bar-height))]">
+    <section className="relative overflow-hidden lg:h-[calc(100vh-var(--main-nav-bar-height))]">
       {/* Background void */}
       <div className="absolute inset-0 bg-background">
         <DotField
@@ -91,10 +91,10 @@ export function HeroSection({
       <div className="absolute right-6 bottom-[10%] h-8 w-8 border-r border-b border-primary/30" />
 
       {/* Content */}
-      <div className="container relative flex flex-col items-center gap-4 pt-14 pb-20 lg:min-h-[calc(100vh-var(--main-nav-bar-height))] lg:flex-row lg:items-center lg:gap-0 lg:pt-0 lg:pb-0">
+      <div className="relative container flex flex-col items-center gap-4 pt-14 pb-20 lg:h-full lg:flex-row lg:items-stretch lg:gap-0 lg:pt-0 lg:pb-0">
         {/* Left column — the pitch */}
         <motion.div
-          className="relative z-10 flex max-w-2xl flex-col justify-center space-y-6 lg:flex-1"
+          className="relative z-10 flex flex-col justify-center space-y-5 lg:min-h-0 lg:flex-1 lg:space-y-6"
           initial="hidden"
           animate="visible"
           variants={stagger}
@@ -191,43 +191,41 @@ export function HeroSection({
           </motion.ul>
         </motion.div>
 
-        {/* Right column — the artist IS the product */}
+        {/* Right column — bottom-right anchored cutout (matches the pre-redesign
+            flush-foot behavior). Wider than the pitch column so the figure can
+            bleed toward the right edge. */}
         <motion.div
+          id="hero_image"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.9, delay: 0.3 }}
-          className="pointer-events-none relative flex flex-col lg:mx-[-60px] lg:self-end xl:mx-[-36px]"
+          className="pointer-events-none relative flex w-full flex-col items-end lg:h-full lg:w-1/2 lg:shrink-0"
         >
-          {/* Halo rings behind head */}
-          <div className="absolute inset-x-0 top-36 size-[800px] animate-pulse rounded-full border border-foreground/20 lg:right-10" />
-          <div className="absolute inset-x-0 top-48 size-[750px] rounded-full border border-dashed border-foreground/20 lg:right-10" />
-          {/* Halo glow — single dramatic light source */}
-          <div
-            className="absolute inset-x-0 top-32 size-[820px] rounded-full lg:right-10"
-            style={{
-              background:
-                'radial-gradient(circle at 30% 20%, color-mix(in oklch, var(--primary) 14%, transparent), transparent 60%)',
-            }}
-          />
+          {/* Halo rings behind head — anchored to the right */}
+          <div className="absolute top-[35%] right-0 size-[min(800px,90vw)] animate-pulse rounded-full border border-foreground/20 lg:-right-6" />
+          <div className="absolute top-[38%] right-0 size-[min(750px,85vw)] rounded-full border border-dashed border-foreground/20 lg:-right-6" />
 
-          <div className="relative min-h-[360px] min-w-[300px] lg:min-h-[860px] lg:min-w-[720px]">
+          <div className="relative h-full min-h-96 w-full lg:min-h-0">
             {/* Ambient peeking comments — behind the PNG, in the halo space */}
             <AmbientComments />
 
-            {/* Artist cutout — dramatic single-source light, deep shadow */}
-            <div className="pointer-events-auto absolute inset-0 z-10 contrast-125 drop-shadow-[0_0_60px_rgba(0,0,0,0.85)] grayscale-30 filter transition-all duration-700 hover:grayscale-0 lg:-right-10">
+            {/* Artist cutout — pinned bottom-right. `contain` keeps the full
+                figure (feet included); `object-right-bottom` hugs the right
+                edge. A taller box than the old 67% crop avoids mid-torso cutoff
+                in the wider redesign column. */}
+            <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-10 h-full contrast-125 drop-shadow-[0_0_60px_rgba(0,0,0,0.85)] grayscale-30 filter transition-all duration-700 hover:grayscale-0 lg:-right-12 lg:left-auto lg:w-[110%] xl:-right-20">
               <Image
                 src="/imgs/michael-01.png" // TODO: asset — refined hero cutout w/ dramatic single-source lighting
                 alt="Michael Zeta"
                 fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover object-top"
+                sizes="(max-width: 768px) 100vw, 60vw"
+                className="object-contain object-bottom-right"
                 priority
               />
             </div>
 
             {/* Foreground HUD overlay */}
-            <div className="absolute bottom-20 -left-8 z-20 hidden border-l-4 border-primary bg-background/80 p-4 backdrop-blur-md md:block">
+            <div className="absolute bottom-20 left-0 z-20 hidden border-l-4 border-primary bg-background/80 p-4 backdrop-blur-md md:block lg:left-2">
               <div className="mb-1 flex items-center gap-3">
                 <Zap size={16} className="text-primary" />
                 <span className="font-mono text-[10px] tracking-widest text-primary uppercase">

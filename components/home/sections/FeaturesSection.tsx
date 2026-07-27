@@ -6,7 +6,7 @@ import { Check, Cpu, Music, Radio, Users } from 'lucide-react'
 import SpotlightCard from '@/components/SpotlightCard'
 import { FEATURES } from '@/lib/home/copy'
 import { SectionHeading } from '../SectionHeading'
-import { fadeUp, stagger } from '../homeSectionVariants'
+import { fadeUp, sectionInView, stagger } from '../homeSectionVariants'
 
 /**
  * Logic backup for analytical buyers. Neutral voice, full terminal/HUD
@@ -18,7 +18,7 @@ const GROUP_ICONS = [Music, Radio, Users] as const
 
 export function FeaturesSection() {
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-10%' })
+  const inView = useInView(ref, sectionInView)
 
   return (
     <section ref={ref} className="relative overflow-hidden px-4 py-28">

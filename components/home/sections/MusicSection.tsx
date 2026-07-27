@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, type MouseEvent } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion, useInView } from 'motion/react'
@@ -14,7 +14,7 @@ import { MUSIC } from '@/lib/home/copy'
 import { SectionHeading } from '../SectionHeading'
 import type { Media } from '@/payload-types'
 import type { YoutubeChannelVideo } from '@/actions/youtube'
-import { fadeUp, stagger } from '../homeSectionVariants'
+import { fadeUp, sectionInView, stagger } from '../homeSectionVariants'
 import type { SongPreview, PremiereTeaser } from '../homeSectionTypes'
 
 // TODO: mixed-content data model — `✎ POST` cards land here once the posts
@@ -26,7 +26,7 @@ type FeedItem =
 
 function TypeTag({ kind }: { kind: 'track' | 'video' }) {
   return (
-    <span className="inline-flex items-center gap-1.5 border border-border/40 bg-background/70 px-2 py-0.5 font-mono text-[9px] tracking-[0.25em] text-primary/80 uppercase backdrop-blur-sm">
+    <span className="inline-flex items-center gap-1.5 border border-border/40 bg-background/70 px-2 py-0.5 font-mono text-[10px] tracking-[0.25em] text-primary/80 uppercase backdrop-blur-sm">
       {kind === 'track' ? '♪ TRACK' : '▶ VIDEO'}
     </span>
   )
@@ -58,7 +58,7 @@ function CuriosityMeta({ song }: { song: SongPreview }) {
           {chips.map((tag) => (
             <span
               key={tag}
-              className="border border-primary/20 bg-primary/5 px-1.5 py-0.5 font-mono text-[8px] tracking-[0.15em] text-primary/70 uppercase"
+              className="border border-primary/20 bg-primary/5 px-1.5 py-0.5 font-mono text-[10px] tracking-[0.15em] text-primary/70 uppercase"
             >
               {tag}
             </span>
@@ -66,17 +66,30 @@ function CuriosityMeta({ song }: { song: SongPreview }) {
         </div>
       )}
       {song.bpm ? (
-        <span className="font-mono text-[9px] tracking-[0.2em] text-muted-foreground/70 uppercase">
+        <span className="font-mono text-xs tracking-[0.2em] text-muted-foreground/70 uppercase">
           {song.bpm} BPM
           {song.durationText ? ` · ${song.durationText}` : ''}
         </span>
       ) : song.tagline ? (
-        <span className="line-clamp-1 font-mono text-[9px] tracking-wide text-muted-foreground/70">
+        <span className="line-clamp-1 font-mono text-xs tracking-wide text-muted-foreground/70">
           {song.tagline}
         </span>
       ) : null}
     </>
   )
+}
+
+function formatReleaseChip(releaseDate?: string | null): string | null {
+  if (!releaseDate) return null
+  const date = new Date(releaseDate)
+  if (Number.isNaN(date.getTime())) return null
+  return date
+    .toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
+    .toUpperCase()
 }
 
 function TrackCard({
@@ -91,130 +104,158 @@ function TrackCard({
   const coverUrl =
     pickMediaImageUrl(coverArt, featured ? 'feature' : 'card') || null
   const coverAlt = coverArt?.alt ?? song.title ?? 'Cover art'
+  const releaseChip = formatReleaseChip(song.releaseDate)
+
+  const handlePlay = (e: MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (song.youtubeId) {
+      playMedia(song as Parameters<typeof playMedia>[0])
+    }
+  }
 
   return (
     <SpotlightCard
       className={cn(
-        'flex h-full flex-col rounded-none border-border/30 bg-card/5 p-0 backdrop-blur-sm transition-all duration-300 hover:border-primary/50',
+        'group relative flex h-full flex-col rounded-none border-border/30 bg-card/5 p-0 backdrop-blur-sm transition-all duration-300 hover:border-primary/50',
         featured && 'min-h-[420px] border-primary/40',
       )}
       spotlightColor={`color-mix(in oklch, var(--primary) ${featured ? 14 : 10}%, transparent)`}
     >
-      {/* Instant play — triggers the global player, no navigation */}
-      <button
-        type="button"
-        className="group relative flex w-full flex-1 cursor-pointer flex-col text-left focus:outline-none"
-        onClick={() =>
-          song.youtubeId && playMedia(song as Parameters<typeof playMedia>[0])
-        }
-        aria-label={`Play ${song.title}`}
-      >
-        <div
-          className={cn(
-            'relative w-full overflow-hidden',
-            featured ? 'min-h-[260px] flex-1' : 'aspect-video',
-          )}
-        >
-          {coverUrl ? (
-            <Image
-              src={coverUrl}
-              alt={coverAlt}
-              fill
-              sizes={
-                featured
-                  ? '(max-width: 768px) 100vw, 60vw'
-                  : '(max-width: 768px) 100vw, 25vw'
-              }
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-primary/5 to-background">
-              <Radio className="h-12 w-12 text-primary/20" />
-            </div>
-          )}
-          <div className="absolute inset-0 bg-linear-to-t from-background/90 via-background/20 to-transparent" />
-          <div className="absolute top-3 left-3">
-            <TypeTag kind="track" />
-          </div>
-          {song.youtubeId && <PlayOverlay />}
-          {song.durationText && !featured && (
-            <div className="absolute right-3 bottom-3 border border-border/40 bg-background/70 px-2 py-0.5 font-mono text-[9px] tracking-widest text-foreground/70 backdrop-blur-sm">
-              {song.durationText}
-            </div>
-          )}
-        </div>
-      </button>
+      {/* Stretch link: whole card opens the song page */}
+      <Link
+        href={`/music/${song.slug}`}
+        className="absolute inset-0 z-0"
+        aria-label={`View ${song.title}`}
+      />
 
-      <div className={cn('shrink-0 space-y-2 p-4', featured && 'space-y-3 pb-5')}>
-        <h3
-          className={cn(
-            'font-heading leading-tight font-bold tracking-tight text-foreground uppercase',
-            featured ? 'text-2xl md:text-3xl' : 'text-sm',
-          )}
-        >
-          {song.title}
-        </h3>
-        <CuriosityMeta song={song} />
-        {featured && song.tagline && song.bpm && (
-          <p className="line-clamp-2 font-body text-xs leading-relaxed text-muted-foreground">
-            {song.tagline}
-          </p>
+      {/* Visual content is non-interactive so clicks fall through to the link */}
+      <div
+        className={cn(
+          'pointer-events-none relative w-full overflow-hidden',
+          featured ? 'min-h-[260px] flex-1' : 'aspect-video',
         )}
-        {/* View more — routes to the song's full page */}
-        <div>
-          <Link
-            href={`/music/${song.slug}`}
-            className="group/link inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.25em] text-foreground/60 uppercase transition-colors hover:text-primary"
-          >
-            Details
-            <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover/link:translate-x-1" />
-          </Link>
+      >
+        {coverUrl ? (
+          <Image
+            src={coverUrl}
+            alt={coverAlt}
+            fill
+            sizes={
+              featured
+                ? '(max-width: 768px) 100vw, 60vw'
+                : '(max-width: 768px) 100vw, 25vw'
+            }
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-primary/5 to-background">
+            <Radio className="h-12 w-12 text-primary/20" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-linear-to-t from-background/90 via-background/20 to-transparent" />
+        <div className="absolute top-3 left-3">
+          <TypeTag kind="track" />
         </div>
+        {releaseChip && (
+          <div className="absolute right-3 bottom-3 border border-border/40 bg-background/70 px-2 py-0.5 font-mono text-[10px] tracking-widest text-foreground/70 backdrop-blur-sm">
+            {releaseChip}
+          </div>
+        )}
+      </div>
+
+      <div
+        className={cn(
+          'pointer-events-none relative z-10 flex shrink-0 items-start gap-3 p-4',
+          featured && 'gap-4 pb-5',
+        )}
+      >
+        <div className={cn('min-w-0 flex-1 space-y-2', featured && 'space-y-3')}>
+          <h3
+            className={cn(
+              'font-heading leading-snug font-bold tracking-tight text-foreground uppercase',
+              featured ? 'text-2xl md:text-3xl' : 'text-base md:text-lg',
+            )}
+          >
+            {song.title}
+          </h3>
+          <CuriosityMeta song={song} />
+          {featured && song.tagline && song.bpm && (
+            <p className="line-clamp-2 font-body text-sm leading-relaxed text-muted-foreground">
+              {song.tagline}
+            </p>
+          )}
+        </div>
+
+        {/* Playback sits on the right so the body isn't left-heavy */}
+        {song.youtubeId && (
+          <button
+            type="button"
+            onClick={handlePlay}
+            aria-label={`Play ${song.title}`}
+            className={cn(
+              'pointer-events-auto inline-flex shrink-0 items-center justify-center border border-primary/50 bg-primary/10 text-primary transition-all duration-300 hover:border-primary hover:bg-primary hover:text-background',
+              featured ? 'h-14 w-14' : 'h-12 w-12',
+            )}
+            style={{
+              boxShadow:
+                '0 0 20px color-mix(in oklch, var(--primary) 25%, transparent)',
+            }}
+          >
+            <Play
+              className={cn('fill-current', featured ? 'h-5 w-5' : 'h-4 w-4')}
+            />
+          </button>
+        )}
       </div>
     </SpotlightCard>
   )
 }
 
 function VideoCard({ video }: { video: YoutubeChannelVideo }) {
-  const { playMedia } = usePlayer()
+  const { playMedia, setVideoEnabled } = usePlayer()
+
+  const handlePlay = () => {
+    playMedia({
+      id: video.youtubeId,
+      youtubeId: video.youtubeId,
+      title: video.title,
+    })
+    // Videos should be watched, not just heard. Leaves videoMode
+    // (theater vs mini) at whatever the visitor last chose.
+    setVideoEnabled(true)
+  }
 
   return (
     <SpotlightCard
       className="flex h-full flex-col rounded-none border-border/30 bg-card/5 p-0 backdrop-blur-sm transition-all duration-300 hover:border-primary/50"
       spotlightColor="color-mix(in oklch, var(--primary) 10%, transparent)"
     >
+      {/* Image stays aspect-locked; no flex-1 so body padding matches track cards */}
       <button
         type="button"
-        className="group relative flex w-full flex-1 cursor-pointer flex-col text-left focus:outline-none"
-        onClick={() =>
-          playMedia({
-            id: video.youtubeId,
-            youtubeId: video.youtubeId,
-            title: video.title,
-          })
-        }
+        className="group relative aspect-video w-full shrink-0 cursor-pointer overflow-hidden text-left focus:outline-none"
+        onClick={handlePlay}
         aria-label={`Play video: ${video.title}`}
       >
-        <div className="relative aspect-video w-full overflow-hidden">
-          <Image
-            src={`https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`}
-            alt={video.title}
-            fill
-            sizes="(max-width: 768px) 100vw, 25vw"
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-          <div className="absolute inset-0 bg-linear-to-t from-background/90 via-background/20 to-transparent" />
-          <div className="absolute top-3 left-3">
-            <TypeTag kind="video" />
-          </div>
-          <PlayOverlay />
+        <Image
+          src={`https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`}
+          alt={video.title}
+          fill
+          sizes="(max-width: 768px) 100vw, 25vw"
+          className="object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-linear-to-t from-background/90 via-background/20 to-transparent" />
+        <div className="absolute top-3 left-3">
+          <TypeTag kind="video" />
         </div>
+        <PlayOverlay />
       </button>
       <div className="shrink-0 space-y-2 p-4">
-        <h3 className="line-clamp-2 font-heading text-sm leading-tight font-bold tracking-tight text-foreground uppercase">
+        <h3 className="line-clamp-2 font-heading text-base leading-snug font-bold tracking-tight text-foreground uppercase md:text-lg">
           {video.title}
         </h3>
-        <span className="block font-mono text-[9px] tracking-[0.2em] text-muted-foreground/70 uppercase">
+        <span className="block font-mono text-xs tracking-[0.2em] text-muted-foreground/70 uppercase">
           {new Date(video.publishedDate).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
@@ -289,15 +330,6 @@ function PremiereFeaturedCard({ premiere }: { premiere: PremiereTeaser }) {
   )
 }
 
-function shuffle<T>(input: T[]): T[] {
-  const out = [...input]
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[out[i], out[j]] = [out[j], out[i]]
-  }
-  return out
-}
-
 export function MusicSection({
   songs,
   videos,
@@ -308,39 +340,30 @@ export function MusicSection({
   premiere: PremiereTeaser | null
 }) {
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-10%' })
+  const inView = useInView(ref, sectionInView)
 
   // Featured slot stays FIXED: the scheduled premiere when one exists,
   // otherwise the most recent release.
   const featuredSong = premiere ? null : (songs[0] ?? null)
   const poolSongs = premiere ? songs : songs.slice(1)
 
-  const initialFeed: FeedItem[] = [
-    ...poolSongs
-      .slice(0, 8)
-      .map<FeedItem>((song) => ({
-        kind: 'track',
-        key: `track-${song.id}`,
-        song,
-      })),
-    ...videos
-      .slice(0, 3)
-      .map<FeedItem>((video) => ({
-        kind: 'video',
-        key: `video-${video.youtubeId}`,
-        video,
-      })),
+  // Most recently published first, tracks and videos interleaved by date.
+  const feed: FeedItem[] = [
+    ...poolSongs.map<FeedItem & { publishedAt: number }>((song) => ({
+      kind: 'track',
+      key: `track-${song.id}`,
+      song,
+      publishedAt: song.releaseDate ? Date.parse(song.releaseDate) : 0,
+    })),
+    ...videos.map<FeedItem & { publishedAt: number }>((video) => ({
+      kind: 'video',
+      key: `video-${video.youtubeId}`,
+      video,
+      publishedAt: Date.parse(video.publishedDate) || 0,
+    })),
   ]
-
-  // Non-featured cards randomize each visit so the page feels alive on
-  // repeat visits. The shuffle must NOT run during SSR/hydration (markup
-  // would mismatch), so we deliberately reorder once after mount — one extra
-  // render is the cost of per-visit randomization.
-  const [feed, setFeed] = useState(initialFeed)
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setFeed((current) => shuffle(current))
-  }, [])
+    .sort((a, b) => b.publishedAt - a.publishedAt)
+    .slice(0, 11)
 
   const sideItems = feed.slice(0, 2)
   const bottomItems = feed.slice(2)

@@ -7,7 +7,13 @@ import { ArrowRight, Play, Radio, ShieldAlert } from 'lucide-react'
 import { PAS } from '@/lib/home/copy'
 import { MagneticCta } from '../HomeSectionMagneticCta'
 import { SectionHeading } from '../SectionHeading'
-import { fadeLeft, fadeRight, fadeUp, stagger } from '../homeSectionVariants'
+import {
+  fadeLeft,
+  fadeRight,
+  fadeUp,
+  sectionInView,
+  stagger,
+} from '../homeSectionVariants'
 
 /** Render a copy string with one italic phrase (spec emphasis). */
 function withEmphasis(text: string, phrase: string) {
@@ -23,8 +29,7 @@ function withEmphasis(text: string, phrase: string) {
 }
 
 function TrailerSlot() {
-  // TODO: asset — channel-trailer video (edgier spoken adaptation of the PAS
-  // copy). Swap this placeholder for the YouTube embed when footage lands.
+  // TODO: asset — channel-trailer video (edgier spoken adaptation of the PAS copy). Swap this placeholder for the YouTube embed when footage lands.
   return (
     <div className="relative aspect-video w-full overflow-hidden border border-border/40 bg-card/5">
       {/* Corner brackets */}
@@ -54,7 +59,7 @@ function TrailerSlot() {
           <Play className="ml-0.5 h-6 w-6 text-primary/70" />
         </div>
         <span className="font-mono text-[9px] tracking-[0.3em] text-muted-foreground/60 uppercase">
-          [ Video placeholder — channel trailer ]
+          [ Transmission corrupted — try again later]
         </span>
       </div>
     </div>
@@ -63,7 +68,7 @@ function TrailerSlot() {
 
 export function PasSection() {
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-10%' })
+  const inView = useInView(ref, sectionInView)
 
   return (
     <section ref={ref} className="relative overflow-hidden px-4 py-28">
@@ -75,7 +80,7 @@ export function PasSection() {
         }}
       />
 
-      <div className="container relative">
+      <div className="relative container">
         <motion.div
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}

@@ -4,23 +4,14 @@ import dynamic from 'next/dynamic'
 import { HeroSection } from './sections/HeroSection'
 import type { HomeProps } from './homeSectionTypes'
 
-export type {
-  SongPreview,
-  PremiereTeaser,
-  HomeProps,
-} from './homeSectionTypes'
+export type { SongPreview, PremiereTeaser, HomeProps } from './homeSectionTypes'
 
 const HomeSectionsBelowHeroDynamic = dynamic(
   () =>
     import('./HomeSectionsBelowHero').then((mod) => mod.HomeSectionsBelowHero),
   {
     ssr: true,
-    loading: () => (
-      <div
-        className="min-h-96 border-t border-border/20 bg-background"
-        aria-hidden
-      />
-    ),
+    loading: () => <div className="min-h-96" aria-hidden />,
   },
 )
 

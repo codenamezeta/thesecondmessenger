@@ -49,22 +49,14 @@ export function EmailBar() {
           <div className="flex items-center gap-3 border border-primary/30 bg-primary/10 px-5 py-3">
             <Check className="size-4 text-primary" />
             <p className="font-mono text-xs tracking-widest text-primary uppercase">
-              Signal locked. You&apos;re on the list.
+              Signal acquired. You&apos;re on the list.
             </p>
           </div>
         ) : (
           <form
             onSubmit={handleSubmit}
-            className="flex w-full max-w-xl flex-col gap-2 sm:flex-row"
+            className="flex w-full max-w-4xl flex-col gap-2 sm:flex-row"
           >
-            <input
-              type="text"
-              autoComplete="name"
-              placeholder="Name (optional)"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="min-h-12 border border-border/40 bg-input px-3 py-2 font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-primary sm:w-40"
-            />
             <input
               type="email"
               autoComplete="email"
@@ -72,6 +64,14 @@ export function EmailBar() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="min-h-12 flex-1 border border-border/40 bg-input px-3 py-2 font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-primary"
+            />
+            <input
+              type="text"
+              autoComplete="name"
+              placeholder="Name (optional)"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               className="min-h-12 flex-1 border border-border/40 bg-input px-3 py-2 font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-primary"
             />
             <button

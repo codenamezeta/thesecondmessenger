@@ -14,9 +14,9 @@ export interface HeroComment {
 
 export const HERO_COMMENTS: HeroComment[] = [
   {
-    author: '@WonderSuper40',
+    author: '@adamwavemusic',
     quote:
-      'Bravo Sir Bravo... I would love to listen to the 2nd verse in your voice...that is my most favorite part ❤️',
+      'Man I love your vibe, don’t stop',
   },
   {
     author: '@californiafied',

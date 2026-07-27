@@ -65,9 +65,29 @@ export default async function HomePage() {
   const premiere = premiereDocs[0] ? toPremiereTeaser(premiereDocs[0]) : null
   const categoryQueues = buildCategoryQueues(songs)
 
+  // Most channel videos ARE the audio source for a song, so showing both
+  // would duplicate the same content. Match on youtubeId (same approach as
+  // /videos) and keep only stand-alone videos with no song page behind them.
   // TODO: mixed-content data model (posts as feed cards) is a Phase 3 build
-  // task — for now the feed mixes songs + YouTube channel videos.
-  const videos = (await getChannelVideos(3)) as YoutubeChannelVideo[]
+  // task — for now the feed mixes songs + stand-alone videos.
+  const [channelVideos, { docs: linkedSongDocs }] = await Promise.all([
+    getChannelVideos(25) as Promise<YoutubeChannelVideo[]>,
+    payload.find({
+      collection: 'songs',
+      where: { youtubeId: { exists: true } },
+      limit: 200,
+      select: { youtubeId: true },
+    }),
+  ])
+
+  const songYoutubeIds = new Set(
+    linkedSongDocs
+      .map((doc) => doc.youtubeId)
+      .filter((id): id is string => Boolean(id)),
+  )
+  const videos = channelVideos
+    .filter((video) => !songYoutubeIds.has(video.youtubeId))
+    .slice(0, 6)
 
   return (
     <>

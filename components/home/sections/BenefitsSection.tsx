@@ -11,7 +11,7 @@ import {
 import SpotlightCard from '@/components/SpotlightCard'
 import { BENEFITS } from '@/lib/home/copy'
 import { SectionHeading } from '../SectionHeading'
-import { fadeUp, stagger } from '../homeSectionVariants'
+import { fadeUp, sectionInView, stagger } from '../homeSectionVariants'
 
 /**
  * The emotional differentiator section — deliberately softer than the HUD
@@ -27,7 +27,7 @@ const ICONS: Record<string, React.ElementType> = {
 
 export function BenefitsSection() {
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-10%' })
+  const inView = useInView(ref, sectionInView)
 
   return (
     <section ref={ref} className="relative overflow-hidden px-4 py-28">

@@ -6,6 +6,15 @@
  * and @michaelzeta5423 (the artist himself).
  */
 
+import type { StaticImageData } from 'next/image'
+
+import AdamWaveMusicAvatar from '@/lib/fan-avatars/@adamwavemusic.png'
+import Diesalwater1923Avatar from '@/lib/fan-avatars/@diesalwater1923.png'
+import SteTatoSuAvatar from '@/lib/fan-avatars/@ste-tato-su.png'
+import Tauron1Avatar from '@/lib/fan-avatars/@tauron1.jpg'
+import TheFunnyCaveAvatar from '@/lib/fan-avatars/@TheFunnyCave.jpg'
+import Vador329Avatar from '@/lib/fan-avatars/@vador329.png'
+
 export type FandomSource = 'YouTube' | 'Reddit' | 'Fender'
 
 export interface FandomComment {
@@ -15,6 +24,8 @@ export interface FandomComment {
   source: FandomSource
   /** Verifiable source link — quietly kills the "he faked these" doubt. */
   href: string
+  /** Local fan avatar when available; omit to use the letter placeholder. */
+  avatar?: StaticImageData
 }
 
 const YT_CHANNEL = 'https://youtube.com/@thesecondmessenger'
@@ -30,6 +41,7 @@ export const ANCHOR_REVIEWS: FandomComment[] = [
     videoTitle: 'Interstellar Love Song',
     source: 'Fender',
     href: 'https://my.fender.com/community/post/dV8e672UNu2YfgiO6J6F',
+    avatar: SteTatoSuAvatar,
   },
   {
     author: '@tauron1',
@@ -37,14 +49,17 @@ export const ANCHOR_REVIEWS: FandomComment[] = [
     videoTitle: 'Sick Of Myself (cover)',
     source: 'YouTube',
     href: YT_CHANNEL,
+    avatar: Tauron1Avatar,
   },
   {
     // Reframes the small audience as "criminally underrated."
     author: '@TheFunnyCave',
-    quote: "That was a great cover! You deserve way more views than you're getting.",
+    quote:
+      "That was a great cover! You deserve way more views than you're getting.",
     videoTitle: 'Sick Of Myself (cover)',
     source: 'YouTube',
     href: YT_CHANNEL,
+    avatar: TheFunnyCaveAvatar,
   },
 ]
 
@@ -56,6 +71,7 @@ export const GRID_REVIEWS: FandomComment[] = [
     videoTitle: 'The Fool',
     source: 'YouTube',
     href: YT_CHANNEL,
+    avatar: Vador329Avatar,
   },
   {
     author: '@deneicy',
@@ -74,7 +90,7 @@ export const GRID_REVIEWS: FandomComment[] = [
   },
   {
     author: 'jcpmuzik',
-    quote: 'mad respect for the craft on this one 🎶🎹',
+    quote: 'Mad respect for the craft on this one 🎶🎹',
     videoTitle: 'The Fool',
     source: 'Reddit',
     href: 'https://www.reddit.com/r/PromoteYourMusic/comments/1uws0h9/comment/oyisltj',
@@ -85,6 +101,7 @@ export const GRID_REVIEWS: FandomComment[] = [
     videoTitle: 'The Fool',
     source: 'YouTube',
     href: YT_CHANNEL,
+    avatar: Diesalwater1923Avatar,
   },
   {
     author: '@adamwavemusic',
@@ -92,6 +109,7 @@ export const GRID_REVIEWS: FandomComment[] = [
     videoTitle: 'Kelly Come Home',
     source: 'YouTube',
     href: YT_CHANNEL,
+    avatar: AdamWaveMusicAvatar,
   },
   {
     author: 'Strong_Literature321',

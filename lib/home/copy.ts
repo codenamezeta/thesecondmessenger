@@ -136,6 +136,8 @@ export const BACKSTAGE = {
 export const FANDOM = {
   eyebrow: '// SIGNAL INTERCEPTS',
   heading: 'The Fandom',
+  subtitle:
+    'Others have already crossed the expanse. These are their transmissions.',
 } as const
 
 // ---------------------------------------------------------------------------
@@ -144,8 +146,8 @@ export const FANDOM = {
 
 export const FEATURES = {
   eyebrow: '// SYSTEM SPECS',
-  heading: 'The Fine Print (the good kind)',
-  subheading: 'Everything you get, laid out plain.',
+  heading: 'The Continuing Mission',
+  subheading: 'The music is the mission. The community is the purpose.',
   groups: [
     {
       title: 'The Music',
@@ -208,7 +210,7 @@ export const FAQ = {
     },
     {
       q: 'What do I get if I pay? Is it worth it?',
-      a: 'Depends how deep you want in. Free gets you every song. Paying unlocks the Vault (demos, stems, alt mixes, sheet music), voting rights on what I release next, and a real say in the project. If you just want the tunes, stay free forever, no hard feelings. If you want to help shape them, that\'s what the tiers are for.',
+      a: "Depends how deep you want in. Free gets you every song. Paying unlocks the Vault (demos, stems, alt mixes, sheet music), voting rights on what I release next, and a real say in the project. If you just want the tunes, stay free forever, no hard feelings. If you want to help shape them, that's what the tiers are for.",
       cta: { label: 'See Membership Tiers', href: '/memberships' },
     },
     {
