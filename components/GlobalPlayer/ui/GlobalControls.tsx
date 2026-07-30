@@ -117,7 +117,7 @@ export const GlobalControls = ({
         <button
           onClick={() => setVideoEnabled(!videoEnabled)}
           className={cn(
-            'relative h-[1.333rem] w-9 rounded-full border border-muted-foreground/75 transition-colors duration-200 ease-in-out',
+            'relative h-[1.333rem] w-9 cursor-pointer rounded-full border border-muted-foreground/75 transition-colors duration-200 ease-in-out',
             videoEnabled ? 'bg-primary/75' : 'bg-input',
           )}
           aria-label="Toggle video"
@@ -159,9 +159,7 @@ export const GlobalControls = ({
               ? 'Turn off captions'
               : 'Turn on captions'
         }
-        aria-label={
-          captionsEnabled ? 'Turn off captions' : 'Turn on captions'
-        }
+        aria-label={captionsEnabled ? 'Turn off captions' : 'Turn on captions'}
         aria-pressed={captionsEnabled}
         disabled={!videoEnabled}
       >

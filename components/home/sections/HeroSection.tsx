@@ -196,18 +196,17 @@ export function HeroSection({
             flush-foot behavior). Wider than the pitch column so the figure can
             bleed toward the right edge. */}
         <motion.div
-          id="hero_image"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.9, delay: 0.3 }}
-          className="pointer-events-none relative flex flex-auto flex-col items-end lg:h-full lg:shrink-0"
+          className="pointer-events-none relative flex w-full flex-auto shrink flex-col items-end md:h-full lg:w-auto lg:flex-1"
         >
-          {/* Halo rings behind head — anchored to the right */}
-          <div className="absolute top-[31%] right-0 size-[min(800px,90vw)] animate-pulse rounded-full border border-foreground/20 lg:-right-10" />
-          <div className="absolute top-[33%] right-0 size-[min(750px,85vw)] rounded-full border border-dashed border-foreground/20 lg:-right-6" />
+          {/* Halo rings behind head — centered on mobile, right-anchored at lg+ */}
+          <div className="absolute top-[31%] left-1/2 size-[min(800px,90vw)] -translate-x-1/2 animate-pulse rounded-full border border-foreground/20 lg:left-auto lg:right-0 lg:translate-x-0" />
+          <div className="absolute top-[33%] left-1/2 size-[min(750px,85vw)] -translate-x-1/2 rounded-full border border-dashed border-foreground/20 lg:left-auto lg:right-0 lg:translate-x-0" />
           {/* Halo glow — single dramatic light source */}
           <div
-            className="absolute top-[35%] left-25 size-[min(820px,92vw)] rounded-full lg:-right-6"
+            className="absolute top-[35%] left-1/2 size-[min(820px,92vw)] -translate-x-1/2 rounded-full lg:left-auto lg:right-0 lg:translate-x-0"
             style={{
               background:
                 'radial-gradient(circle at 30% 20%, color-mix(in oklch, var(--primary) 14%, transparent), transparent 60%)',
@@ -218,17 +217,16 @@ export function HeroSection({
             {/* Ambient peeking comments — behind the PNG, in the halo space */}
             <AmbientComments />
 
-            {/* Artist cutout — pinned bottom-right. `contain` keeps the full
-                figure (feet included); `object-right-bottom` hugs the right
-                edge. A taller box than the old 67% crop avoids mid-torso cutoff
-                in the wider redesign column. */}
-            <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-10 h-full contrast-125 drop-shadow-[0_0_60px_rgba(0,0,0,0.85)] grayscale-30 filter transition-all duration-700 hover:grayscale-0 lg:-right-12 lg:left-auto lg:w-[110%] xl:-right-20">
+            {/* Artist cutout — full-width + bottom-centered on mobile so the
+                column (parent `items-center`) doesn't collapse to ~0 width.
+                At lg+, pin bottom-right and bleed past the column edge. */}
+            <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-10 size-full contrast-125 drop-shadow-[0_0_60px_rgba(0,0,0,0.85)] grayscale-30 filter transition-all duration-700 hover:grayscale-0 lg:-right-12 lg:left-auto lg:w-[110%] xl:-right-20">
               <Image
                 src="/imgs/michael-01.png" // TODO: asset — refined hero cutout w/ dramatic single-source lighting
                 alt="Michael Zeta"
                 fill
-                sizes="(max-width: 768px) 100vw, 60vw"
-                className="object-contain object-bottom-right"
+                sizes="(max-width: 1023px) 100vw, 60vw"
+                className="object-contain object-bottom lg:object-bottom-right"
                 priority
               />
             </div>
